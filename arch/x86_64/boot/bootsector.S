@@ -1,6 +1,9 @@
 .code16
 .text
 .globl start
+
+#include "x86-consts.h"
+
 start:
 	/*
 	 * We can't handle being interrupted and the registers might be in an
@@ -14,9 +17,17 @@ start:
 
 	call enable_a20
 
+	call check_long_mode_support
+	cmpw $1, %ax
+	jne start.no_long_mode
+
 	movw $zeptux_ok_str, %si
 	call bios_say
 
+	hlt
+start.no_long_mode:
+	movw $long_mode_fail_str, %si
+	call bios_say
 	hlt
 
 /* Outputs string pointed to by SI. */
@@ -131,8 +142,27 @@ check_a20.disabled:
 	movw $0, %ax
 	ret
 
+/*
+ * Determines whether CPU supports long mode (e.g. 64-bit).
+ * Sets AX 1 if so, 0 if not.
+ */
+check_long_mode_support:
+	xorl %edx, %edx
+	movl $0x80000001, %eax
+	cpuid
+	andl $X86_LONGMODE_FLAG, %edx
+	jz check_long_mode_support.unsupported
+	movw $1, %ax
+	ret
+check_long_mode_support.unsupported:
+	movw $0, %ax
+	ret
+
 zeptux_ok_str:
 	.asciz "zeptux ok!"
 
 a20_fail_str:
 	.asciz "panic: Cannot enable A20 line!"
+
+long_mode_fail_str:
+	.asciz "panic: CPU does not support long mode!"
