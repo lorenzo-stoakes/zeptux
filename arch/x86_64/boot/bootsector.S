@@ -174,25 +174,33 @@ start32:
 	movw %ax, %gs
 
 	// Set up page tables.
+	//
+	// Perform 1 GiB 'gigantic' page mappings (only PGT, PUD with PSE bit
+	// set in PUD) from PA 0 to 1 GiB at VAs:
+	//   * 0
+	//   * X86_KERNEL_DIRECT_MAP_BASE
+	//   * X86_KERNEL_ELF_BASE
 
-	// Clear 4 pages at 0x1000, 0x2000, 0x3000, 0x4000.
+	// Clear memory in range [0x1000, 0x5000).
+	// (eax was cleared above).
 	movl $0x1000, %edi
-	movl $0x1000, %ecx
-	rep stosl
-	// Point PGT[0] -> PUD[0] -> PMD[0] -> PTE[0]
-	movl $0x2003, 0x1000
-	movl $0x3003, 0x2000
-	movl $0x4003, 0x3000
+	movl $0x4000, %ecx
+	rep stosb
 
-	// Set up linear mapping for first 2 MiB.
-	movl $3, %eax
-	movl $0x4000, %edi
-	movl $512, %ecx
-start32.setpte_loop:
-	movl %eax, (%edi)
-	addl $0x1000, %eax
-	addl $8, %edi
-	loop start32.setpte_loop
+	// (We can use 32-bit moves below because the page table bits we are
+	//  manipulating are all within lower 32).
+
+	// PGE for VA 0 -> PUD at 0x2000.
+	movl $(X86_PAGE_FLAG_KERNEL | 0x2000), 0x1000
+	// PGE for VA X86_KERNEL_DIRECT_MAP_BASE -> PUD at 0x3000.
+	movl $(X86_PAGE_FLAG_KERNEL | 0x3000), (0x1000 + 8 * X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET)
+	// PGE for VA X86_KERNEL_ELF_BASE -> PUD at 0x4000.
+	movl $(X86_PAGE_FLAG_KERNEL | 0x4000), (0x1000 + 8 * X86_KERNEL_ELF_BASE_PGD_OFFSET)
+
+	// Add 'gigantic' PUDs pointing at PA 0.
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x2000
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x3000
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x4000
 
 	// Assign PGT to CR3.
 	movl $0x1000, %edi

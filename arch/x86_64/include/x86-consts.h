@@ -34,3 +34,58 @@
 #define X86_MFR_EFER (0xc0000080UL)
 
 #define X86_MFR_EFER_LME (1UL << 8) // Enable long mode.
+
+// Page table constants
+
+#define X86_PAGE_FLAG_PRESENT_BIT        (0)
+#define X86_PAGE_FLAG_RW_BIT             (1)
+#define X86_PAGE_FLAG_USER_BIT           (2)
+#define X86_PAGE_FLAG_WRITE_THROUGH_BIT  (3)
+#define X86_PAGE_FLAG_CACHE_DISABLED_BIT (4)
+#define X86_PAGE_FLAG_ACCESSED_BIT       (5)
+#define X86_PAGE_FLAG_DIRTY_BIT          (6)
+#define X86_PAGE_FLAG_PSE_BIT            (7)
+#define X86_PAGE_FLAG_GLOBAL_BIT         (8)
+#define X86_PAGE_FLAG_NX_BIT             (63)
+
+#define X86_PAGE_FLAG_PRESENT        (1UL << X86_PAGE_FLAG_PRESENT_BIT)
+#define X86_PAGE_FLAG_RW             (1UL << X86_PAGE_FLAG_RW_BIT)
+#define X86_PAGE_FLAG_USER           (1UL << X86_PAGE_FLAG_USER_BIT)
+#define X86_PAGE_FLAG_WRITE_THROUGH  (1UL << X86_PAGE_FLAG_WRITE_THROUGH_BIT)
+#define X86_PAGE_FLAG_CACHE_DISABLED (1UL << X86_PAGE_FLAG_CACHE_DISABLED_BIT)
+#define X86_PAGE_FLAG_ACCESSED       (1UL << X86_PAGE_FLAG_ACCESSED_BIT)
+#define X86_PAGE_FLAG_DIRTY          (1UL << X86_PAGE_FLAG_DIRTY_BIT)
+#define X86_PAGE_FLAG_PSE            (1UL << X86_PAGE_FLAG_PSE_BIT)
+#define X86_PAGE_FLAG_GLOBAL         (1UL << X86_PAGE_FLAG_GLOBAL_BIT)
+#define X86_PAGE_FLAG_NX             (1UL << X86_PAGE_FLAG_NX_BIT)
+
+#define X86_PAGE_FLAG_KERNEL (X86_PAGE_FLAG_PRESENT | X86_PAGE_FLAG_RW | X86_PAGE_FLAG_GLOBAL)
+
+// We establish larger page sizes by setting the PSE flag.
+#define X86_PUD_FLAG_1GIB_PAGE_SIZE (X86_PAGE_FLAG_PSE)
+#define X86_PMD_FLAG_2MIB_PAGE_SIZE (X86_PAGE_FLAG_PSE)
+
+// Assuming 4-level page tables we have 48 bits to play with. x86 requires that
+// the MSB is set for all higher bits, thus the very first address which sets
+// higher bits to 1 is 0xffff800000000000 which is at the exact halfway mark of
+// virtual memory. This makes it the ideal place to divide between userland and
+// kernel memory.
+
+//    6         5         4         3         2         1
+// 3210987654321098765432109876543210987654321098765432109876543210
+// 1111111111111111100000000000000000000000000000000000000000000000
+// ................100000000000000000000000000000000000000000000000
+#define X86_KERNEL_BASE (0xffff800000000000UL)
+
+// Immediately at the beginning of kernel memory we provide a 64 TiB direct
+// mapping of physical memory. This is SUPER convenient and takes advantage of
+// the HUGE 64-bit address space.
+#define X86_KERNEL_DIRECT_MAP_BASE            (X86_KERNEL_BASE)
+#define X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET (128)
+
+// We place this 64 TiB after the direct physical mapping. This is a direct
+// memory mapping so the ELF is actually loaded at X86_KERNEL_ELF_BASE + x86_KERNEL_ELF_OFFSET.
+#define X86_KERNEL_ELF_BASE            (0xffffc80000000000UL)
+#define X86_KERNEL_ELF_BASE_PGD_OFFSET (256)
+#define X86_KERNEL_ELF_OFFSET          (0x20000UL)
+#define X86_KERNEL_ELF_ADDRESS         (X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_OFFSET)
