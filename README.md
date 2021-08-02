@@ -26,8 +26,8 @@ As zeptux is currently a nearly non-existent entity, we must start by targeting
 trivial goals:
 
 1. DONE: x86 real mode hello, world
-2. x86 32-bit, hello world
-3. x86 64-bit, hello world
+2. DONE: x86 32-bit, hello world
+3. DONE: x86 64-bit, hello world
 4. x86 echoing console
 ... and many more to come.
 

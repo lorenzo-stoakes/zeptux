@@ -3,6 +3,7 @@
 .globl start
 
 #include "x86-consts.h"
+#include "bootsector.h"
 
 start:
 	/*
@@ -11,9 +12,9 @@ start:
 	 */
 	cli
 	xorw %ax, %ax
-	movw %ax, %ds /* Data  segment. */
-	movw %ax, %es /* Extra segment. */
-	movw %ax, %ss /* Stack segment. */
+	movw %ax, %ds // Data  segment.
+	movw %ax, %es // Extra segment.
+	movw %ax, %ss // Stack segment.
 
 	call enable_a20
 
@@ -21,24 +22,26 @@ start:
 	cmpw $1, %ax
 	jne start.no_long_mode
 
-	movw $zeptux_ok_str, %si
-	call bios_say
+	// Move to 32-bit protected mode.
+	lgdtl gdtdescr
+	movl $X86_CR0_PROTECTED_MODE, %eax
+	movl %eax, %cr0
+	ljmpl $GDT_SEGMENT_CODE32, $start32
 
-	hlt
 start.no_long_mode:
-	movw $long_mode_fail_str, %si
+	movw $panic_str, %si
 	call bios_say
 	hlt
 
-/* Outputs string pointed to by SI. */
+// Outputs string pointed to by SI.
 bios_say:
-	/* 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H */
+	// 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H
 	movb $0xe, %ah
 	xorw %bx, %bx
 bios_say.loop:
-	lodsb /* Load byte at DS:SI into AL. */
+	lodsb // Load byte at DS:SI into AL.
 	cmpb $0, %al
-	je bios_say.done /* Exit on null terminator. */
+	je bios_say.done // Exit on null terminator.
 	int $0x10
 	jmp bios_say.loop
 bios_say.done:
@@ -68,19 +71,19 @@ bios_say.done:
  * For more on this horror read https://www.win.tue.nl/~aeb/linux/kbd/A20.html
  */
 enable_a20:
-	/* Is A20 already enabled? Then nothing to do. */
+	// Is A20 already enabled? Then nothing to do.
 	call check_a20
 	cmpw $1, %ax
 	je enable_a20.done
 
-	/* Attempt 1: BIOS enable. */
+	// Attempt 1: BIOS enable.
 	movw $0x2401, %ax
 	int $0x15
 	call check_a20
 	cmpw $1, %ax
 	je enable_a20.done
 
-	/* Attempt 2: Fast A20. */
+	// Attempt 2: Fast A20.
 	inb $0x92, %al
 	orb $0b10, %al
 	outb %al, $0x92
@@ -88,8 +91,8 @@ enable_a20:
 	cmpw $1, %ax
 	je enable_a20.done
 
-	/* Nothing worked, we cannot continue. */
-	movw $a20_fail_str, %si
+	// Nothing worked, we cannot continue.
+	movw $panic_str, %si
 	call bios_say
 	hlt
 
@@ -108,20 +111,20 @@ enable_a20.done:
  * Sets AX to 1 if enabled, 0 if disabled.
  */
 check_a20:
-	/* Clear DS. */
+	// Clear DS.
 	xorw %ax, %ax
 	movw %ax, %ds
-	/* Set DI to 0x7dfe so %ds:%di == 0x0000: 0x7dfe. */
+	// Set DI to 0x7dfe so %ds:%di == 0x0000: 0x7dfe.
 	movw $0x7dfe, %di
-	/* Store 0x0000:0x7dfe in %ax and copy to %bx. */
+	// Store 0x0000:0x7dfe in %ax and copy to %bx.
 	movw %ds:0(%di), %ax
 	movw %ax, %bx
-	/* Set ES to 0xffff. */
+	// Set ES to 0xffff.
 	movw $0xffff, %ax
 	movw %ax, %es
-	/* Set SI to 0x7e0e so %es:%si == 0xffff:0x7e0e. */
+	// Set SI to 0x7e0e so %es:%si == 0xffff:0x7e0e.
 	movw $0x7e0e, %si
-	/* If 0x0000:0x7dfe != 0xffff:0x7e0e then A20 must be enabled. */
+	// If 0x0000:0x7dfe != 0xffff:0x7e0e then A20 must be enabled.
 	cmpw %es:0(%si), %ax
 	jne check_a20.enabled
 	/*
@@ -130,9 +133,9 @@ check_a20:
 	 */
 	movw $0xbeef, %ax
 	movw %ax, %ds:0(%di)
-	/* Check if they match, if they do now then A20 is definitely disabled. */
+	// Check if they match, if they do now then A20 is definitely disabled.
 	cmpw %es:0(%si), %ax
-	/* Before returning, restore bootsector magic value. */
+	// Before returning, restore bootsector magic value.
 	movw %bx, %ds:0(%di)
 	je check_a20.disabled
 check_a20.enabled:
@@ -158,11 +161,91 @@ check_long_mode_support.unsupported:
 	movw $0, %ax
 	ret
 
-zeptux_ok_str:
-	.asciz "zeptux ok!"
+.code32
 
-a20_fail_str:
-	.asciz "panic: Cannot enable A20 line!"
+start32:
+	movw $GDT_SEGMENT_DATA, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %ss
 
-long_mode_fail_str:
-	.asciz "panic: CPU does not support long mode!"
+	xorl %eax, %eax
+	movw %ax, %fs
+	movw %ax, %gs
+
+	// Set up page tables.
+
+	// Clear 4 pages at 0x1000, 0x2000, 0x3000, 0x4000.
+	movl $0x1000, %edi
+	movl $0x1000, %ecx
+	rep stosl
+	// Point PGT[0] -> PUD[0] -> PMD[0] -> PTE[0]
+	movl $0x2003, 0x1000
+	movl $0x3003, 0x2000
+	movl $0x4003, 0x3000
+
+	// Set up linear mapping for first 2 MiB.
+	movl $3, %eax
+	movl $0x4000, %edi
+	movl $512, %ecx
+start32.setpte_loop:
+	movl %eax, (%edi)
+	addl $0x1000, %eax
+	addl $8, %edi
+	loop start32.setpte_loop
+
+	// Assign PGT to CR3.
+	movl $0x1000, %edi
+	movl %edi, %cr3
+
+	// Enable PAE.
+	movl %cr4, %eax
+	orl $X86_CR4_PAE, %eax
+	movl %eax, %cr4
+
+	// Enable long mode.
+	movl $X86_MFR_EFER, %ecx
+	rdmsr
+	orl $X86_MFR_EFER_LME, %eax
+	wrmsr
+
+	// Enable paging.
+	movl %cr0, %eax
+	orl $X86_CR0_PAGED_MODE, %eax
+	movl %eax, %cr0
+
+	// Jump into long mode.
+	ljmpl $GDT_SEGMENT_CODE64, $start64
+
+.code64
+start64:
+	movw $GDT_SEGMENT_DATA, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %ss
+
+	xorq %rax, %rax
+	movw %ax, %fs
+	movw %ax, %gs
+
+	movq $start, %rsp
+	call load
+	hlt
+
+panic_str:
+	.asciz "panic"
+
+gdt:
+	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
+	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_32BIT_PROTECTED,
+			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
+			X86_GDTE_ACCESS_EXEC | X86_GDTE_ACCESS_RW) // GDT_SEGMENT_CODE32_INDEX
+	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_64BIT_CODE,
+			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
+			X86_GDTE_ACCESS_EXEC | X86_GDTE_ACCESS_RW) // GDT_SEGMENT_CODE64_INDEX
+	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_32BIT_PROTECTED,
+			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
+			X86_GDTE_ACCESS_RW)                        // GDT_SEGMENT_DATA_INDEX
+gdtdescr:
+	.short gdtdescr - gdt - 1 // size
+	.long  gdt // offset
