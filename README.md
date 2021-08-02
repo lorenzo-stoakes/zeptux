@@ -10,7 +10,7 @@ It is released under an MIT license.
 ## Status
 _Almost non-existent._
 
-Generates bootsector image, which says 'hello world'
+- Self-loading boot sector (via ATA).
 
 ### Usage
 
@@ -19,17 +19,6 @@ Make sure you have gcc, binutils and qemu installed. Then run:
 ```
 $ make qemu
 ```
-
-## Roadmap
-
-As zeptux is currently a nearly non-existent entity, we must start by targeting
-trivial goals:
-
-1. DONE: x86 real mode hello, world
-2. DONE: x86 32-bit, hello world
-3. DONE: x86 64-bit, hello world
-4. x86 echoing console
-... and many more to come.
 
 ## Design concepts
 

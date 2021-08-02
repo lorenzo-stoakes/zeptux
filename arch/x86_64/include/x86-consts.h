@@ -81,11 +81,17 @@
 // mapping of physical memory. This is SUPER convenient and takes advantage of
 // the HUGE 64-bit address space.
 #define X86_KERNEL_DIRECT_MAP_BASE            (X86_KERNEL_BASE)
-#define X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET (128)
+#define X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET (256)
 
 // We place this 64 TiB after the direct physical mapping. This is a direct
 // memory mapping so the ELF is actually loaded at X86_KERNEL_ELF_BASE + x86_KERNEL_ELF_OFFSET.
 #define X86_KERNEL_ELF_BASE            (0xffffc80000000000UL)
-#define X86_KERNEL_ELF_BASE_PGD_OFFSET (256)
-#define X86_KERNEL_ELF_OFFSET          (0x20000UL)
+#define X86_KERNEL_ELF_BASE_PGD_OFFSET (400)
+// in x86 physical memory map, this is where extended memory lives so is safe to
+// write to.
+#define X86_KERNEL_ELF_OFFSET          (0x1000000UL)
 #define X86_KERNEL_ELF_ADDRESS         (X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_OFFSET)
+// We specify that the kernel text section comes first and is offset by 0x1000
+// so if booting from boot sector we can quickly load the ELF image direct and
+// jump to it as headers will never exceed 1 page in size.
+#define X86_KERNEL_TEXT                (X86_KERNEL_ELF_ADDRESS + 0x1000UL)

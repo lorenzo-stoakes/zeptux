@@ -5,6 +5,10 @@
 #include "x86-consts.h"
 #include "bootsector.h"
 
+// We are struggling to fit code into boot sector so skip checks and assume A20
+// enabled (it is in qemu) and 64-bit capable CPU.
+#define SKIP_CHECKS
+
 start:
 	/*
 	 * We can't handle being interrupted and the registers might be in an
@@ -16,11 +20,13 @@ start:
 	movw %ax, %es // Extra segment.
 	movw %ax, %ss // Stack segment.
 
+#ifndef SKIP_CHECKS
 	call enable_a20
 
 	call check_long_mode_support
 	cmpw $1, %ax
 	jne start.no_long_mode
+#endif
 
 	// Move to 32-bit protected mode.
 	lgdtl gdtdescr
@@ -28,11 +34,14 @@ start:
 	movl %eax, %cr0
 	ljmpl $GDT_SEGMENT_CODE32, $start32
 
+#ifndef SKIP_CHECKS
 start.no_long_mode:
 	movw $panic_str, %si
 	call bios_say
 	hlt
+#endif
 
+#ifndef SKIP_CHECKS
 // Outputs string pointed to by SI.
 bios_say:
 	// 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H
@@ -46,7 +55,9 @@ bios_say.loop:
 	jmp bios_say.loop
 bios_say.done:
 	ret
+#endif
 
+#ifndef SKIP_CHECKS
 /*
  * Once upon a time 1 MiB was considered a huge amount of memory. Thus the
  * weirdness that is segmented memory meant that 16-bit x86 could specify an
@@ -160,6 +171,7 @@ check_long_mode_support:
 check_long_mode_support.unsupported:
 	movw $0, %ax
 	ret
+#endif
 
 .code32
 
@@ -183,6 +195,7 @@ start32:
 
 	// Clear memory in range [0x1000, 0x5000).
 	// (eax was cleared above).
+	// This memory is safe to use as is located in 'conventional memory'.
 	movl $0x1000, %edi
 	movl $0x4000, %ecx
 	rep stosb
@@ -240,8 +253,10 @@ start64:
 	call load
 	hlt
 
+#ifdef SKIP_CHECKS
 panic_str:
 	.asciz "panic"
+#endif
 
 gdt:
 	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
