@@ -17,8 +17,9 @@ boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	ld -T arch/x86_64/boot/bootsector.ld -o boot.bin bootsector.o loader.o
 
 kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
-	gcc $(CFLAGS) -c kernel/main.c -o kernel.o
-	ld -T kernel/kernel.ld -o kernel.elf kernel.o
+	gcc $(CFLAGS) -c -Iinclude/ -Iarch/x86_64/include kernel/main.c -o kernel.o
+	gcc $(CFLAGS) -c -Iinclude/ -Iarch/x86_64/include kernel/serial.c -o serial.o
+	ld -T kernel/kernel.ld -o kernel.elf kernel.o serial.o
 
 zeptux.img: boot.bin kernel.elf
 	dd if=/dev/zero of=zeptux.img count=2000
@@ -29,7 +30,7 @@ clean:
 	rm -f *.o *.img *.bin
 
 qemu: zeptux.img
-	qemu-system-x86_64 -drive file=zeptux.img,format=raw \
+	qemu-system-x86_64 -nographic -drive file=zeptux.img,format=raw \
 		-serial mon:stdio -smp 1
 
 .PHONY: all clean qemu

@@ -16,7 +16,6 @@ _Almost non-existent._
 
 ### Next steps
 
-* Add serial output function so we can output to qemu -nographic mode.
 * Add ability to printf arbitrary strings via uart. EXTREMELY useful for
   debugging.
 * Add initial boot memory allocator/freer, use 0xe820 int 0x15 to determine
