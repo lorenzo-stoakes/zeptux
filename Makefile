@@ -1,4 +1,4 @@
-CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -O2
+CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -O2 -mcmodel=large
 
 EARLY_HEADERS=include/types.h arch/x86_64/include/bootsector.h arch/x86_64/include/x86-consts.h arch/x86_64/include/io.h include/elf.h
 HEADERS=include/types.h include/mem.h arch/x86_64/include/x86-consts.h include/elf.h
