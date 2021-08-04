@@ -15,6 +15,3 @@
 #include "string.h"
 #include "ver.h"
 #include "types.h"
-
-#define printf early_printf
-#include "panic.h"
