@@ -3,7 +3,7 @@ CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 HEADERS=include/*.h
 EARLY_HEADERS=$(HEADERS) arch/x86_64/include/*.h
 BOOTSECTOR_FILES=arch/x86_64/boot/bootsector.S arch/x86_64/boot/bootsector.ld arch/x86_64/boot/loader.c
-KERNEL_FILES=kernel/main.c kernel/format.c early/fixups.c early/serial.c kernel/kernel.ld
+KERNEL_FILES=kernel/main.c lib/format.c early/fixups.c early/serial.c kernel/kernel.ld
 INCLUDES=-I. -Iinclude/
 
 all: zeptux.img
@@ -17,7 +17,7 @@ boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 
 kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) kernel/main.c -o main.o
-	gcc $(CFLAGS) -c $(INCLUDES) kernel/format.c -o format.o
+	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/fixups.c -o early_fixups.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
 
