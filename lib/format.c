@@ -4,7 +4,7 @@
 #include "consts.h"
 #include "types.h"
 
-static const char* digits = "0123456789abcdef";
+static const char *digits = "0123456789abcdef";
 
 static void putc_str(putc_fn putc, const char *str)
 {
