@@ -7,6 +7,6 @@ int main(void)
 	early_serial_init_poll();
 	fixup_bss();
 
-	printf("\nZeptux %x.%x.%x\n", zeptux_ver.maj, zeptux_ver.min, zeptux_ver.rev);
+	printf("\nzeptux v%u.%u.%u\n", zeptux_ver.maj, zeptux_ver.min, zeptux_ver.rev);
 	return 0;
 }
