@@ -5,7 +5,16 @@
  * stage.
  */
 
+#include "early_fixups.h"
+#include "early_io.h"
 #include "early_serial.h"
+
+#include "elf.h"
 #include "macros.h"
 #include "mem.h"
+#include "string.h"
+#include "ver.h"
 #include "types.h"
+
+#define printf early_printf
+#include "panic.h"

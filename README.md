@@ -16,8 +16,6 @@ _Almost non-existent._
 
 ### Next steps
 
-* Add ability to printf arbitrary strings via uart. EXTREMELY useful for
-  debugging.
 * Add initial boot memory allocator/freer, use 0xe820 int 0x15 to determine
   physical memory layout.
 
