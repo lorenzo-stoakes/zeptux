@@ -1,9 +1,9 @@
-#include "serial.h"
+#include "zeptux_early.h"
 
 int main(void)
 {
-	serial_init_poll();
-	serial_putstr("\nHello, world!\n");
+	early_serial_init_poll();
+	early_serial_putstr("\nHello, world!\n");
 
 	return 0;
 }

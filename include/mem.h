@@ -1,7 +1,7 @@
 #pragma once
 
 // For now we assume x86-64 architecture.
-#include "x86-consts.h"
+#include "arch/x86_64/include/x86-consts.h"
 
 // The division between userland and kernel memory.
 #define KERNEL_BASE (X86_KERNEL_BASE)

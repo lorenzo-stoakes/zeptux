@@ -1,6 +1,7 @@
-#include "zeptux.h"
 #include "elf.h"
 #include "io.h"
+#include "macros.h"
+#include "mem.h"
 
 #define SECTOR_SIZE_BYTES (512)
 

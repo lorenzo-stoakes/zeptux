@@ -1,5 +1,5 @@
 #include "io.h"
-#include "serial.h"
+#include "early_serial.h"
 #include "types.h"
 
 #define COM1 (0x3f8)
@@ -14,7 +14,7 @@ static bool is_transmit_empty()
 	return inb(COM1 + 5) & LSR_THR;
 }
 
-void serial_init_poll(void)
+void early_serial_init_poll(void)
 {
 	// We need to specify ratio betwen baud rate and the base crystal
 	// oscillation rate of a 16550 UART serial chip.
@@ -33,7 +33,7 @@ void serial_init_poll(void)
 }
 
 
-void serial_putc(char chr)
+void early_serial_putc(char chr)
 {
 	while (!is_transmit_empty())
 		;
@@ -41,9 +41,9 @@ void serial_putc(char chr)
 	outb(COM1, (uint8_t)chr);
 }
 
-void serial_putstr(const char *str)
+void early_serial_putstr(const char *str)
 {
 	for (const char *chr = str; *chr != '\0'; chr++) {
-		serial_putc(*chr);
+		early_serial_putc(*chr);
 	}
 }
