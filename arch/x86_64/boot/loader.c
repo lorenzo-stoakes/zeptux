@@ -61,11 +61,8 @@ void load(void)
 	struct elf_header* header = (struct elf_header *)buf;
 
 	// ASSUME: Section header is located at end of ELF file.
-	uint32_t size = ALIGN_UP(header->shoff, SECTOR_SIZE_BYTES);
-	// ASSUME: We avoid needing to read the number of sections and simply
-	// assume we won't have more than 24.
-	ata_pio_read_sectors(&buf[SECTOR_SIZE_BYTES], 2, size + 2);
-
+	uint32_t size = ALIGN_UP(header->shoff +
+				 header->shnum * sizeof(struct elf_section_header), SECTOR_SIZE_BYTES);
 	uint16_t count = size / SECTOR_SIZE_BYTES;
 	ata_pio_read_sectors(&buf[SECTOR_SIZE_BYTES], 2, count);
 
