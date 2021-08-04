@@ -1,9 +1,8 @@
+#include "bootsector.h"
 #include "elf.h"
 #include "io_asm.h"
 #include "macros.h"
 #include "mem.h"
-
-#define SECTOR_SIZE_BYTES (512)
 
 // We are struggling for code size to fit into the bootsector (512 bytes!) so
 // we are having to be succinct here.
@@ -57,14 +56,14 @@ void load(void)
 	uint8_t *buf = (uint8_t *)(KERNEL_ELF_ADDRESS & ((1UL << 32) - 1));
 
 	// Read ELF header.
-	ata_pio_read_sectors(buf, 1, 1);
+	ata_pio_read_sectors(buf, 1 + STAGE2_SECTORS, 1);
 	struct elf_header* header = (struct elf_header *)buf;
 
 	// ASSUME: Section header is located at end of ELF file.
 	uint32_t size = ALIGN_UP(header->shoff +
 				 header->shnum * sizeof(struct elf_section_header), SECTOR_SIZE_BYTES);
 	uint16_t count = size / SECTOR_SIZE_BYTES;
-	ata_pio_read_sectors(&buf[SECTOR_SIZE_BYTES], 2, count);
+	ata_pio_read_sectors(&buf[SECTOR_SIZE_BYTES], 2 + STAGE2_SECTORS, count);
 
 	// Directly load the kernel.
 	void (*entry)(void) = (void(*)(void))(header->entry);

@@ -1,13 +1,12 @@
 .code16
 .text
 .globl start
+.globl boot2
+
+// Stage 1 bootloader
 
 #include "x86-consts.h"
 #include "bootsector.h"
-
-// We are struggling to fit code into boot sector so skip checks and assume A20
-// enabled (it is in qemu) and 64-bit capable CPU.
-#define SKIP_CHECKS
 
 start:
 	/*
@@ -20,28 +19,20 @@ start:
 	movw %ax, %es // Extra segment.
 	movw %ax, %ss // Stack segment.
 
-#ifndef SKIP_CHECKS
 	call enable_a20
 
 	call check_long_mode_support
 	cmpw $1, %ax
 	jne start.no_long_mode
-#endif
 
-	// Move to 32-bit protected mode.
-	lgdtl gdtdescr
-	movl $X86_CR0_PROTECTED_MODE, %eax
-	movl %eax, %cr0
-	ljmpl $GDT_SEGMENT_CODE32, $start32
+	call load_stage2
+	jmp boot2
 
-#ifndef SKIP_CHECKS
 start.no_long_mode:
 	movw $panic_str, %si
 	call bios_say
 	hlt
-#endif
 
-#ifndef SKIP_CHECKS
 // Outputs string pointed to by SI.
 bios_say:
 	// 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H
@@ -55,9 +46,7 @@ bios_say.loop:
 	jmp bios_say.loop
 bios_say.done:
 	ret
-#endif
 
-#ifndef SKIP_CHECKS
 /*
  * Once upon a time 1 MiB was considered a huge amount of memory. Thus the
  * weirdness that is segmented memory meant that 16-bit x86 could specify an
@@ -171,104 +160,23 @@ check_long_mode_support:
 check_long_mode_support.unsupported:
 	movw $0, %ax
 	ret
-#endif
 
-.code32
-
-start32:
-	movw $GDT_SEGMENT_DATA, %ax
-	movw %ax, %ds
+// Uses BIOS to load the stage bootloader code into memory.
+load_stage2:
+	// Clear ES.
+	xorw %ax, %ax
 	movw %ax, %es
-	movw %ax, %ss
+	// Read mode.
+	movb $2, %ah
+	movb $STAGE2_SECTORS, %al
+	// Place them just after this block.
+	movw $boot2, %bx
+	// Start at sector 2 (skip this bootsector).
+	movw $2, %cx
+	// Read from boot drive.
+	movw $BOOT_DRIVE_NUM, %dx
+	int $0x13
+	ret
 
-	xorl %eax, %eax
-	movw %ax, %fs
-	movw %ax, %gs
-
-	// Set up page tables.
-	//
-	// Perform 1 GiB 'gigantic' page mappings (only PGT, PUD with PSE bit
-	// set in PUD) from PA 0 to 1 GiB at VAs:
-	//   * 0
-	//   * X86_KERNEL_DIRECT_MAP_BASE
-	//   * X86_KERNEL_ELF_BASE
-
-	// Clear memory in range [0x1000, 0x5000).
-	// (eax was cleared above).
-	// This memory is safe to use as is located in 'conventional memory'.
-	movl $0x1000, %edi
-	movl $0x4000, %ecx
-	rep stosb
-
-	// (We can use 32-bit moves below because the page table bits we are
-	//  manipulating are all within lower 32).
-
-	// PGE for VA 0 -> PUD at 0x2000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x2000), 0x1000
-	// PGE for VA X86_KERNEL_DIRECT_MAP_BASE -> PUD at 0x3000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x3000), (0x1000 + 8 * X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET)
-	// PGE for VA X86_KERNEL_ELF_BASE -> PUD at 0x4000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x4000), (0x1000 + 8 * X86_KERNEL_ELF_BASE_PGD_OFFSET)
-
-	// Add 'gigantic' PUDs pointing at PA 0.
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x2000
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x3000
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x4000
-
-	// Assign PGT to CR3.
-	movl $0x1000, %edi
-	movl %edi, %cr3
-
-	// Enable PAE.
-	movl %cr4, %eax
-	orl $X86_CR4_PAE, %eax
-	movl %eax, %cr4
-
-	// Enable long mode.
-	movl $X86_MFR_EFER, %ecx
-	rdmsr
-	orl $X86_MFR_EFER_LME, %eax
-	wrmsr
-
-	// Enable paging.
-	movl %cr0, %eax
-	orl $X86_CR0_PAGED_MODE, %eax
-	movl %eax, %cr0
-
-	// Jump into long mode.
-	ljmpl $GDT_SEGMENT_CODE64, $start64
-
-.code64
-start64:
-	movw $GDT_SEGMENT_DATA, %ax
-	movw %ax, %ds
-	movw %ax, %es
-	movw %ax, %ss
-
-	xorq %rax, %rax
-	movw %ax, %fs
-	movw %ax, %gs
-
-	movq $start, %rsp
-	call load
-	hlt
-
-#ifdef SKIP_CHECKS
 panic_str:
 	.asciz "panic"
-#endif
-
-gdt:
-	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
-	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_32BIT_PROTECTED,
-			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
-			X86_GDTE_ACCESS_EXEC | X86_GDTE_ACCESS_RW) // GDT_SEGMENT_CODE32_INDEX
-	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_64BIT_CODE,
-			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
-			X86_GDTE_ACCESS_EXEC | X86_GDTE_ACCESS_RW) // GDT_SEGMENT_CODE64_INDEX
-	.quad MAKE_GDTE(X86_GDTE_FLAG_4K_GRANULARITY | X86_GDTE_FLAG_32BIT_PROTECTED,
-			X86_GDTE_ACCESS_PRESENT | X86_GDTE_ACCESS_NONSYS |
-			X86_GDTE_ACCESS_RW)                        // GDT_SEGMENT_DATA_INDEX
-gdtdescr:
-	.short gdtdescr - gdt - 1 // size
-	.long  gdt // offset
