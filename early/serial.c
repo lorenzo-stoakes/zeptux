@@ -1,4 +1,4 @@
-#include "io.h"
+#include "io_asm.h"
 #include "early_serial.h"
 #include "types.h"
 

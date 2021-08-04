@@ -1,13 +1,9 @@
 BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -O2
 CFLAGS=$(BOOT_CFLAGS) -mcmodel=large
-
-EARLY_HEADERS=include/types.h arch/x86_64/include/bootsector.h arch/x86_64/include/x86-consts.h arch/x86_64/include/io.h include/elf.h
-HEADERS=include/types.h include/mem.h arch/x86_64/include/x86-consts.h include/elf.h
-
+HEADERS=include/*.h
+EARLY_HEADERS=$(HEADERS) arch/x86_64/include/*.h
 BOOTSECTOR_FILES=arch/x86_64/boot/bootsector.S arch/x86_64/boot/bootsector.ld arch/x86_64/boot/loader.c
-
 KERNEL_FILES=kernel/main.c early/serial.c kernel/kernel.ld
-
 INCLUDES=-I. -Iinclude/
 
 all: zeptux.img

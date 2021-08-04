@@ -1,5 +1,5 @@
 #include "elf.h"
-#include "io.h"
+#include "io_asm.h"
 #include "macros.h"
 #include "mem.h"
 
