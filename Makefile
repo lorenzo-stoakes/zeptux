@@ -24,7 +24,7 @@ boot.bin: check_build_env $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOUR
 	cat boot1.bin boot2.bin > boot.bin
 
 kernel.elf: check_build_env $(KERNEL_FILES) $(HEADERS) Makefile
-	gcc $(CFLAGS) -c $(INCLUDES) kernel/main.c -o main.o
+	gcc $(CFLAGS) -c $(INCLUDES) -Wno-main kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/fixups.c -o early_fixups.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
