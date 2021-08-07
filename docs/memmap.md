@@ -1,6 +1,10 @@
-## Physical memory map
+# Zeptux memory map layout
 
-### x86-64
+This describes both the physical and virtual memory layout used by
+zeptux. Initially only x86-64 is supported so everything here assumes this
+architecture.
+
+## PHYSICAL memory map
 
 Physical memory is divided into ranges of usable and unusable memory as follows:
 
@@ -62,3 +66,13 @@ Physical memory is divided into ranges of usable and unusable memory as follows:
 ```
 
 ref: https://wiki.osdev.org/Memory_Map
+
+### Early boot loader
+
+* The boot sector (stage 1) and early stage 2 boot loader are loaded in the boot
+  sector/conventional memory range [0x7c00, 0x8600).
+* Early PGD and PUD (with the 1 GiB 'gigantic page' bit set) page tables are
+  loaded in conventional memory in the range [0x1000, 0x5000).
+* Initial kernel stack is set to the top of conventional memory at 0x80000.
+* The kernel ELF image is loaded at the beginning of the post-ISA memory hole
+  extended memory at 0x1000000.
