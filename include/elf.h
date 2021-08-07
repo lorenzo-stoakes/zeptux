@@ -8,6 +8,38 @@
 // 0x7f followed by 'ELF' in ASCII. Little endian so in reverse.
 #define ELF_MAGIC_NUMBER (0x464c457fUL)
 
+enum elf_pt_type {
+	ELF_PT_NULL = 0,
+	ELF_PT_LOAD = 1,
+	ELF_PT_DYMAMIC = 2,
+	ELF_PT_INTERP = 3,
+	ELF_PT_NOTE = 4,
+	ELF_PT_SHLIB = 5,
+	ELF_PT_PHDR = 6,
+	ELF_PT_TLS = 7,
+};
+
+enum elf_sh_type {
+	ELF_SHT_NULL = 0,
+	ELF_SHT_PROGBITS = 1,
+	ELF_SHT_SYMTAB = 2,
+	ELF_SHT_STRTAB = 3,
+	ELF_SHT_RELA = 4,
+	ELF_SHT_HASH = 5,
+	ELF_SHT_DYNAMIC = 6,
+	ELF_SHT_NOTE = 7,
+	ELF_SHT_NOBITS = 8,
+	ELF_SHT_REL = 9,
+	ELF_SHT_SHLIB = 10,
+	ELF_SHT_DYNSYM = 11 ,
+	ELF_SHT_INIT_ARRAY = 14,
+	ELF_SHT_FINI_ARRAY = 15,
+	ELF_SHT_PREINIT_ARRAY = 16,
+	ELF_SHT_GROUP = 17,
+	ELF_SHT_SYMTAB_SHNDX = 18,
+	ELF_SHT_NUM = 19,
+};
+
 struct elf_header {
 	uint32_t magic;         // Must = ELF_MAGIC_NUMBER.
 	uint8_t  ident_class;   // 1 = 32-bit, 2 = 64-bit.
