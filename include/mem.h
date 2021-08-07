@@ -1,5 +1,8 @@
 #pragma once
 
+// See docs/memmap.md for more information on the physical and virtual memory
+// maps as provided by hardware and assigned by zeptux.
+
 // For now we assume x86-64 architecture.
 #include "arch/x86_64/include/x86-consts.h"
 
