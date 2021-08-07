@@ -5,7 +5,6 @@
  * stage.
  */
 
-#include "early_fixups.h"
 #include "early_io.h"
 #include "early_serial.h"
 

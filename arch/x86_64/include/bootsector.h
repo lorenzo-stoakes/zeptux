@@ -37,3 +37,6 @@
 
 // The number of 512-byte sectors the stage 2 boot loader uses.
 #define STAGE2_SECTORS (4)
+
+// The number of 512-byte sectors both stage 1 and 2 boot loaders use.
+#define BOOT_SECTORS (1 + STAGE2_SECTORS)
