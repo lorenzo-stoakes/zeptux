@@ -8,19 +8,22 @@ INCLUDES=-I. -Iinclude/
 
 all: zeptux.img
 
-boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
+check_build_env:
+	./scripts/check_build_env.sh
+
+boot.bin: check_build_env $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iarch/x86_64/include -o boot2.o
 	objcopy --remove-section .note.gnu.property boot2.o
 	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -Iarch/x86_64/include -o loader.o
-	objcopy --remove-section=* --keep-section=.text loader.o
+	objcopy --only-section=.text loader.o
 
 	ld -T arch/x86_64/boot/boot1.ld -o boot1.bin boot1.o
 	ld -T arch/x86_64/boot/boot2.ld -o boot2.bin boot2.o loader.o
 	cat boot1.bin boot2.bin > boot.bin
 
-kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
+kernel.elf: check_build_env $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/fixups.c -o early_fixups.o
@@ -40,4 +43,4 @@ qemu: zeptux.img
 	qemu-system-x86_64 -nographic -drive file=zeptux.img,format=raw \
 		-serial mon:stdio -smp 1
 
-.PHONY: all clean qemu
+.PHONY: all clean qemu check_build_env
