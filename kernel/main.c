@@ -6,7 +6,8 @@ void main(void)
 {
 	early_serial_init_poll();
 
-	printf("\nzeptux v%u.%u.%u\n", zeptux_ver.maj, zeptux_ver.min, zeptux_ver.rev);
+	printf("\n-- zeptux %u.%u.%u --\n\n", zeptux_ver.maj, zeptux_ver.min, zeptux_ver.rev);
+	printf("kernel ELF size = %lu\n", boot_info()->kernel_elf_size_bytes);
 
 	// We never exit.
 	while (true)

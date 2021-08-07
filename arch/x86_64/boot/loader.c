@@ -1,4 +1,5 @@
 #include "bootsector.h"
+#include "early_boot_info.h"
 #include "elf.h"
 #include "io_asm.h"
 #include "macros.h"
@@ -239,6 +240,8 @@ void load(void)
 	// in memory, and initialise .bss section.
 	if (!load2(buf, &state))
 		return;
+
+	boot_info()->kernel_elf_size_bytes = state.bytes_loaded;
 
 	// Directly load the kernel.
 	void (*entry)(void) = (void(*)(void))(state.header->entry);

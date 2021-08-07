@@ -3,6 +3,7 @@
 // See docs/memmap.md for more information on the physical and virtual memory
 // maps as provided by hardware and assigned by zeptux.
 
+#include "types.h"
 // For now we assume x86-64 architecture.
 #include "arch/x86_64/include/x86-consts.h"
 
@@ -17,6 +18,8 @@
 #define KERNEL_TEXT_ADDRESS (X86_KERNEL_TEXT_ADDRESS)
 // Initial kernel stack location.
 #define KERNEL_INIT_STACK (X86_KERNEL_INIT_STACK)
+// Location where we store intial boot information useful for the kernel.
+#define EARLY_BOOT_INFO_ADDRESS (X86_EARLY_BOOT_INFO_ADDRESS)
 
 static inline void *memset(void *dest, int chr, uint64_t count)
 {
