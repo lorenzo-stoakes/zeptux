@@ -108,3 +108,5 @@
 // unlikely boot code will expand sufficiently to impinge upon it.
 #define X86_EARLY_BOOT_INFO_ADDRESS_PHYS (0x10000)
 #define X86_EARLY_BOOT_INFO_ADDRESS      (X86_KERNEL_DIRECT_MAP_BASE + X86_EARLY_BOOT_INFO_ADDRESS_PHYS)
+
+#define X86_E820_MAGIC_NUMBER (0x534d4150)

@@ -6,11 +6,97 @@
 .code16
 
 boot2:
+	call get_e820
+
 	// Move to 32-bit protected mode.
 	lgdtl gdtdescr
 	movl $X86_CR0_PROTECTED_MODE, %eax
 	movl %eax, %cr0
 	ljmpl $GDT_SEGMENT_CODE32, $start32
+
+// Retrieve e820 memory layout information and store it in the early_boot_info
+// struct located at EARLY_BOOT_INFO_ADDRESS_PHYS.
+get_e820:
+	xorl %ebx, %ebx
+	movl $X86_E820_MAGIC_NUMBER, %edx // Magic number == "SMAP".
+	movl $20, %ecx 	// We don't care about the ACPI extended bits.
+
+	// We store the target address in ES:DI. Offset by 10 bytes to locate
+	// the first entry in the array.
+	movw $(X86_EARLY_BOOT_INFO_ADDRESS_PHYS >> 4), %ax
+	movw %ax, %es
+	movw $10, %di
+
+	movl $0xe820, %eax
+	int $0x15
+	jc get_e820.unsupported
+
+	cmpl %eax, %edx
+	jne get_e820.call_failed
+
+	xorw %bp, %bp   // Use for counter.
+
+	// We got an entry just to check it worked, now reset and do it again,
+	// this time for real.
+	xorl %ebx, %ebx
+get_e820.loop:
+	// These get clobbered on every call.
+	movl $0xe820, %eax
+	movl $20, %ecx
+	movl $X86_E820_MAGIC_NUMBER, %edx
+	int $0x15
+
+	jc get_e820.done   // Now carry set means we were already done.
+	jcxz get_e820.skip // Skip entries with zero entry size.
+	cmpb $20, %cl 	   // If CL is anything other than 20 bytes then something's borked.
+	jne get_e820.unexpected_length
+	movl %es:8(%di), %ecx
+	orl %es:12(%di), %ecx
+	jz get_e820.skip // Skip entries with entries OF zero size.
+
+	// OK, we're good, so read more.
+	addw $20, %di
+	incw %bp
+get_e820.skip:
+	// If EBX is 0 then there's nothing left to process.
+	testl %ebx, %ebx
+	jnz get_e820.loop
+get_e820.done:
+	movw %bp, %es:8 // Store entry count.
+	// Restore clobbered regs and clear ES.
+	xorl %eax, %eax
+	xorl %ebx, %ebx
+	xorl %ecx, %ecx
+	movw %ax, %es
+	// Carry flag could be set by e820 call so clear it.
+	clc
+	ret
+
+get_e820.unsupported:
+	movw $e820_unsupported_str, %si
+	call bios_say
+	hlt
+
+get_e820.call_failed:
+	movw $e820_call_failed_str, %si
+	call bios_say
+	hlt
+
+get_e820.unexpected_length:
+	movw $e820_unexpected_length_str, %si
+	call bios_say
+	hlt
+
+#include "bios_say.S"
+
+e820_unsupported_str:
+	.asciz "panic: e820 call unsupported!"
+
+e820_call_failed_str:
+	.asciz "panic: e820 call failed!"
+
+e820_unexpected_length_str:
+	.asciz "panic: e820 call unexpected entry length!"
 
 .code32
 
@@ -96,8 +182,6 @@ start64:
 	hlt
 start64.loop:
 	jmp start64.loop
-
-.data
 
 gdt:
 	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
