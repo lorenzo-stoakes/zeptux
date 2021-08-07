@@ -1,7 +1,8 @@
-.code16
 .text
+.code16
+
 .globl start
-.globl boot2
+.globl boot2 // Declared in boot1.ld
 
 // Stage 1 bootloader
 
@@ -29,23 +30,9 @@ start:
 	jmp boot2
 
 start.no_long_mode:
-	movw $panic_str, %si
+	movw $panic_nolong_str, %si
 	call bios_say
 	hlt
-
-// Outputs string pointed to by SI.
-bios_say:
-	// 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H
-	movb $0xe, %ah
-	xorw %bx, %bx
-bios_say.loop:
-	lodsb // Load byte at DS:SI into AL.
-	cmpb $0, %al
-	je bios_say.done // Exit on null terminator.
-	int $0x10
-	jmp bios_say.loop
-bios_say.done:
-	ret
 
 /*
  * Once upon a time 1 MiB was considered a huge amount of memory. Thus the
@@ -92,7 +79,7 @@ enable_a20:
 	je enable_a20.done
 
 	// Nothing worked, we cannot continue.
-	movw $panic_str, %si
+	movw $panic_a20_str, %si
 	call bios_say
 	hlt
 
@@ -178,5 +165,22 @@ load_stage2:
 	int $0x13
 	ret
 
-panic_str:
-	.asciz "panic"
+// Outputs string pointed to by SI.
+bios_say:
+	// 'teletype output' - see https://en.wikipedia.org/wiki/INT_10H
+	movb $0xe, %ah
+	xorw %bx, %bx
+bios_say.loop:
+	lodsb // Load byte at DS:SI into AL.
+	cmpb $0, %al
+	je bios_say.done // Exit on null terminator.
+	int $0x10
+	jmp bios_say.loop
+bios_say.done:
+	ret
+
+panic_a20_str:
+	.asciz "panic: unable to enable a20!"
+
+panic_nolong_str:
+	.asciz "panic: long mode not supported!"

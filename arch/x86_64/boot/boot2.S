@@ -1,8 +1,9 @@
 #include "x86-consts.h"
 #include "bootsector.h"
 
-.code16
 .text
+
+.code16
 
 boot2:
 	// Move to 32-bit protected mode.
@@ -19,7 +20,7 @@ start32:
 	movw %ax, %es
 	movw %ax, %ss
 
-	xorl %eax, %eax
+	xorw %ax, %ax
 	movw %ax, %fs
 	movw %ax, %gs
 
@@ -31,10 +32,9 @@ start32:
 	//   * X86_KERNEL_DIRECT_MAP_BASE
 	//   * X86_KERNEL_ELF_BASE
 
-	// Clear memory in range [0x1000, 0x5000).
-	// (eax was cleared above).
-	// This memory is safe to use as is located in 'conventional memory'.
-	movl $0x1000, %edi
+	// Clear 4 pages of memory to be used as page tables.
+	xorl %eax, %eax
+	movl $X86_EARLY_PGD, %edi
 	movl $0x4000, %ecx
 	rep stosb
 
@@ -42,19 +42,19 @@ start32:
 	//  manipulating are all within lower 32).
 
 	// PGE for VA 0 -> PUD at 0x2000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x2000), 0x1000
+	movl $(X86_PAGE_FLAG_KERNEL | X86_EARLY_PUD_DIRECT0), X86_EARLY_PGD
 	// PGE for VA X86_KERNEL_DIRECT_MAP_BASE -> PUD at 0x3000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x3000), (0x1000 + 8 * X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET)
+	movl $(X86_PAGE_FLAG_KERNEL | X86_EARLY_PUD_DIRECT_MAP), (X86_EARLY_PGD + 8 * X86_KERNEL_DIRECT_MAP_BASE_PGD_OFFSET)
 	// PGE for VA X86_KERNEL_ELF_BASE -> PUD at 0x4000.
-	movl $(X86_PAGE_FLAG_KERNEL | 0x4000), (0x1000 + 8 * X86_KERNEL_ELF_BASE_PGD_OFFSET)
+	movl $(X86_PAGE_FLAG_KERNEL | X86_EARLY_PUD_KERNEL_ELF), (X86_EARLY_PGD + 8 * X86_KERNEL_ELF_BASE_PGD_OFFSET)
 
 	// Add 'gigantic' PUDs pointing at PA 0.
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x2000
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x3000
-	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), 0x4000
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), X86_EARLY_PUD_DIRECT0
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), X86_EARLY_PUD_DIRECT_MAP
+	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), X86_EARLY_PUD_KERNEL_ELF
 
 	// Assign PGT to CR3.
-	movl $0x1000, %edi
+	movl $X86_EARLY_PGD, %edi
 	movl %edi, %cr3
 
 	// Enable PAE.
@@ -83,13 +83,21 @@ start64:
 	movw %ax, %es
 	movw %ax, %ss
 
-	xorq %rax, %rax
+	xorw %ax, %ax
 	movw %ax, %fs
 	movw %ax, %gs
 
-	movq $boot2, %rsp
+	// Setup stack.
+	movq $X86_KERNEL_INIT_STACK, %rsp
+	// Call the kernel ELF loader.
 	call load
+
+	// If we reach here, something has gone wrong!
 	hlt
+start64.loop:
+	jmp start64.loop
+
+.data
 
 gdt:
 	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.

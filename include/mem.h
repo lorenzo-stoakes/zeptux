@@ -15,6 +15,8 @@
 #define KERNEL_ELF_ADDRESS (X86_KERNEL_ELF_ADDRESS)
 // Where the .text section of the kernel is loaded to.
 #define KERNEL_TEXT_ADDRESS (X86_KERNEL_TEXT_ADDRESS)
+// Initial kernel stack location.
+#define KERNEL_INIT_STACK (X86_KERNEL_INIT_STACK)
 
 static inline void *memset(void *dest, int chr, uint64_t count)
 {
