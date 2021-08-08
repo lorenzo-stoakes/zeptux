@@ -219,3 +219,41 @@ int snprintf(char *buf, size_t n, const char *fmt, ...)
 
 	return ret;
 }
+
+char *bytes_to_human(uint64_t bytes, char *buf, uint64_t buf_size)
+{
+	static const char *units[] = {"bytes", "KiB", "MiB", "GiB", "TiB"};
+
+	uint64_t unit_index = 0;
+	uint64_t unit_mult = 1;
+
+	uint64_t num_units = bytes;
+	for (uint64_t i = 0; i < ARRAY_COUNT(units);
+	     i++, num_units /= 1024, unit_mult *= 1024) {
+		if (num_units < 1024) {
+			unit_index = i;
+			break;
+		}
+	}
+
+	// If unit is < GiB it's ok to just round off.
+	if (unit_index < 3 || bytes % unit_mult == 0) {
+		snprintf(buf, buf_size, "%5lu %s", num_units,
+			 units[unit_index]);
+		return buf;
+	}
+
+	// We'll add a single decimal place. As we don't have floating point we
+	// have to use integer maths.
+
+	uint64_t remaining = bytes - num_units * unit_mult;
+	// Obtain in terms of unit below.
+	remaining *= 1024;
+	remaining /= unit_mult;
+	// Single digit after decimal place.
+	uint64_t fract = remaining >= 1000 ? 9 : remaining / 100;
+
+	snprintf(buf, buf_size, "%3lu.%lu %s", num_units, fract,
+		 units[unit_index]);
+	return buf;
+}

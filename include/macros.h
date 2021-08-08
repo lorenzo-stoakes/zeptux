@@ -8,3 +8,6 @@
 
 // Align '_n' to power of 2 '_to', rounding up.
 #define ALIGN_UP(_n, _to) ALIGN((_n) + _to - 1, _to)
+
+// Determine the number of elements in a C array.
+#define ARRAY_COUNT(_arr) (sizeof(_arr) / sizeof(_arr[0]))
