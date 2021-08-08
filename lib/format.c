@@ -151,8 +151,9 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 			chr = *fmt++;
 		}
 
-		if (chr == '0' || chr == ' ') {
+		if (!format.pad_left && (chr == '0' || chr == ' ')) {
 			format.pad_char = chr;
+
 			chr = *fmt++;
 		}
 
