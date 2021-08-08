@@ -10,13 +10,13 @@ INCLUDES=-I. -Iinclude/
 
 ALL_CSOURCE=$(EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES)
 
-all: zeptux.img
+all: pre_step zeptux.img
 
 pre_step:
 	./scripts/check_build_env.sh
 	clang-format -style=file -i $(shell find $(ALL_CSOURCE) -type f)
 
-boot.bin: pre_step $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
+boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iarch/x86_64/include -o boot2.o
@@ -28,7 +28,7 @@ boot.bin: pre_step $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	ld -T arch/x86_64/boot/boot2.ld -o boot2.bin boot2.o loader.o
 	cat boot1.bin boot2.bin > boot.bin
 
-kernel.elf: pre_step $(KERNEL_FILES) $(HEADERS) Makefile
+kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -Wno-main kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
