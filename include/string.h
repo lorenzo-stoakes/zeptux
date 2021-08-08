@@ -4,8 +4,10 @@
 
 static inline int strcmp(const char *a, const char *b)
 {
-	while (*a != '\0' && *b != '\0' && *a++ == *b++)
-		;
+	for (; *a != '\0' && *b != '\0'; a++, b++) {
+		if (*a != *b)
+			break;
+	}
 
 	return *a - *b;
 }
