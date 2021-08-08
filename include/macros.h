@@ -11,3 +11,8 @@
 
 // Determine the number of elements in a C array.
 #define ARRAY_COUNT(_arr) (sizeof(_arr) / sizeof(_arr[0]))
+
+// Generate a string literal for the input parameter. We have to do this twice
+// due to limitations of the C macro system.
+#define STRINGIFY(_x) STRINGIFY2(_x)
+#define STRINGIFY2(_x) #_x
