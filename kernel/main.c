@@ -15,13 +15,24 @@ static void prelude()
 	uint16_t count = boot_info()->num_e820_entries;
 	early_printf("\ne820 entries (%u):\n", count);
 
+	uint64_t total_size = 0;
 	for (uint64_t i = 0; i < count; i++) {
 		struct e820_entry *entry = &boot_info()->e820_entries[i];
+		uint64_t from = entry->base;
+		uint64_t size = entry->size;
+		uint64_t to = from + size;
 
-		early_printf("\t%s\t%016lx - %016lx\n",
-			     e820_type_to_string(entry->type), entry->base,
-			     entry->base + entry->size);
+		total_size += size;
+
+		char buf[10];
+		early_printf("\t%s\t%016lx - %016lx : %s\n",
+			     e820_type_to_string(entry->type), from, to,
+			     bytes_to_human(size, buf, ARRAY_COUNT(buf)));
 	}
+
+	char buf[10];
+	early_printf("\n%71s\n",
+		     bytes_to_human(total_size, buf, ARRAY_COUNT(buf)));
 }
 
 void main(void)
