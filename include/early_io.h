@@ -22,6 +22,11 @@ static inline PRINTF(1, 2) int early_printf(const char *fmt, ...)
 	return ret;
 }
 
+static inline int early_puts(const char *str)
+{
+	return early_printf("%s\n", str);
+}
+
 static inline void panic(const char *why)
 {
 	early_printf("panic: %s\n", why);

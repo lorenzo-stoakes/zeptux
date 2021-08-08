@@ -45,9 +45,10 @@ zeptux.img: boot.bin kernel.elf
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
 
 test.elf: kernel.elf $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/main.c -o test_main.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/test_main.c -o test_main.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_format.c -o test_format.o
 
-	ld -T kernel/kernel.ld -o test.elf test_main.o format.o early_serial.o
+	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o format.o early_serial.o
 
 test.img: boot.bin test.elf
 	dd if=/dev/zero of=test.img count=2000 2>/dev/null
