@@ -4,7 +4,20 @@
 void main(void)
 {
 	early_serial_init_poll();
-	early_printf("\n--zeptux tests--\n");
+	// QEMU doesn't start us on a clear line.
+	early_printf("\n");
 
-	test_format();
+	const char *res = test_format();
+	if (res != NULL)
+		early_puts(res);
+
+	res = test_string();
+	if (res != NULL)
+		early_puts(res);
+
+	early_printf("\n// zeptux test run complete\n");
+
+	// We never exit.
+	while (true)
+		;
 }

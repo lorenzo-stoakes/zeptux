@@ -47,8 +47,9 @@ zeptux.img: boot.bin kernel.elf
 test.elf: zeptux.img $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/test_main.c -o test_main.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_format.c -o test_format.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_string.c -o test_string.o
 
-	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o format.o early_serial.o
+	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o test_string.o format.o early_serial.o
 
 test.img: boot.bin test.elf
 	dd if=/dev/zero of=test.img count=2000 2>/dev/null
