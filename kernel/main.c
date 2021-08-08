@@ -18,7 +18,7 @@ static void prelude()
 	for (uint64_t i = 0; i < count; i++) {
 		struct e820_entry *entry = &boot_info()->e820_entries[i];
 
-		early_printf("\t%s\t%lx - %lx\n",
+		early_printf("\t%s\t%016lx - %016lx\n",
 			     e820_type_to_string(entry->type), entry->base,
 			     entry->base + entry->size);
 	}
