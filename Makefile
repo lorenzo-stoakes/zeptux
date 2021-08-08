@@ -11,7 +11,7 @@ KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
 TEST_CFILES=lib/*.c early/*.c test/early_kernel/*.c
 TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
 
-ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES)
+ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
 QEMU_OPT=-nographic -serial mon:stdio -smp 1
 
 all: pre_step zeptux.img
@@ -44,7 +44,7 @@ zeptux.img: boot.bin kernel.elf
 	dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
 
-test.elf: kernel.elf $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
+test.elf: zeptux.img $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/test_main.c -o test_main.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_format.c -o test_format.o
 
