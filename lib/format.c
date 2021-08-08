@@ -2,6 +2,7 @@
 #include "compiler.h"
 #include "consts.h"
 #include "macros.h"
+#include "string.h"
 #include "types.h"
 
 static const char *digits = "0123456789abcdef";
@@ -12,9 +13,8 @@ struct vsnprintf_state {
 	size_t n, count;
 };
 
-// Represents integer format for a specific integer being output via
-// vsnprintf().
-struct vsnprintf_integer_format {
+// Represents format options for vsnprintf().
+struct vsnprintf_format {
 	int base;
 	char pad_char;
 	int pad_count;
@@ -47,12 +47,29 @@ static void _vsnprintf_puts(struct vsnprintf_state *state, const char *str)
 	}
 }
 
+// Try to place string `str` into the target buffer, with the specified format
+// settings.
+static void _vsnprintf_puts_format(struct vsnprintf_state *state,
+				   const char *str,
+				   struct vsnprintf_format *format)
+{
+	if (format->pad_left)
+		_vsnprintf_puts(state, str);
+
+	size_t len = strlen(str);
+	if (format->pad_count > (int)len)
+		_vsnprintf_putc_repeat(state, ' ', format->pad_count - len);
+
+	if (!format->pad_left)
+		_vsnprintf_puts(state, str);
+}
+
 // Try to place uint64 `val` into the target buffer in base `format->base`. This
 // is the core integer output formatter - we output uint32 here by casting the
 // value and int64/32 by handling the sign then casting to uint and calling
 // here.
 static void _vsnprintf_uint64(struct vsnprintf_state *state, uint64_t val,
-			      struct vsnprintf_integer_format *format)
+			      struct vsnprintf_format *format)
 {
 	int i = UINT64_MAX_CHARS - 1;
 	char val_buf[UINT64_MAX_CHARS + 1];
@@ -81,7 +98,7 @@ static void _vsnprintf_uint64(struct vsnprintf_state *state, uint64_t val,
 
 // Try to place int64 `val` into the target buffer in base `format->base`.
 static void _vsnprintf_int64(struct vsnprintf_state *state, int64_t val,
-			     struct vsnprintf_integer_format *format)
+			     struct vsnprintf_format *format)
 {
 	uint64_t un;
 	if (val < 0) {
@@ -120,7 +137,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		// We set this even when we are not outputting an integer,
 		// however we're not going for incredible performance here so
 		// we'll live with it!
-		struct vsnprintf_integer_format int_format = {
+		struct vsnprintf_format format = {
 			.base = 10,
 			.pad_char = ' ',
 			.pad_count = 0,
@@ -128,18 +145,18 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		};
 
 		if (chr == '-') {
-			int_format.pad_left = true;
+			format.pad_left = true;
 			chr = *fmt++;
 		}
 
 		if (chr == '0' || chr == ' ') {
-			int_format.pad_char = chr;
+			format.pad_char = chr;
 			chr = *fmt++;
 		}
 
 		while (chr >= '0' && chr <= '9') {
-			int_format.pad_count *= 10;
-			int_format.pad_count += chr - '0';
+			format.pad_count *= 10;
+			format.pad_count += chr - '0';
 			chr = *fmt++;
 		}
 
@@ -158,7 +175,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 			int64_t val = va_arg(ap, int64_t);
 
 			_vsnprintf_int64(&state, is64 ? val : (int)val,
-					 &int_format);
+					 &format);
 			break;
 		}
 		case 'U':
@@ -167,7 +184,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 			uint64_t val = va_arg(ap, uint64_t);
 
 			_vsnprintf_uint64(&state, is64 ? val : (uint)val,
-					  &int_format);
+					  &format);
 			break;
 		}
 		case 'P':
@@ -179,22 +196,23 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		{
 			uint64_t val = va_arg(ap, uint64_t);
 
-			int_format.base = 16;
+			format.base = 16;
 			_vsnprintf_uint64(&state, is64 ? val : (uint)val,
-					  &int_format);
+					  &format);
 			break;
 		}
 		case 'S':
 		case 's':
 		{
 			const char *str = va_arg(ap, const char *);
-			_vsnprintf_puts(&state, str);
+			_vsnprintf_puts_format(&state, str, &format);
 			break;
 		}
 		case '%':
 			_vsnprintf_putc(&state, '%');
 			break;
 		default:
+			format.pad_count = 0;
 			_vsnprintf_puts(&state, "%format error%");
 			break;
 		}

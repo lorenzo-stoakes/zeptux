@@ -9,3 +9,13 @@ static inline int strcmp(const char *a, const char *b)
 
 	return *a - *b;
 }
+
+static inline size_t strlen(const char *str)
+{
+	uint64_t len = 0;
+
+	while (*str++ != '\0')
+		len++;
+
+	return len;
+}
