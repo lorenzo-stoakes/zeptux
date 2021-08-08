@@ -2,4 +2,5 @@
 
 #include "types.h"
 
-void printf_to_putc(putc_fn putc, const char *fmt, ...);
+int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap);
+int snprintf(char *buf, size_t n, const char *fmt, ...);

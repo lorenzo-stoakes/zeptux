@@ -41,7 +41,7 @@ void early_serial_putc(char chr)
 	outb(COM1, (uint8_t)chr);
 }
 
-void early_serial_putstr(const char *str)
+void early_serial_puts(const char *str)
 {
 	for (const char *chr = str; *chr != '\0'; chr++) {
 		early_serial_putc(*chr);
