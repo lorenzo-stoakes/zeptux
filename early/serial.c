@@ -1,5 +1,5 @@
-#include "io_asm.h"
 #include "early_serial.h"
+#include "io_asm.h"
 #include "types.h"
 
 #define COM1 (0x3f8)
@@ -21,17 +21,17 @@ void early_serial_init_poll(void)
 	uint16_t ratio = BAUD_RATE / BASE_BAUD_RATE;
 
 	// See https://wiki.osdev.org/Serial_Ports#Initialization
-	outb(COM1 + 1, 0);         // Disable interrupts.
-	outb(COM1 + 3, DLAB_FLAG); // Enable DLAB - 'Divisor Latch Access Bit'. Lets
-			           // us set baud rate.
-	outb(COM1, ratio);          // Baud low bits.
+	outb(COM1 + 1, 0); // Disable interrupts.
+	outb(COM1 + 3,
+	     DLAB_FLAG);   // Enable DLAB - 'Divisor Latch Access Bit'. Lets
+			   // us set baud rate.
+	outb(COM1, ratio); // Baud low bits.
 	outb(COM1 + 1, ratio >> 8); // Baud high bits.
 	outb(COM1 + 3, MODE_8N1);   // Set 8 bits, no parity, 1 stop bit.
-	outb(COM1 + 4, 0);          // Disable IRQs.
+	outb(COM1 + 4, 0);	    // Disable IRQs.
 
 	// ASSUME: It works correctly.
 }
-
 
 void early_serial_putc(char chr)
 {

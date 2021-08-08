@@ -8,14 +8,14 @@
 
 // Helpers for iterating through ELF program and section headers.
 
-#define for_each_prog_header(_buf, _header, _prog_header)		\
-	struct elf_program_header *_prog_header =			\
-		(struct elf_program_header *)&_buf[_header->phoff];	\
+#define for_each_prog_header(_buf, _header, _prog_header)           \
+	struct elf_program_header *_prog_header =                   \
+		(struct elf_program_header *)&_buf[_header->phoff]; \
 	for (int i = 0; i < _header->phnum; i++, _prog_header++)
 
-#define for_each_sect_header(_buf, _header, _sect_header)		\
-	struct elf_section_header *_sect_header =			\
-		(struct elf_section_header *)&_buf[_header->shoff];	\
+#define for_each_sect_header(_buf, _header, _sect_header)           \
+	struct elf_section_header *_sect_header =                   \
+		(struct elf_section_header *)&_buf[_header->shoff]; \
 	for (int i = 0; i < _header->phnum; i++, _sect_header++)
 
 struct elf_load_state {
@@ -95,15 +95,18 @@ static struct elf_load_state load1(uint8_t *buf)
 
 	// Calculate the number of sectors we need to load in order to also load
 	// the section headers.
-	uint32_t section_header_end_bytes = header->shoff +
+	uint32_t section_header_end_bytes =
+		header->shoff +
 		header->shnum * sizeof(struct elf_section_header);
-	section_header_end_bytes = ALIGN_UP(section_header_end_bytes, SECTOR_SIZE_BYTES);
+	section_header_end_bytes =
+		ALIGN_UP(section_header_end_bytes, SECTOR_SIZE_BYTES);
 	uint16_t sectors = section_header_end_bytes / SECTOR_SIZE_BYTES;
 
 	// Read these sectors. We are now in a state of having loaded the ELF
 	// file up to and including all section table entries (and possibly more
 	// as we aligned up to sector size).
-	read_sectors_lba48(&buf[SECTOR_SIZE_BYTES], BOOT_SECTORS + 1, sectors - 1);
+	read_sectors_lba48(&buf[SECTOR_SIZE_BYTES], BOOT_SECTORS + 1,
+			   sectors - 1);
 
 	ret.header = header;
 	ret.bytes_loaded = section_header_end_bytes;
@@ -120,14 +123,14 @@ static uint64_t elf_get_size_bytes(uint8_t *buf, struct elf_header *header)
 	uint64_t ret = 0;
 
 	// First, determine the highest offset amongst programs.
-	for_each_prog_header(buf, header, prog_header) {
+	for_each_prog_header (buf, header, prog_header) {
 		uint64_t end = prog_header->offset + prog_header->memsz;
 		if (end > ret)
 			ret = end;
 	}
 
 	// Next, determine the highest offset amongst sections.
-	for_each_sect_header(buf, header, sect_header) {
+	for_each_sect_header (buf, header, sect_header) {
 		// Ignore sections that don't require data loaded.
 		if (sect_header->type == ELF_SHT_NOBITS)
 			continue;
@@ -145,20 +148,22 @@ static uint64_t elf_get_size_bytes(uint8_t *buf, struct elf_header *header)
 static bool elf_check_addrs(uint8_t *buf, struct elf_header *header)
 {
 	// Check program header addresses.
-	for_each_prog_header(buf, header, prog_header) {
+	for_each_prog_header (buf, header, prog_header) {
 		// Unloaded programs (e.g. .bss) do not need to be checked.
 		if (prog_header->filesz == 0)
 			continue;
 
 		uint64_t addr = prog_header->vaddr;
-		if (addr != 0 && prog_header->offset != addr - KERNEL_ELF_ADDRESS)
+		if (addr != 0 &&
+		    prog_header->offset != addr - KERNEL_ELF_ADDRESS)
 			return false;
 	}
 
 	// Check section header addresses.
-	for_each_sect_header(buf, header, sect_header) {
+	for_each_sect_header (buf, header, sect_header) {
 		uint64_t addr = sect_header->addr;
-		if (addr != 0 && sect_header->offset != addr - KERNEL_ELF_ADDRESS)
+		if (addr != 0 &&
+		    sect_header->offset != addr - KERNEL_ELF_ADDRESS)
 			return false;
 	}
 
@@ -181,7 +186,7 @@ static void elf_zero_bss(uint8_t *buf, struct elf_header *header)
 	const char bss_name[] = ".bss";
 
 	// Find the .bss section.
-	for_each_sect_header(buf, header, sect_header) {
+	for_each_sect_header (buf, header, sect_header) {
 		const char *name = &shstr[sect_header->name];
 		if (strcmp(name, bss_name) != 0)
 			continue;
@@ -203,12 +208,14 @@ static bool load2(uint8_t *buf, struct elf_load_state *state)
 	// load them!
 	uint64_t bytes = elf_get_size_bytes(buf, header);
 	if (bytes > state->bytes_loaded) {
-		uint64_t old_bytes_aligned = state->sectors_loaded * SECTOR_SIZE_BYTES;
+		uint64_t old_bytes_aligned =
+			state->sectors_loaded * SECTOR_SIZE_BYTES;
 		uint64_t bytes_aligned = ALIGN_UP(bytes, SECTOR_SIZE_BYTES);
 		uint16_t sectors = bytes_aligned / SECTOR_SIZE_BYTES;
 		uint16_t delta = sectors - state->sectors_loaded;
 
-		read_sectors_lba48(&buf[old_bytes_aligned], state->sectors_loaded, delta);
+		read_sectors_lba48(&buf[old_bytes_aligned],
+				   state->sectors_loaded, delta);
 	}
 
 	// Step 2: Check that any VAs specified within the ELF headers match the
@@ -244,7 +251,7 @@ void load(void)
 	boot_info()->kernel_elf_size_bytes = state.bytes_loaded;
 
 	// Directly load the kernel.
-	void (*entry)(void) = (void(*)(void))(state.header->entry);
+	void (*entry)(void) = (void (*)(void))(state.header->entry);
 	entry();
 
 	// We should never return but if we do the system will halt.

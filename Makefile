@@ -2,16 +2,21 @@ BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nos
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 HEADERS=include/*.h
 EARLY_HEADERS=$(HEADERS) arch/x86_64/include/*.h
-BOOTSECTOR_FILES=arch/x86_64/boot/boot1.S arch/x86_64/boot/boot1.ld arch/x86_64/boot/boot2.S arch/x86_64/boot/boot2.ld arch/x86_64/boot/loader.c
-KERNEL_FILES=kernel/main.c lib/format.c early/serial.c kernel/kernel.ld
+BOOTSECTOR_CFILES=arch/x86_64/boot/*.c
+BOOTSECTOR_FILES=arch/x86_64/boot/*.S arch/x86_64/boot/*.ld $(BOOTSECTOR_CFILES)
+KERNEL_CFILES=kernel/*.c lib/*.c early/*.c
+KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
 INCLUDES=-I. -Iinclude/
+
+ALL_CSOURCE=$(EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES)
 
 all: zeptux.img
 
-check_build_env:
+pre_step:
 	./scripts/check_build_env.sh
+	clang-format -style=file -i $(shell find $(ALL_CSOURCE) -type f)
 
-boot.bin: check_build_env $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
+boot.bin: pre_step $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iarch/x86_64/include -o boot2.o
@@ -23,7 +28,7 @@ boot.bin: check_build_env $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOUR
 	ld -T arch/x86_64/boot/boot2.ld -o boot2.bin boot2.o loader.o
 	cat boot1.bin boot2.bin > boot.bin
 
-kernel.elf: check_build_env $(KERNEL_FILES) $(HEADERS) Makefile
+kernel.elf: pre_step $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -Wno-main kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
@@ -42,4 +47,4 @@ qemu: zeptux.img
 	qemu-system-x86_64 -nographic -drive file=zeptux.img,format=raw \
 		-serial mon:stdio -smp 1
 
-.PHONY: all clean qemu check_build_env
+.PHONY: all clean pre_step qemu

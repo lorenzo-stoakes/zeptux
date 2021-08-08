@@ -16,18 +16,19 @@
 
 // We assume base = 0, limit = 0xfffff:
 //                             b-------f---l---a-------b-----------------------l---------------
-#define GDTE_TEMPLATE_ENTRY (0b0000000000001111000000000000000000000000000000001111111111111111ULL)
+#define GDTE_TEMPLATE_ENTRY \
+	(0b0000000000001111000000000000000000000000000000001111111111111111ULL)
 
 #define MAKE_GDTE(_flag, _access) \
 	(GDTE_TEMPLATE_ENTRY | ((_flag) << 52) | ((_access) << 40))
 
 #define GDT_SEGMENT_CODE32_INDEX (1)
 #define GDT_SEGMENT_CODE64_INDEX (2)
-#define GDT_SEGMENT_DATA_INDEX   (3)
+#define GDT_SEGMENT_DATA_INDEX (3)
 
 #define GDT_SEGMENT_CODE32 (GDT_SEGMENT_CODE32_INDEX * 8)
 #define GDT_SEGMENT_CODE64 (GDT_SEGMENT_CODE64_INDEX * 8)
-#define GDT_SEGMENT_DATA   (GDT_SEGMENT_DATA_INDEX   * 8)
+#define GDT_SEGMENT_DATA (GDT_SEGMENT_DATA_INDEX * 8)
 
 // By definition the boot drive is always 0x80.
 #define BOOT_DRIVE_NUM (0x80)

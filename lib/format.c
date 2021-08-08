@@ -1,7 +1,7 @@
-#include "compiler.h"
 #include "format.h"
-#include "macros.h"
+#include "compiler.h"
 #include "consts.h"
+#include "macros.h"
 #include "types.h"
 
 static const char *digits = "0123456789abcdef";
@@ -125,7 +125,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		case 'S':
 		case 's':
 		{
-			const char *str = va_arg(ap, const char*);
+			const char *str = va_arg(ap, const char *);
 			_vsnprintf_puts(&state, str);
 			break;
 		}
