@@ -27,7 +27,9 @@ struct vsnprintf_format {
 static void _vsnprintf_putc(struct vsnprintf_state *state, char chr)
 {
 	if (state->count < state->n - 1)
-		state->buf[state->count++] = chr;
+		state->buf[state->count] = chr;
+
+	state->count++;
 }
 
 // Place `chr` into the target buffer `n` times.
