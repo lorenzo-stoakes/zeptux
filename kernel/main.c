@@ -12,7 +12,7 @@ static void prelude()
 	// Dump raw E820 memory structure.
 
 	uint16_t count = boot_info()->num_e820_entries;
-	early_printf("\ne820 entries (%lu):\n", count);
+	early_printf("\ne820 entries (%u):\n", count);
 
 	for (uint64_t i = 0; i < count; i++) {
 		struct e820_entry *entry = &boot_info()->e820_entries[i];

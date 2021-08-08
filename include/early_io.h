@@ -7,7 +7,7 @@
 
 #define EARLY_PRINTF_BUFFER_SIZE (1024)
 
-static inline int early_printf(const char *fmt, ...)
+static inline PRINTF(1, 2) int early_printf(const char *fmt, ...)
 {
 	va_list list;
 	va_start(list, fmt);

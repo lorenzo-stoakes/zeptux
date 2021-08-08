@@ -1,6 +1,11 @@
 #pragma once
 
+// Tell the compiler that we don't want struct padding.
 #define PACKED __attribute__((packed))
+// Tell the compiler that this function is of the printf-ilk and ask that
+// arguments are checked accordingly.
+#define PRINTF(__string_idx, __first_check_idx) \
+	__attribute__((format(printf, (__string_idx), (__first_check_idx))))
 #define static_assert _Static_assert
 
 // Since parameters get put in registers we need help from the compiler to
