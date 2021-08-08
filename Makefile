@@ -1,14 +1,18 @@
 BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
+INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h
 EARLY_HEADERS=$(HEADERS) arch/x86_64/include/*.h
+TEST_HEADERS=test/include/*.h
 BOOTSECTOR_CFILES=arch/x86_64/boot/*.c
 BOOTSECTOR_FILES=arch/x86_64/boot/*.S arch/x86_64/boot/*.ld $(BOOTSECTOR_CFILES)
 KERNEL_CFILES=kernel/*.c lib/*.c early/*.c
 KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
-INCLUDES=-I. -Iinclude/
+TEST_CFILES=lib/*.c early/*.c test/early_kernel/*.c
+TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
 
-ALL_CSOURCE=$(EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES)
+ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES)
+QEMU_OPT=-nographic -serial mon:stdio -smp 1
 
 all: pre_step zeptux.img
 
@@ -40,11 +44,23 @@ zeptux.img: boot.bin kernel.elf
 	dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
 
+test.elf: kernel.elf $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/main.c -o test_main.o
+
+	ld -T kernel/kernel.ld -o test.elf test_main.o format.o early_serial.o
+
+test.img: boot.bin test.elf
+	dd if=/dev/zero of=test.img count=2000 2>/dev/null
+	dd if=boot.bin of=test.img conv=notrunc 2>/dev/null
+	dd if=test.elf of=test.img seek=5 conv=notrunc 2>/dev/null
+
 clean:
 	rm -f *.o *.img *.bin
 
 qemu: zeptux.img
-	qemu-system-x86_64 -nographic -drive file=zeptux.img,format=raw \
-		-serial mon:stdio -smp 1
+	qemu-system-x86_64 $(QEMU_OPT) -drive file=zeptux.img,format=raw
 
-.PHONY: all clean pre_step qemu
+test: test.img
+	qemu-system-x86_64 $(QEMU_OPT) -drive file=test.img,format=raw
+
+.PHONY: all clean pre_step qemu test
