@@ -16,6 +16,7 @@ struct vsnprintf_state {
 // Represents format options for vsnprintf().
 struct vsnprintf_format {
 	int base;
+	bool neg;
 	char pad_char;
 	int pad_count;
 	bool pad_left;
@@ -86,6 +87,17 @@ static void _vsnprintf_uint64(struct vsnprintf_state *state, uint64_t val,
 	}
 	val_buf[UINT64_MAX_CHARS] = '\0';
 
+	// An irritating detail - if we pad with spaces we need to put the
+	// negation char with the number, e.g. %5d -> ' -123'. However if
+	// we pad with zeroes it should go first, e.g. %05d -> '-0123'.
+	// We disallow padding left with zeroes for obvious reasons.
+	if (format->neg && format->pad_char == '0') {
+		_vsnprintf_putc(state, '-');
+		format->pad_count--;
+	} else if (format->neg) {
+		val_buf[i--] = '-';
+	}
+
 	if (format->pad_left)
 		_vsnprintf_puts(state, &val_buf[i + 1]);
 
@@ -104,7 +116,7 @@ static void _vsnprintf_int64(struct vsnprintf_state *state, int64_t val,
 {
 	uint64_t un;
 	if (val < 0) {
-		_vsnprintf_putc(state, '-');
+		format->neg = true;
 		un = -val;
 	} else {
 		un = val;
@@ -141,6 +153,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		// we'll live with it!
 		struct vsnprintf_format format = {
 			.base = 10,
+			.neg = false,
 			.pad_char = ' ',
 			.pad_count = 0,
 			.pad_left = false,
