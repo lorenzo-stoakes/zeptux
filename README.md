@@ -8,16 +8,35 @@ It is, rather unfashionably, implemented in C and assembly.
 It is released under an MIT license.
 
 ## Status
-_Almost non-existent._
+_"Almost non-existent."_
 
-- Self-loading boot sector (via ATA).
+- Self-loading 2-stage boot sector (via ATA).
+- Early PIO serial port output support.
+- Fairly functional [v]snprintf.
+- Reads e820 records.
+- Early kernel unit test framework.
 
 ## Roadmap
 
 ### Next steps
 
-* Add initial boot memory allocator/freer, use 0xe820 int 0x15 to determine
-  physical memory layout.
+* Add initial physical memory allocator.
+* Drop direct 1 GiB mapping e.g. from VA 0 - 1 GiB -> 0 1 GiB PA.
+* Move boot sector allocated physical memory into physical allocator.
+* Map boot sector allocated memory into VA correctly (including the kernel ELF),
+  correcting ELF page flags (e.g. ro for .rodata).
+* Implement early slab allocator.
+* Implement interrupt handler and enable interrupts.
+* Page fault handling.
+* Implement interrupt-driven serial port interface for early kernel I/O.
+* Implement kernel ring buffer (outputting to serial interface to start with).
+* Implement virtual file system support.
+* Implement correct, possibly trivial disk I/O driver.
+* Implement processes both userland and kernel.
+* Implement scheduler.
+* Load init userland process.
+* Add basic system calls.
+* Implement trivial shell.
 
 ### Usage
 
@@ -26,6 +45,16 @@ Make sure you have gcc, binutils and qemu installed. Then run:
 ```
 $ make qemu
 ```
+
+#### Tests
+
+To execute tests, run:
+
+```
+$ make test
+```
+
+This will generate a test kernel image which will then be executed under qemu.
 
 ## Design concepts
 
