@@ -220,12 +220,16 @@ static const char *test_snprintf(void)
 	assert(strcmp(buf, "-123") == 0, "truncated snprintf neg int mismatch");
 	// Same thing but a padded right digit.
 	count = snprintf(buf, 5, "%8d", 123456);
-	assert(count == 8, "incorrect truncated snprintf padded right int count");
-	assert(strcmp(buf, "  12") == 0, "truncated snprintf padded right int mismatch");
+	assert(count == 8,
+	       "incorrect truncated snprintf padded right int count");
+	assert(strcmp(buf, "  12") == 0,
+	       "truncated snprintf padded right int mismatch");
 	// Same thing but a padded left digit.
 	count = snprintf(buf, 5, "%-8d", 123456);
-	assert(count == 8, "incorrect truncated snprintf padded left int count");
-	assert(strcmp(buf, "1234") == 0, "truncated snprintf padded left int mismatch");
+	assert(count == 8,
+	       "incorrect truncated snprintf padded left int count");
+	assert(strcmp(buf, "1234") == 0,
+	       "truncated snprintf padded left int mismatch");
 
 	// Zero size buffer should not touch the buffer at all.
 	count = snprintf(buf, 0, "hello");

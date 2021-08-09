@@ -12,7 +12,7 @@ const char *test_misc(void)
 	assert(ALIGN_UP(0, 512) == 0, "ALIGN_UP(0, 512) != 512");
 	assert(ALIGN_UP(1025, 2) == 1026, "ALIGN_UP(1025, 2) != 1026");
 
-	const uint16_t shorts[] = { 1, 2, 3 };
+	const uint16_t shorts[] = {1, 2, 3};
 	assert(ARRAY_COUNT(shorts) == 3, "ARRAY_COUNT({1, 2, 3}) != 3");
 
 	const uint64_t empty[] = {};
