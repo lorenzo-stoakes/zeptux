@@ -15,7 +15,11 @@ void main(void)
 	if (res != NULL)
 		early_puts(res);
 
-	early_printf("\n// zeptux test run complete\n");
+	res = test_misc();
+	if (res != NULL)
+		early_puts(res);
+
+	early_puts("\n// zeptux test run complete");
 
 	// We never exit.
 	while (true)

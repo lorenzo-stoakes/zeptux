@@ -9,3 +9,6 @@ const char *test_format(void);
 
 // test_string.c
 const char *test_string(void);
+
+// test_misc.c
+const char *test_misc(void);
