@@ -2,6 +2,7 @@
 
 #include "consts.h"
 #include "early_serial.h"
+#include "early_video.h"
 #include "format.h"
 #include "types.h"
 
@@ -18,6 +19,7 @@ static inline PRINTF(1, 2) int early_printf(const char *fmt, ...)
 	va_end(list);
 
 	early_serial_puts(buf);
+	early_video_puts(buf);
 
 	return ret;
 }

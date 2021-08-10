@@ -19,7 +19,7 @@ static inline const char *e820_type_to_string(enum e820_type type)
 {
 	switch (type) {
 	case E820_TYPE_RAM:
-		return "available RAM";
+		return "RAM";
 	case E820_TYPE_RESERVED:
 		return "reserved";
 	case E820_TYPE_ACPI:

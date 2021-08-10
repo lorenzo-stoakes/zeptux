@@ -8,6 +8,7 @@
 #include "early_boot_info.h"
 #include "early_io.h"
 #include "early_serial.h"
+#include "early_video.h"
 
 #include "elf.h"
 #include "macros.h"

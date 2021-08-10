@@ -112,3 +112,7 @@
 	(X86_KERNEL_DIRECT_MAP_BASE + X86_EARLY_BOOT_INFO_ADDRESS_PHYS)
 
 #define X86_E820_MAGIC_NUMBER (0x534d4150)
+
+// Offset into physical memory where we can output video characters to be
+// displayed on the monitor.
+#define X86_VIDEO_MEMORY_OFFSET (0xB8000)

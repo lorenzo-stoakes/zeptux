@@ -12,7 +12,7 @@ TEST_CFILES=lib/*.c early/*.c test/early_kernel/*.c
 TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
 
 ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
-QEMU_OPT=-nographic -serial mon:stdio -smp 1
+QEMU_OPT=-serial mon:stdio -smp 1
 
 all: pre_step zeptux.img
 
@@ -36,8 +36,9 @@ kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -Wno-main kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
+	gcc $(CFLAGS) -c $(INCLUDES) early/video.c -o early_video.o
 
-	ld -T kernel/kernel.ld -o kernel.elf main.o format.o early_serial.o
+	ld -T kernel/kernel.ld -o kernel.elf main.o format.o early_serial.o early_video.o
 
 zeptux.img: boot.bin kernel.elf
 	dd if=/dev/zero of=zeptux.img count=2000 2>/dev/null
@@ -50,7 +51,7 @@ test.elf: zeptux.img $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_string.c -o test_string.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_misc.c -o test_misc.o
 
-	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o test_string.o test_misc.o format.o early_serial.o
+	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o test_string.o test_misc.o format.o early_serial.o early_video.o
 
 test.img: boot.bin test.elf
 	dd if=/dev/zero of=test.img count=2000 2>/dev/null
@@ -61,9 +62,13 @@ clean:
 	rm -f *.o *.img *.bin
 
 qemu: zeptux.img
+	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=zeptux.img,format=raw
+
+qemu-vga: zeptux.img
 	qemu-system-x86_64 $(QEMU_OPT) -drive file=zeptux.img,format=raw
 
-test: test.img
-	qemu-system-x86_64 $(QEMU_OPT) -drive file=test.img,format=raw
 
-.PHONY: all clean pre_step qemu test
+test: test.img
+	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test.img,format=raw
+
+.PHONY: all clean pre_step qemu qemu-vga test

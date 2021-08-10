@@ -6,6 +6,8 @@
 .code16
 
 boot2:
+	call enter_video_mode_3
+
 	call get_e820
 
 	// Move to 32-bit protected mode.
@@ -13,6 +15,11 @@ boot2:
 	movl $X86_CR0_PROTECTED_MODE, %eax
 	movl %eax, %cr0
 	ljmpl $GDT_SEGMENT_CODE32, $start32
+
+enter_video_mode_3:
+	mov $3, %ax 	// Set video mode to 3 (80x25)
+	int $0x10
+	ret
 
 // Retrieve e820 memory layout information and store it in the early_boot_info
 // struct located at EARLY_BOOT_INFO_ADDRESS_PHYS.
