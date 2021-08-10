@@ -16,7 +16,7 @@
 #define for_each_sect_header(_buf, _header, _sect_header)           \
 	struct elf_section_header *_sect_header =                   \
 		(struct elf_section_header *)&_buf[_header->shoff]; \
-	for (int i = 0; i < _header->phnum; i++, _sect_header++)
+	for (int i = 0; i < _header->shnum; i++, _sect_header++)
 
 struct elf_load_state {
 	struct elf_header *header;
@@ -161,6 +161,9 @@ static bool elf_check_addrs(uint8_t *buf, struct elf_header *header)
 
 	// Check section header addresses.
 	for_each_sect_header (buf, header, sect_header) {
+		if (sect_header->type != ELF_SHT_PROGBITS)
+			continue;
+
 		uint64_t addr = sect_header->addr;
 		if (addr != 0 &&
 		    sect_header->offset != addr - KERNEL_ELF_ADDRESS)
