@@ -34,3 +34,14 @@ static inline void *memset(void *dest, int chr, uint64_t count)
 
 	return dest;
 }
+
+static inline void *memcpy(void *dest, void *src, size_t n)
+{
+	uint8_t *ptr = dest;
+
+	for (size_t i = 0; i < n; i++) {
+		*ptr++ = *(uint8_t *)src++;
+	}
+
+	return dest;
+}
