@@ -1,11 +1,16 @@
 #include "x86-consts.h"
 #include "bootsector.h"
+#include "config.h"
 
 .text
 
 .code16
 
 boot2:
+#ifdef CONFIG_BOOTLOADER_BIOS
+	call bios_load_kernel_elf
+#endif
+
 	call enter_video_mode_3
 
 	call get_e820
@@ -94,6 +99,37 @@ get_e820.unexpected_length:
 	movw $e820_unexpected_length_str, %si
 	call bios_say
 	hlt
+
+#ifdef CONFIG_BOOTLOADER_BIOS
+bios_load_kernel_elf:
+	// Clear ES.
+	xorw %ax, %ax
+	movw %ax, %es
+	// Read mode.
+	movb $2, %ah
+
+	movw $BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS, %bx
+	// Load after boot sector and stage 2 sectors.
+	movw $STAGE2_SECTORS + 2, %cx
+	movw $BOOT_DRIVE_NUM, %dx
+
+	// This will be calculated and set in the image on build.
+	// TODO: Handle kernel ELF size > 255 sectors.
+	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %eax
+	shrl $9, %eax // Convert to sectors.
+	incb %al      // Effectively round up by always loading 1 sector more.
+	movb $2, %ah  // Read mode.
+
+	int $0x13
+
+	xorw %di, %di
+
+	// Store kernel ELF file size in boot info ELF size field.
+	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %eax
+	movl %eax, X86_EARLY_BOOT_INFO_ADDRESS_PHYS
+
+	ret
+#endif
 
 #include "bios_say.S"
 

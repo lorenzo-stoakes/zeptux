@@ -41,3 +41,11 @@
 
 // The number of 512-byte sectors both stage 1 and 2 boot loaders use.
 #define BOOT_SECTORS (1 + STAGE2_SECTORS)
+
+// The location where the BIOS loads the kernel ELF image (later moved into the
+// correct place after transitioning from real mode).
+#define BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS \
+	(0x7c00 + BOOT_SECTORS * SECTOR_SIZE_BYTES)
+
+// The location where the ELF image size is encoded by a script.
+#define KERNEL_IMAGE_SIZE_MEM_ADDRESS (BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS - 4)

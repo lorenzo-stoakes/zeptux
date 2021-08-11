@@ -1,3 +1,10 @@
+ # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
+ # 2 bootsectors increases.
+ELF_SIZE_OFFSET=2556
+
+# The BIOS ELF loader is currently limited to 255 sectors.
+MAX_KERNEL_ELF_SIZE=130560
+
 BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 INCLUDES=-I. -Iinclude/
@@ -40,7 +47,11 @@ kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 
 	ld -T kernel/kernel.ld -o kernel.elf main.o format.o early_serial.o early_video.o
 
+	find kernel.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
+
 zeptux.img: boot.bin kernel.elf
+	scripts/patch_bin_int.py boot.bin $(ELF_SIZE_OFFSET) $(shell stat -c%s kernel.elf)
+
 	dd if=/dev/zero of=zeptux.img count=2000 2>/dev/null
 	dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null

@@ -1,4 +1,5 @@
 #include "bootsector.h"
+#include "config.h"
 #include "early_boot_info.h"
 #include "elf.h"
 #include "io_asm.h"
@@ -18,6 +19,70 @@
 		(struct elf_section_header *)&_buf[_header->shoff]; \
 	for (int i = 0; i < _header->shnum; i++, _sect_header++)
 
+// Zero the .bss section.
+static void elf_zero_bss(struct elf_header *header)
+{
+	uint8_t *buf = (uint8_t *)KERNEL_ELF_ADDRESS;
+
+	// Locate the shstr - the section header string buffer so we can lookup
+	// section names.
+	struct elf_section_header *section_headers =
+		(struct elf_section_header *)&buf[header->shoff];
+	struct elf_section_header *shstr_sect_header =
+		&section_headers[header->shstrndx];
+	const char *shstr = (const char *)&buf[shstr_sect_header->offset];
+
+	// We only keep the .text section for this loader so we put this name on
+	// the stack.
+	const char bss_name[] = ".bss";
+
+	// Find the .bss section.
+	for_each_sect_header (buf, header, sect_header) {
+		const char *name = &shstr[sect_header->name];
+		if (strcmp(name, bss_name) != 0)
+			continue;
+
+		// Once found, clear it!
+		memset((void *)sect_header->addr, 0, sect_header->size);
+		break;
+	}
+}
+
+// Check that virtual addresses referenced by ELF elements match where they have
+// actually been loaded in memory.
+static bool elf_check_addrs(struct elf_header *header)
+{
+	uint8_t *buf = (uint8_t *)KERNEL_ELF_ADDRESS;
+
+	// Check program header addresses.
+	for_each_prog_header (buf, header, prog_header) {
+		// Unloaded programs (e.g. .bss) do not need to be checked.
+		if (prog_header->filesz == 0)
+			continue;
+
+		uint64_t addr = prog_header->vaddr;
+		if (addr != 0 &&
+		    prog_header->offset != addr - KERNEL_ELF_ADDRESS)
+			return false;
+	}
+
+	// Check section header addresses.
+	for_each_sect_header (buf, header, sect_header) {
+		if (sect_header->type != ELF_SHT_PROGBITS)
+			continue;
+
+		uint64_t addr = sect_header->addr;
+		if (addr != 0 &&
+		    sect_header->offset != addr - KERNEL_ELF_ADDRESS)
+			return false;
+	}
+
+	return true;
+}
+
+#ifdef CONFIG_BOOTLOADER_ATA_PIO
+
+// Represents current ELF image load state while loading via ATA PIO.
 struct elf_load_state {
 	struct elf_header *header;
 	uint64_t bytes_loaded, sectors_loaded;
@@ -143,63 +208,6 @@ static uint64_t elf_get_size_bytes(uint8_t *buf, struct elf_header *header)
 	return ret;
 }
 
-// Check that virtual addresses referenced by ELF elements match where they have
-// actually been loaded in memory.
-static bool elf_check_addrs(uint8_t *buf, struct elf_header *header)
-{
-	// Check program header addresses.
-	for_each_prog_header (buf, header, prog_header) {
-		// Unloaded programs (e.g. .bss) do not need to be checked.
-		if (prog_header->filesz == 0)
-			continue;
-
-		uint64_t addr = prog_header->vaddr;
-		if (addr != 0 &&
-		    prog_header->offset != addr - KERNEL_ELF_ADDRESS)
-			return false;
-	}
-
-	// Check section header addresses.
-	for_each_sect_header (buf, header, sect_header) {
-		if (sect_header->type != ELF_SHT_PROGBITS)
-			continue;
-
-		uint64_t addr = sect_header->addr;
-		if (addr != 0 &&
-		    sect_header->offset != addr - KERNEL_ELF_ADDRESS)
-			return false;
-	}
-
-	return true;
-}
-
-// Zero the .bss section.
-static void elf_zero_bss(uint8_t *buf, struct elf_header *header)
-{
-	// Locate the shstr - the section header string buffer so we can lookup
-	// section names.
-	struct elf_section_header *section_headers =
-		(struct elf_section_header *)&buf[header->shoff];
-	struct elf_section_header *shstr_sect_header =
-		&section_headers[header->shstrndx];
-	const char *shstr = (const char *)&buf[shstr_sect_header->offset];
-
-	// We only keep the .text section for this loader so we put this name on
-	// the stack.
-	const char bss_name[] = ".bss";
-
-	// Find the .bss section.
-	for_each_sect_header (buf, header, sect_header) {
-		const char *name = &shstr[sect_header->name];
-		if (strcmp(name, bss_name) != 0)
-			continue;
-
-		// Once found, clear it!
-		memset((void *)sect_header->addr, 0, sect_header->size);
-		break;
-	}
-}
-
 // Perform some additional tasks - most likely we have loaded everything we
 // need, however we have to make sure that memory locations match expected VA
 // locations
@@ -221,18 +229,12 @@ static bool load2(uint8_t *buf, struct elf_load_state *state)
 				   state->sectors_loaded, delta);
 	}
 
-	// Step 2: Check that any VAs specified within the ELF headers match the
-	// actually loaded locations.
-	if (!elf_check_addrs(buf, header))
-		return false;
-
-	// Step 3: Zero the .bss section in memory.
-	elf_zero_bss(buf, header);
-
 	return true;
 }
 
-void load(void)
+// Load the kernel from disk using direct ATA PIO calls and polling. Not all
+// hardware supports, though qemu does. We assume LBA 48 mode is supported.
+static struct elf_header *load_ata_pio(void)
 {
 	// We have mapped KERNEL_ELF_ADDRESS at 0x1000000 PA (16 MiB offset)
 	// which is a safely addressable area of extended (assuming the system
@@ -244,18 +246,79 @@ void load(void)
 	// table.
 	struct elf_load_state state = load1(buf);
 	if (state.header == NULL)
-		return; // Returning here means the system halts.
+		return NULL;
 
 	// Load anything not already present, check things are where we expect
 	// in memory, and initialise .bss section.
 	if (!load2(buf, &state))
-		return;
+		return NULL;
 
 	boot_info()->kernel_elf_size_bytes = state.bytes_loaded;
 
-	// Directly load the kernel.
-	void (*entry)(void) = (void (*)(void))(state.header->entry);
-	entry();
+	return state.header;
+}
+#endif // CONFIG_BOOTLOADER_ATA_PIO
 
-	// We should never return but if we do the system will halt.
+#ifdef CONFIG_BOOTLOADER_BIOS
+// Very simply copy the entire kernel loaded into conventional memory for us by
+// the bootloader to its expected place in memory. As with an ATA-loaded kernel
+// we expect that everything will work with the file image simply copied into
+// place (modulo the steps in check_and_finalise()). This may need revisiting.
+static struct elf_header *copy_kernel_elf_image(void)
+{
+	memcpy((void *)KERNEL_ELF_ADDRESS,
+	       (void *)BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS,
+	       boot_info()->kernel_elf_size_bytes);
+
+	return (struct elf_header *)KERNEL_ELF_ADDRESS;
+}
+#endif
+
+// Perform final integrity checks on kernel ELF image and perform any tasks not
+// achieved by loading the image.
+static bool check_and_finalise(struct elf_header *header)
+{
+	// Check that any VAs specified within the ELF headers match the
+	// actually loaded locations.
+	if (!elf_check_addrs(header))
+		return false;
+
+	// Zero the .bss section of the ELF image.
+	elf_zero_bss(header);
+
+	return true;
+}
+
+// Load the kernel ELF image into memory at KERNEL_ELF_ADDRESS.
+static struct elf_header *load_elf_image(void)
+{
+	struct elf_header *header;
+
+#ifdef CONFIG_BOOTLOADER_ATA_PIO
+	header = load_ata_pio();
+#elif defined(CONFIG_BOOTLOADER_BIOS)
+	header = copy_kernel_elf_image();
+#else
+#error misconfigured
+#endif
+
+	return header;
+}
+
+// Execute the kernel. This should not return.
+static void exec(struct elf_header *header)
+{
+	// Directly call into the kernel.
+	void (*entry)(void) = (void (*)(void))(header->entry);
+	entry();
+}
+
+void load(void)
+{
+	struct elf_header *header;
+
+	header = load_elf_image();
+	if (!check_and_finalise(header))
+		return; // System halt.
+	exec(header);
 }
