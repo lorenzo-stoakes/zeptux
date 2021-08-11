@@ -40,7 +40,7 @@ _"Almost non-existent."_
 
 ### Usage
 
-Make sure you have gcc, binutils and qemu installed. Then run:
+Make sure you have gcc, binutils, python 3 and qemu installed. Then run:
 
 ```
 $ make qemu
