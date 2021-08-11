@@ -10,9 +10,7 @@ boot2:
 #ifdef CONFIG_BOOTLOADER_BIOS
 	call bios_load_kernel_elf
 #endif
-
-	call enter_video_mode_3
-
+	call set_video_mode
 	call get_e820
 
 	// Move to 32-bit protected mode.
@@ -21,7 +19,7 @@ boot2:
 	movl %eax, %cr0
 	ljmpl $GDT_SEGMENT_CODE32, $start32
 
-enter_video_mode_3:
+set_video_mode:
 	mov $3, %ax 	// Set video mode to 3 (80x25)
 	int $0x10
 	ret
