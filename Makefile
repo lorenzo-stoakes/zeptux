@@ -23,7 +23,7 @@ pre_step:
 boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
-	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iarch/x86_64/include -o boot2.o
+	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o
 	objcopy --remove-section .note.gnu.property boot2.o
 	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -Iarch/x86_64/include -o loader.o
 	objcopy --only-section=.text loader.o
@@ -59,7 +59,7 @@ test.img: boot.bin test.elf
 	dd if=test.elf of=test.img seek=5 conv=notrunc 2>/dev/null
 
 clean:
-	rm -f *.o *.img *.bin
+	rm -f *.o *.img *.bin *.elf
 
 qemu: zeptux.img
 	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=zeptux.img,format=raw
