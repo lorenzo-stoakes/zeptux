@@ -76,3 +76,5 @@ ref: https://wiki.osdev.org/Memory_Map
 * Initial kernel stack is set to the top of conventional memory at 0x80000.
 * The kernel ELF image is loaded at the beginning of the post-ISA memory hole
   extended memory at 0x1000000.
+* Early boot information (including kernel ELF size, e820 entries) is stored at
+  0x6000 in lower conventional memory.
