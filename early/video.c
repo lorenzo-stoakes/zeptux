@@ -39,7 +39,7 @@ static void next_line(void)
 		offset_by(COLS - (offset % COLS));
 }
 
-// Put character to video buffer, warpping around if necessary.
+// Put character to video buffer, wrapping around if necessary.
 static void putc(char chr)
 {
 	uint64_t offset = get_offset();
