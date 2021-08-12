@@ -143,6 +143,10 @@ e820_unexpected_length_str:
 .code32
 
 start32:
+	// It seems interrupts _can_ be re-established as we transition modes,
+	// so to be sure clear them again.
+	cli
+
 	movw $GDT_SEGMENT_DATA, %ax
 	movw %ax, %ds
 	movw %ax, %es
@@ -206,6 +210,10 @@ start32:
 
 .code64
 start64:
+	// It seems interrupts _can_ be re-established as we transition modes,
+	// so to be sure clear them again.
+	cli
+
 	movw $GDT_SEGMENT_DATA, %ax
 	movw %ax, %ds
 	movw %ax, %es
