@@ -12,7 +12,8 @@
 //
 // 'base' and 'limit' are split into separate groups of bits, from low to high.
 //
-// 'flag' specifies
+// 'flag' and 'access' define various properties of the entries, defined in
+// X86_GDTE_FLAG_* and X86_GDTE_ACCESS_* respectively.
 
 // We assume base = 0, limit = 0xfffff:
 //                             b-------f---l---a-------b-----------------------l---------------
