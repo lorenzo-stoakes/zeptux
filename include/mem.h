@@ -23,7 +23,10 @@
 // Location in memory where text output can be written to which gets displayed
 // on the monitor.
 #define EARLY_VIDEO_MEMORY_ADDRESS \
-	(KERNEL_DIRECT_MAP_BASE + X86_VIDEO_MEMORY_OFFSET)
+	(KERNEL_DIRECT_MAP_BASE + X86_VIDEO_MEMORY_ADDRESS_PHYS)
+// Location in memory which acts as a double buffer to the actual video memory.
+#define EARLY_VIDEO_BUFFER_ADDRESS \
+	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS)
 
 static inline void *memset(void *dest, int chr, uint64_t count)
 {

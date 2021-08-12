@@ -38,6 +38,8 @@ static void prelude()
 void main(void)
 {
 	early_serial_init_poll();
+	early_video_init();
+
 	prelude();
 
 	// We never exit.

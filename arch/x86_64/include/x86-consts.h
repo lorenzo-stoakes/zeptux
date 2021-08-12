@@ -114,4 +114,9 @@
 
 // Offset into physical memory where we can output video characters to be
 // displayed on the monitor.
-#define X86_VIDEO_MEMORY_OFFSET (0xB8000)
+#define X86_VIDEO_MEMORY_ADDRESS_PHYS (0xb8000)
+
+// Offset into physical memory where we can store a buffer to copy into video
+// memory. We use the memory above the original boot sector which is no longer
+// needed.
+#define X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS (0x7e00)
