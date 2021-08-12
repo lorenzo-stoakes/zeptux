@@ -5,8 +5,8 @@ struct version_tuplet zeptux_ver = {.maj = 0, .min = 0, .rev = 0};
 // Provide some early kernel information.
 static void prelude()
 {
-	early_printf("\n-- zeptux %u.%u.%u --\n", zeptux_ver.maj,
-		     zeptux_ver.min, zeptux_ver.rev);
+	early_printf("-- zeptux %u.%u.%u --\n", zeptux_ver.maj, zeptux_ver.min,
+		     zeptux_ver.rev);
 	early_printf("kernel ELF size = %lu\n",
 		     boot_info()->kernel_elf_size_bytes);
 
