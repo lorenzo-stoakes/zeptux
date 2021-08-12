@@ -20,7 +20,7 @@ boot2:
 	ljmpl $GDT_SEGMENT_CODE32, $start32
 
 set_video_mode:
-	mov $3, %ax 	// Set video mode to 3 (80x25)
+	movw $3, %ax 	// Set video mode to 3 (80x25)
 	int $0x10
 	ret
 
