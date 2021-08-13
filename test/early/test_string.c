@@ -1,5 +1,4 @@
-#include "test.h"
-#include "zeptux_early.h"
+#include "test_early.h"
 
 const char *test_string(void)
 {

@@ -1,8 +1,7 @@
 #pragma once
 
-#define assert(_expr, _msg) \
-	if (!(_expr))       \
-		return __FILE__ ":" STRINGIFY(__LINE__) ": " _msg;
+#include "test_helpers.h"
+#include "zeptux_early.h"
 
 // test_format.c
 const char *test_format(void);

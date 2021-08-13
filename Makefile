@@ -10,15 +10,15 @@ CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h
 BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
-TEST_HEADERS=test/include/*.h
+TEST_EARLY_HEADERS=test/include/test_helpers.h test/include/test_early.h
 BOOTSECTOR_CFILES=arch/x86_64/boot/*.c
 BOOTSECTOR_FILES=arch/x86_64/boot/*.S arch/x86_64/boot/*.ld $(BOOTSECTOR_CFILES)
 KERNEL_CFILES=kernel/*.c lib/*.c early/*.c
 KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
-TEST_CFILES=lib/*.c early/*.c test/early_kernel/*.c
-TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
+TEST_EARLY_CFILES=lib/*.c early/*.c test/early/*.c
+TEST_EARLY_FILES=$(TEST_EARLY_CFILES) kernel/kernel.ld
 
-ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
+ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_EARLY_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
 
 KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o
@@ -60,18 +60,18 @@ zeptux.img: boot.bin kernel.elf
 	dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
 
-test.elf: zeptux.img $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early_kernel/test_main.c -o test_main.o
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_format.c -o test_format.o
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_string.c -o test_string.o
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_misc.c -o test_misc.o
+test-early.elf: zeptux.img $(TEST_EARLY_FILES) $(HEADERS) $(TEST_EARLY_HEADERS) Makefile
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early/test_main.c -o test_main.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_format.c -o test_format.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_string.c -o test_string.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_misc.c -o test_misc.o
 
-	ld -T kernel/kernel.ld -o test.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_OBJ_FILES)
+	ld -T kernel/kernel.ld -o test-early.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_OBJ_FILES)
 
-test.img: boot.bin test.elf
-	dd if=/dev/zero of=test.img count=2000 2>/dev/null
-	dd if=boot.bin of=test.img conv=notrunc 2>/dev/null
-	dd if=test.elf of=test.img seek=5 conv=notrunc 2>/dev/null
+test-early.img: boot.bin test-early.elf
+	dd if=/dev/zero of=test-early.img count=2000 2>/dev/null
+	dd if=boot.bin of=test-early.img conv=notrunc 2>/dev/null
+	dd if=test-early.elf of=test-early.img seek=5 conv=notrunc 2>/dev/null
 
 clean:
 	rm -f *.o *.img *.bin *.elf
@@ -82,8 +82,7 @@ qemu: zeptux.img
 qemu-vga: zeptux.img
 	qemu-system-x86_64 $(QEMU_OPT) -drive file=zeptux.img,format=raw
 
+test-early: test-early.img
+	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
 
-test: test.img
-	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test.img,format=raw
-
-.PHONY: all clean pre_step qemu qemu-vga test
+.PHONY: all clean pre_step qemu qemu-vga test-early

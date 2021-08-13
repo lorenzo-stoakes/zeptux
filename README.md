@@ -48,10 +48,10 @@ $ make qemu
 
 #### Tests
 
-To execute tests, run:
+To execute early kernel image tests, run:
 
 ```
-$ make test
+$ make test-early
 ```
 
 This will generate a test kernel image which will then be executed under qemu.
