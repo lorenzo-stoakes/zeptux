@@ -1,5 +1,5 @@
+#include "asm.h"
 #include "early_serial.h"
-#include "io_asm.h"
 #include "types.h"
 
 #define COM1 (0x3f8)
