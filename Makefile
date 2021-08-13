@@ -9,7 +9,7 @@ BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nos
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h
-EARLY_HEADERS=$(HEADERS) arch/x86_64/include/*.h
+BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
 TEST_HEADERS=test/include/*.h
 BOOTSECTOR_CFILES=arch/x86_64/boot/*.c
 BOOTSECTOR_FILES=arch/x86_64/boot/*.S arch/x86_64/boot/*.ld $(BOOTSECTOR_CFILES)
@@ -18,7 +18,7 @@ KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
 TEST_CFILES=lib/*.c early/*.c test/early_kernel/*.c
 TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
 
-ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
+ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
 
 KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o
@@ -30,7 +30,7 @@ pre_step:
 	./scripts/check_build_env.sh
 	clang-format -style=file -i $(shell find $(ALL_CSOURCE) -type f)
 
-boot.bin: $(BOOTSECTOR_FILES) $(EARLY_HEADERS) $(ADDITIONAL_SOURCES)
+boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS) $(ADDITIONAL_SOURCES)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o

@@ -1,8 +1,10 @@
 #pragma once
 
 #include "compiler.h"
-#include "mem.h"
+#include "early_mem.h"
 #include "types.h"
+// For now we assume x86-64 architecture.
+#include "arch/x86_64/include/x86-consts.h"
 
 // See https://uefi.org/specs/ACPI/6.4/15_System_Address_Map_Interfaces/Sys_Address_Map_Interfaces.html#address-range-types
 enum e820_type {
