@@ -21,3 +21,6 @@ static inline void insl(void *ptr, uint16_t port, int count)
 		     : "d"(port), "0"(ptr), "1"(count)
 		     : "memory", "cc");
 }
+
+// Hint to the CPU that we're spin-waiting. TODO: x86-64 specific.
+#define hint_spinwait() __builtin_ia32_pause()

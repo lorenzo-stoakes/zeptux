@@ -13,3 +13,9 @@
 #define va_start(_list, _param) __builtin_va_start(_list, _param)
 #define va_end(_list) __builtin_va_end(_list)
 #define va_arg(_list, _type) __builtin_va_arg(_list, _type)
+
+#define atomic_load_relaxed(_ptr) __atomic_load_n(_ptr, __ATOMIC_RELAXED)
+#define atomic_exchange_acquire(_ptr, _val) \
+	__atomic_exchange_n(_ptr, _val, __ATOMIC_ACQUIRE)
+#define atomic_store_release(_ptr, _val) \
+	__atomic_store_n(_ptr, _val, __ATOMIC_RELEASE)
