@@ -21,6 +21,9 @@ TEST_FILES=$(TEST_CFILES) kernel/kernel.ld
 ALL_CSOURCE=$(EARLY_HEADERS) $(TEST_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
 
+KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o
+TEST_OBJ_FILES=test_format.o test_string.o test_misc.o
+
 all: pre_step zeptux.img
 
 pre_step:
@@ -44,8 +47,9 @@ kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/video.c -o early_video.o
+	gcc $(CFLAGS) -c $(INCLUDES) early/init.c -o early_init.o
 
-	ld -T kernel/kernel.ld -o kernel.elf main.o format.o early_serial.o early_video.o
+	ld -T kernel/kernel.ld -o kernel.elf main.o $(KERNEL_OBJ_FILES)
 
 	find kernel.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 
@@ -62,7 +66,7 @@ test.elf: zeptux.img $(TEST_FILES) $(HEADERS) $(TEST_HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_string.c -o test_string.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early_kernel/test_misc.c -o test_misc.o
 
-	ld -T kernel/kernel.ld -o test.elf test_main.o test_format.o test_string.o test_misc.o format.o early_serial.o early_video.o
+	ld -T kernel/kernel.ld -o test.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_OBJ_FILES)
 
 test.img: boot.bin test.elf
 	dd if=/dev/zero of=test.img count=2000 2>/dev/null

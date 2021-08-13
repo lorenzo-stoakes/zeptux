@@ -37,8 +37,7 @@ static void prelude()
 
 void main(void)
 {
-	early_serial_init_poll();
-	early_video_init();
+	early_init();
 
 	prelude();
 
