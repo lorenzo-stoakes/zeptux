@@ -12,6 +12,7 @@
 #include "early_serial.h"
 #include "early_video.h"
 
+#include "asm.h"
 #include "elf.h"
 #include "macros.h"
 #include "mem.h"
