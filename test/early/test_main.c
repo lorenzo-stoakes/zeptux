@@ -17,8 +17,5 @@ void main(void)
 		early_puts(res);
 
 	early_puts("// zeptux EARLY test run complete");
-
-	// We never exit.
-	while (true)
-		;
+	exit_qemu();
 }
