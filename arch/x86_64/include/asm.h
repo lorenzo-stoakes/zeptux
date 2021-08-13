@@ -14,6 +14,11 @@ static inline void outb(uint16_t port, uint8_t data)
 	asm volatile("outb %0,%1" : : "a"(data), "d"(port));
 }
 
+static inline void outw(uint16_t port, uint16_t data)
+{
+	asm volatile("outw %0,%1" : : "a"(data), "d"(port));
+}
+
 static inline void insl(void *ptr, uint16_t port, int count)
 {
 	asm volatile("cld; rep insl"
