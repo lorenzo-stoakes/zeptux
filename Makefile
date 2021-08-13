@@ -17,6 +17,8 @@ KERNEL_CFILES=kernel/*.c lib/*.c early/*.c
 KERNEL_FILES=$(KERNEL_CFILES) kernel/kernel.ld
 TEST_EARLY_CFILES=lib/*.c early/*.c test/early/*.c
 TEST_EARLY_FILES=$(TEST_EARLY_CFILES) kernel/kernel.ld
+TEST_USER_CFILES=test/user/*.cpp
+TEST_USER_FILES=$(TEST_USER_CFILES) $(BOOTSECTOR_HEADERS)
 
 ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_EARLY_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
@@ -83,6 +85,12 @@ qemu-vga: zeptux.img
 	qemu-system-x86_64 $(QEMU_OPT) -drive file=zeptux.img,format=raw
 
 test-early: test-early.img
-	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
+	@qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
 
-.PHONY: all clean pre_step qemu qemu-vga test-early
+test-user: $(TEST_USER_FILES) Makefile
+	@g++ -g -Iinclude -Iarch/x86-64/include -Itest/include test/user/test_main.cpp -o test_user
+	@./test_user
+
+test: test-early test-user
+
+.PHONY: all clean pre_step qemu qemu-vga test-early test-user test
