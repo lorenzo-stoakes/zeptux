@@ -8,7 +8,7 @@ MAX_KERNEL_ELF_SIZE=130560
 BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large
 INCLUDES=-I. -Iinclude/
-HEADERS=include/*.h
+HEADERS=include/*.h include/mm/*.h
 BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
 TEST_EARLY_HEADERS=test/include/test_helpers.h test/include/test_early.h
 BOOTSECTOR_CFILES=arch/x86_64/boot/*.c
