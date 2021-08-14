@@ -16,6 +16,8 @@
 #define KERNEL_ELF_ADDRESS (X86_KERNEL_ELF_ADDRESS)
 // Where the .text section of the kernel is loaded to.
 #define KERNEL_TEXT_ADDRESS (X86_KERNEL_TEXT_ADDRESS)
+// The default memory page size.
+#define PAGE_SIZE (X86_PAGE_SIZE)
 
 static inline void *memset(void *dest, int chr, uint64_t count)
 {
