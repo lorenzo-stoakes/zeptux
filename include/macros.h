@@ -16,3 +16,7 @@
 // due to limitations of the C macro system.
 #define STRINGIFY(_x) STRINGIFY2(_x)
 #define STRINGIFY2(_x) #_x
+
+// Helpful bitmask macros.
+#define BIT_MASK(_bit) (1UL << _bit)
+#define IS_SET(_val, _bit) !!((_val & BIT_MASK(_bit)) == BIT_MASK(_bit))
