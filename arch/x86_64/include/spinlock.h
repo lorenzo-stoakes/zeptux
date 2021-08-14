@@ -1,6 +1,7 @@
 #pragma once
 
 #include "asm.h"
+#include "atomic.h"
 #include "compiler.h"
 #include "types.h"
 
@@ -9,7 +10,7 @@
 // Represents a spinlock object. Use a struct wrapper as a cheap form of C type
 // safety.
 typedef struct {
-	uint64_t x;
+	atomic_t x;
 } spinlock_t;
 
 // Simple mechanism for assigning an empty unlocked spinlock.
