@@ -5,8 +5,9 @@
 #include "types.h"
 
 enum phys_flag {
-	PHYS_PINNED_BIT = 0,
-	PHYS_UNMOVEABLE_BIT = 1,
+	PHYS_ALLOCATED_BIT = 0,
+	PHYS_PINNED_BIT = 1,
+	PHYS_UNMOVEABLE_BIT = 2,
 };
 
 // Represents a block of physical memory which is of size 2^order pages. We
@@ -29,19 +30,18 @@ static_assert(sizeof(struct phys_block) == 2 * sizeof(uint64_t));
 // its range.
 static inline struct phys_block *phys_head(struct phys_block *block)
 {
+	// We take the risk of not taking a lock on a tail page.
 	return block - block->head_offset;
 }
 
-// Is this physical block of memory pinned (temporarily unmovable/unfreeable)?
-static inline bool phys_is_pinned(struct phys_block *block)
+// Obtain a copy of a specific physical block.
+static inline struct phys_block phys_read(struct phys_block *block)
 {
-	block = phys_head(block);
-	return IS_SET(block->flags, PHYS_PINNED_BIT);
-}
+	struct phys_block *ptr = phys_head(block);
 
-// Is this physical block of memory movable?
-static inline bool phys_is_movable(struct phys_block *block)
-{
-	block = phys_head(block);
-	return !IS_SET(block->flags, PHYS_PINNED_BIT);
+	spinlock_acquire(&ptr->lock);
+	struct phys_block ret = *ptr;
+	spinlock_release(&ptr->lock);
+
+	return ret;
 }
