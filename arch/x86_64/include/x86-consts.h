@@ -86,8 +86,8 @@
 
 // We place this 64 TiB after the direct physical mapping. This is a direct
 // memory mapping so the ELF is actually loaded at X86_KERNEL_ELF_BASE + x86_KERNEL_ELF_OFFSET.
-#define X86_KERNEL_ELF_BASE (0xffffc80000000000UL)
-#define X86_KERNEL_ELF_BASE_PGD_OFFSET (400)
+#define X86_KERNEL_ELF_BASE (0xffffc00000000000UL)
+#define X86_KERNEL_ELF_BASE_PGD_OFFSET (384)
 // in x86 physical memory map, this is where extended memory lives so is safe to
 // write to.
 #define X86_KERNEL_ELF_OFFSET (0x1000000UL)

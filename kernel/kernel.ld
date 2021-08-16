@@ -2,7 +2,7 @@ ENTRY(main)
 
 SECTIONS {
 	/* KERNEL_TEXT_ADDRESS */
-	. = 0xffffc80001001000;
+	. = 0xffffc00001001000;
 
 	.text : ALIGN(4K) {
 		*(.text .text.*)
