@@ -38,6 +38,7 @@ static void prelude()
 void main(void)
 {
 	early_init();
+	early_meminit();
 
 	prelude();
 

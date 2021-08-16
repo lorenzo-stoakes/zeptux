@@ -29,3 +29,11 @@ static inline void insl(void *ptr, uint16_t port, int count)
 
 // Hint to the CPU that we're spin-waiting. TODO: x86-64 specific.
 #define hint_spinwait() __builtin_ia32_pause()
+
+static inline void global_flush_tlb(void)
+{
+	asm volatile("movq %%cr3, %%rax; movq %%rax, %%cr3"
+		     :
+		     :
+		     : "memory", "rax");
+}

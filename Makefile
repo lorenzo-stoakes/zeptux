@@ -23,7 +23,7 @@ TEST_USER_FILES=$(TEST_USER_CFILES) $(BOOTSECTOR_HEADERS)
 ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_EARLY_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
 
-KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o
+KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o early_mem.o
 TEST_OBJ_FILES=test_format.o test_string.o test_misc.o
 
 all: pre_step zeptux.img
@@ -50,6 +50,7 @@ kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/video.c -o early_video.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/init.c -o early_init.o
+	gcc $(CFLAGS) -c $(INCLUDES) early/mem.c -o early_mem.o
 
 	ld -T kernel/kernel.ld -o kernel.elf main.o $(KERNEL_OBJ_FILES)
 
