@@ -30,11 +30,9 @@ static void putc(char chr)
 		goto exit;
 
 	char *buf = get_buf();
-	// GCC gets ridiculously confused about this.
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
 	buf[0] = chr;
 	buf[1] = 15;
-#pragma GCC diagnostic pop
+
 exit:
 	curr_col++;
 }
