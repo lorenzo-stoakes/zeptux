@@ -122,4 +122,4 @@
 #define X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS (0x7e00)
 
 // The default page size for x86-64 is 4 KiB.
-#define X86_PAGE_SIZE (1UL << 12)
+#define X86_PAGE_SHIFT (12)
