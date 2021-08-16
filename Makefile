@@ -19,8 +19,10 @@ TEST_EARLY_CFILES=lib/*.c early/*.c test/early/*.c
 TEST_EARLY_FILES=$(TEST_EARLY_CFILES) kernel/kernel.ld
 TEST_USER_CFILES=test/user/*.cpp
 TEST_USER_FILES=$(TEST_USER_CFILES) $(BOOTSECTOR_HEADERS)
+TEST_USER_HEADERS=test/include/test_helpers.h test/include/test_user.h
 
-ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_EARLY_CFILES)
+ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(TEST_USER_HEADERS) \
+	$(BOOTSECTOR_CFILES) $(KERNEL_CFILES) $(TEST_EARLY_CFILES) $(TEST_USER_CFILES)
 QEMU_OPT=-serial mon:stdio -smp 1
 
 KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o early_mem.o
@@ -88,8 +90,8 @@ qemu-vga: zeptux.img
 test-early: test-early.img
 	@qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
 
-test-user: $(TEST_USER_FILES) Makefile
-	@g++ -g -Iinclude -Iarch/x86-64/include -Itest/include test/user/test_main.cpp -o test_user
+test-user: $(TEST_USER_FILES) $(BOOTSECTOR_HEADERS) $(TEST_USER_HEADERS) Makefile
+	@g++ -g -Iinclude -Iarch/x86-64/include -Itest/include test/user/test_range.cpp test/user/test_main.cpp -o test_user
 	@./test_user
 
 test: test-early test-user
