@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint> // Needed to fake out the stdarg zeptux kernel replacements.
 #include <string>
 
 // Duplicated from macros.h but userland tests can't import that so appears

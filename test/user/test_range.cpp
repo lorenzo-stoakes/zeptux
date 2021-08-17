@@ -1,8 +1,5 @@
-// Needed to fake out the stdarg zeptux kernel replacements.
-#include <cstdint>
-
-#include "range.h"
 #include "test_user.h"
+#include "range.h"
 
 #include <sstream>
 #include <string>
