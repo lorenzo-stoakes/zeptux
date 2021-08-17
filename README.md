@@ -21,7 +21,6 @@ _"Almost non-existent."_
 ### Next steps
 
 * Add initial physical memory allocator.
-* Drop direct 1 GiB mapping e.g. from VA 0 - 1 GiB -> 0 1 GiB PA.
 * Move boot sector allocated physical memory into physical allocator.
 * Map boot sector allocated memory into VA correctly (including the kernel ELF),
   correcting ELF page flags (e.g. ro for .rodata).
