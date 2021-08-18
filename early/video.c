@@ -6,7 +6,7 @@
 #define BUFFER_SIZE (MEMORY_SIZE + 2 * COLS) // 1 extra row.
 
 // This is not re-entrant but we're early and single core so it's fine.
-static int curr_row = 0, curr_col = 0;
+static int curr_row, curr_col;
 
 // Retrieve a pointer to the video buffer which, as this is called before any
 // allocator is online, is an arbitrarily assigned area of memory.
