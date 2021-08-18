@@ -6,7 +6,7 @@ ELF_SIZE_OFFSET=2556
 MAX_KERNEL_ELF_SIZE=130560
 
 BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -D__ZEPTUX_KERNEL
-CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large -Wno-stringop-overflow -D__ZEPTUX_KERNEL
+CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large -Wno-stringop-overflow -D__ZEPTUX_KERNEL -mno-sse
 INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h include/mm/*.h
 BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
