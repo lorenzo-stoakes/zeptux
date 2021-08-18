@@ -20,4 +20,8 @@
 	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_DIRECT_MAP)
 #define EARLY_PUD_KERNEL_ELF (KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_KERNEL_ELF)
 
+struct early_boot_info; // To avoid circular declaration.
+void sort_e820(struct early_boot_info *info);
+void merge_e820(struct early_boot_info *info);
+
 void early_meminit(void);

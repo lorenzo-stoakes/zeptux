@@ -13,10 +13,8 @@ static bool less(struct e820_entry *a, struct e820_entry *b)
 	return a->base < b->base || (a->base == b->base && a->size < b->size);
 }
 
-static void sort_e820(void)
+void sort_e820(struct early_boot_info *info)
 {
-	struct early_boot_info *info = boot_info();
-
 	// Insertion sort.
 	for (int i = 1; i < (int)info->num_e820_entries; i++) {
 		struct e820_entry key = info->e820_entries[i];
@@ -30,10 +28,8 @@ static void sort_e820(void)
 	}
 }
 
-static void merge_e820(void)
+void merge_e820(struct early_boot_info *info)
 {
-	struct early_boot_info *info = boot_info();
-
 	// Note that we assume that all zero-size entries have been pruned out
 	// by the boot code.
 
@@ -85,9 +81,11 @@ static void merge_e820(void)
 
 void early_meminit(void)
 {
+	struct early_boot_info *info = boot_info();
+
 	drop_direct0();
-	sort_e820();
-	merge_e820();
+	sort_e820(info);
+	merge_e820(info);
 
 	// 2. Determine available free memory
 	// 3. Initialise physical memblock
