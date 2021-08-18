@@ -74,8 +74,11 @@ test-early.elf: zeptux.img $(TEST_EARLY_FILES) $(HEADERS) $(TEST_EARLY_HEADERS) 
 	ld -T kernel/kernel.ld -o test-early.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_EARLY_OBJ_FILES)
 
 test-early.img: boot.bin test-early.elf
+	cp boot.bin boot-test.bin
+	scripts/patch_bin_int.py boot-test.bin $(ELF_SIZE_OFFSET) $(shell stat -c%s test-early.elf)
+
 	dd if=/dev/zero of=test-early.img count=2000 2>/dev/null
-	dd if=boot.bin of=test-early.img conv=notrunc 2>/dev/null
+	dd if=boot-test.bin of=test-early.img conv=notrunc 2>/dev/null
 	dd if=test-early.elf of=test-early.img seek=5 conv=notrunc 2>/dev/null
 
 clean:
