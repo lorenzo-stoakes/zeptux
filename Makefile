@@ -72,6 +72,7 @@ test-early.elf: zeptux.img $(TEST_EARLY_FILES) $(HEADERS) $(TEST_EARLY_HEADERS) 
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_misc.c -o test_misc.o
 
 	ld -T kernel/kernel.ld -o test-early.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_EARLY_OBJ_FILES)
+	find test-early.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 
 test-early.img: boot.bin test-early.elf
 	cp boot.bin boot-test.bin
