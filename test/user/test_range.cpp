@@ -1,10 +1,12 @@
 #include "test_user.h"
+
 #include "range.h"
+#undef static_assert // zeptux breaks static_assert in c++ :)
 
 #include <sstream>
 #include <string>
 
-const std::string test_range(void)
+std::string test_range(void)
 {
 	assert(range_within({0, 0}, 0), "0 not within [0,0]?");
 	assert(!range_within({0, 0}, 1), "1 within [0,0]?");

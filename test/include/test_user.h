@@ -17,4 +17,8 @@
 		return _oss.str();                             \
 	}
 
-const std::string test_range();
+// test_range.cpp
+std::string test_range();
+
+// test_spinlock.cpp
+std::string test_spinlock();

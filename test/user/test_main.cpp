@@ -4,9 +4,13 @@
 
 int main()
 {
-	const std::string res = test_range();
+	std::string res = test_range();
 	if (!res.empty())
-		std::cerr << res << std::endl;
+		std::cout << "FAIL: " << res << std::endl;
+
+	res = test_spinlock();
+	if (!res.empty())
+		std::cout << "FAIL: " << res << std::endl;
 
 	std::cout << "// zeptux USER  test run complete" << std::endl;
 
