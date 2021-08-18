@@ -20,7 +20,7 @@
 	for (int i = 0; i < _header->shnum; i++, _sect_header++)
 
 // Zero the .bss section.
-static void elf_zero_bss(struct elf_header *header)
+static bool elf_zero_bss(struct elf_header *header)
 {
 	uint8_t *buf = (uint8_t *)KERNEL_ELF_ADDRESS;
 
@@ -37,15 +37,20 @@ static void elf_zero_bss(struct elf_header *header)
 	const char bss_name[] = ".bss";
 
 	// Find the .bss section.
+	bool found = false;
 	for_each_sect_header (buf, header, sect_header) {
 		const char *name = &shstr[sect_header->name];
+
 		if (strcmp(name, bss_name) != 0)
 			continue;
 
 		// Once found, clear it!
+		found = true;
 		memset((void *)sect_header->addr, 0, sect_header->size);
 		break;
 	}
+
+	return found;
 }
 
 // Check that virtual addresses referenced by ELF elements match where they have
@@ -284,9 +289,7 @@ static bool check_and_finalise(struct elf_header *header)
 		return false;
 
 	// Zero the .bss section of the ELF image.
-	elf_zero_bss(header);
-
-	return true;
+	return elf_zero_bss(header);
 }
 
 // Load the kernel ELF image into memory at KERNEL_ELF_ADDRESS.
