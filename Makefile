@@ -26,7 +26,7 @@ ALL_CSOURCE=$(BOOTSECTOR_HEADERS) $(TEST_EARLY_HEADERS) $(TEST_USER_HEADERS) \
 QEMU_OPT=-serial mon:stdio -smp 1
 
 KERNEL_OBJ_FILES=format.o early_serial.o early_video.o early_init.o early_mem.o
-TEST_OBJ_FILES=test_format.o test_string.o test_misc.o
+TEST_EARLY_OBJ_FILES=test_format.o test_string.o test_misc.o
 
 all: pre_step zeptux.img
 
@@ -71,7 +71,7 @@ test-early.elf: zeptux.img $(TEST_EARLY_FILES) $(HEADERS) $(TEST_EARLY_HEADERS) 
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_string.c -o test_string.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_misc.c -o test_misc.o
 
-	ld -T kernel/kernel.ld -o test-early.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_OBJ_FILES)
+	ld -T kernel/kernel.ld -o test-early.elf test_main.o $(KERNEL_OBJ_FILES) $(TEST_EARLY_OBJ_FILES)
 
 test-early.img: boot.bin test-early.elf
 	dd if=/dev/zero of=test-early.img count=2000 2>/dev/null
