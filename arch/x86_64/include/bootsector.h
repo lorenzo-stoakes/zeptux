@@ -34,8 +34,11 @@
 // By definition the boot drive is always 0x80.
 #define BOOT_DRIVE_NUM (0x80)
 
-// The size of a disk sector in bytes.
-#define SECTOR_SIZE_BYTES (512)
+// The 2^ power for disk sector size.
+#define SECTOR_SHIFT (9)
+
+// The size of a disk sector in bytes (512).
+#define SECTOR_SIZE_BYTES (1ULL << SECTOR_SHIFT)
 
 // The number of 512-byte sectors the stage 2 boot loader uses.
 #define STAGE2_SECTORS (4)
@@ -47,6 +50,13 @@
 // correct place after transitioning from real mode).
 #define BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS \
 	(0x7c00 + BOOT_SECTORS * SECTOR_SIZE_BYTES)
+
+// Remaining sectors in the segment we first load the BIOS ELF image into.
+#define BIOS_KERNEL_ELF_LOAD_SEGMENT0_SECTORS_REMAINING \
+	((0x10000 - BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS) >> SECTOR_SHIFT)
+
+// Where we load the DAP for int 0x13 ah=0x42 disk loading.
+#define BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS (0x500)
 
 // The location where the ELF image size is encoded by a script.
 #define KERNEL_IMAGE_SIZE_MEM_ADDRESS (BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS - 4)

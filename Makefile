@@ -2,10 +2,12 @@
  # 2 bootsectors increases.
 ELF_SIZE_OFFSET=2556
 
-# The BIOS ELF loader is currently limited to 255 sectors.
-MAX_KERNEL_ELF_SIZE=130560
+# The BIOS ELF loader is loaded at 0x8600 and conventional memory ends at
+# 0x80000. That leaves 0x77a00, but we want to leave 16 KiB for the kernel stack
+# and 512 bytes for sector rounding up on boot.
+MAX_KERNEL_ELF_SIZE=473088
 
-BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra  -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -D__ZEPTUX_KERNEL
+BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -D__ZEPTUX_KERNEL
 CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large -Wno-stringop-overflow
 INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h include/mm/*.h

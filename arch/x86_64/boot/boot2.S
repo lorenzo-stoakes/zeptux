@@ -100,33 +100,90 @@ get_e820.unexpected_length:
 
 #ifdef CONFIG_BOOTLOADER_BIOS
 bios_load_kernel_elf:
-	// Clear ES.
-	xorw %ax, %ax
-	movw %ax, %es
-	// Read mode.
-	movb $2, %ah
+	// We store the remaining number of sectors to load in %cx and the
+	// current number to load in %bx.
 
-	movw $BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS, %bx
-	// Load after boot sector and stage 2 sectors.
-	movw $STAGE2_SECTORS + 2, %cx
 	movw $BOOT_DRIVE_NUM, %dx
+	movw $BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS, %si
 
 	// This will be calculated and set in the image on build.
-	// TODO: Handle kernel ELF size > 255 sectors.
-	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %eax
-	shrl $9, %eax // Convert to sectors.
-	incb %al      // Effectively round up by always loading 1 sector more.
-	movb $2, %ah  // Read mode.
+	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %ecx
+	shrl $9, %ecx // Convert to sectors.
+	incw %cx      // Effectively round up by always loading 1 sector more.
 
+	// Initialise DAP.
+	movb $0x10, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS)  // Size of DAP
+	movb $0, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 1) // unused
+	// (next 2 bytes - number of sectors to load.)
+	// Where to load offset:
+	movw $BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 4)
+	// Where to load segment:
+	movw $0, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 6)
+	// Sector offset (loading after boot sector and stage 2 sectors):
+	movl $STAGE2_SECTORS + 1, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 8)
+	movl $0, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 12)
+
+	// Determine if we only need to load sectors less than those in the
+	// current segment...
+	movw %cx, %bx
+	cmpw $BIOS_KERNEL_ELF_LOAD_SEGMENT0_SECTORS_REMAINING, %bx
+	jle bios_load_kernel_elf.loop
+	// ...If not we can only load until the end of the segment to avoid
+	// weird behaviour.
+	mov $BIOS_KERNEL_ELF_LOAD_SEGMENT0_SECTORS_REMAINING, %bx
+
+bios_load_kernel_elf.loop:
+	// Set the number of sectors to load.
+	movw %bx, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 2)
+
+	// Execute 'extended read sectors from drive' command.
+	movw $0x4200, %ax
 	int $0x13
+	jc bios_load_kernel_elf.fault
 
-	xorw %di, %di
+	// Subtract what we have loaded from remaining.
+	subw %bx, %cx
 
+	// Are we done yet?
+	cmpw $0, %cx
+	je bios_load_kernel_elf.done
+
+	// Zero target address.
+	movw $0, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 4)
+	// Increment segment.
+	movw (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 6), %ax
+	addw $0x1000, %ax
+	movw %ax, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 6)
+
+	// Offset by number of sectors loaded.
+	movl (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 8), %eax
+	addw %bx, %ax
+	movl %eax, (BIOS_KERNEL_ELF_LOAD_DAP_PHYS_ADDRESS + 8)
+
+	movw %cx, %bx
+	cmpw $128, %bx
+	jle bios_load_kernel_elf.loop
+	movw $128, %bx
+	jmp bios_load_kernel_elf.loop
+
+bios_load_kernel_elf.done:
 	// Store kernel ELF file size in boot info ELF size field.
 	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %eax
 	movl %eax, X86_EARLY_BOOT_INFO_ADDRESS_PHYS
 
+	// Clear used registers.
+	xorl %eax, %eax
+	xorw %bx, %bx
+	xorw %cx, %cx
+	xorw %si, %si
+
 	ret
+
+bios_load_kernel_elf.fault:
+	mov $bios_load_fail_str, %si
+	call bios_say
+	hlt
+
 #endif
 
 #include "bios_say.S"
@@ -139,6 +196,9 @@ e820_call_failed_str:
 
 e820_unexpected_length_str:
 	.asciz "panic: e820 call unexpected entry length!"
+
+bios_load_fail_str:
+	.asciz "panic: BIOS ELF image load failed"
 
 .code32
 
