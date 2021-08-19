@@ -101,6 +101,9 @@
 #define X86_EARLY_PUD_DIRECT0 (0x2000)
 #define X86_EARLY_PUD_DIRECT_MAP (0x3000)
 #define X86_EARLY_PUD_KERNEL_ELF (0x4000)
+
+// Place very early stack at start of boot sector.
+#define X86_EARLY_INIT_STACK (0x7c00)
 // Place the kernel stack at the top of conventional memory. Use the direct
 // memory map to reference it.
 #define X86_KERNEL_INIT_STACK (X86_KERNEL_DIRECT_MAP_BASE + 0x80000)

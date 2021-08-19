@@ -20,6 +20,8 @@ start:
 	movw %ax, %es // Extra segment.
 	movw %ax, %ss // Stack segment.
 
+	movw $X86_EARLY_INIT_STACK, %sp // Very early stack.
+
 	call enable_a20
 
 	call check_long_mode_support
