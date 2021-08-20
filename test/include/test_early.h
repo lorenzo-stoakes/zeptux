@@ -21,3 +21,6 @@ const char *test_string(void);
 
 // test_misc.c
 const char *test_misc(void);
+
+// test_mem.c
+const char *test_mem(void);
