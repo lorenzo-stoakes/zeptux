@@ -31,7 +31,7 @@ void sort_e820(struct early_boot_info *info)
 void merge_e820(struct early_boot_info *info)
 {
 	// Note that we assume that all zero-size entries have been pruned out
-	// by the boot code.
+	// by the boot code AND that the entries have been sorted.
 
 	int curr_index = 0;
 	for (int i = 1; i < (int)info->num_e820_entries; i++) {
@@ -60,7 +60,7 @@ void merge_e820(struct early_boot_info *info)
 		case RANGE_OVERLAP:
 			// ....        ....
 			//     #### or   ####
-			curr->size += entry_range.to - entry_range.from + 1;
+			curr->size += entry_range.to - curr_range.to;
 			goto loop;
 		case RANGE_COINCIDE:
 			// ......
