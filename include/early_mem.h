@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h"
+
 // Initial kernel stack location.
 #define EARLY_KERNEL_INIT_STACK (X86_KERNEL_INIT_STACK)
 // Location where we store intial boot information useful for the kernel.
@@ -21,7 +23,12 @@
 #define EARLY_PUD_KERNEL_ELF (KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_KERNEL_ELF)
 
 struct early_boot_info; // To avoid circular declaration.
-void sort_e820(struct early_boot_info *info);
-void merge_e820(struct early_boot_info *info);
 
-void early_meminit(void);
+void sort_e820(struct early_boot_info *info);
+// Assumes e820 entries sorted.
+void merge_e820(struct early_boot_info *info);
+// Assumes e820 entries merged.
+uint64_t get_total_ram(struct early_boot_info *info);
+
+// Returns total RAM in bytes.
+uint64_t early_meminit(void);

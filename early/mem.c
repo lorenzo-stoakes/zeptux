@@ -81,7 +81,23 @@ void merge_e820(struct early_boot_info *info)
 	info->num_e820_entries = curr_index + 1;
 }
 
-void early_meminit(void)
+// Extract the total available memory in bytes.
+uint64_t get_total_ram(struct early_boot_info *info)
+{
+	uint64_t ret = 0;
+
+	for (int i = 0; i < (int)info->num_e820_entries; i++) {
+		struct e820_entry *entry = &info->e820_entries[i];
+
+		if (entry->type == E820_TYPE_RAM)
+			ret += entry->size;
+	}
+
+	return ret;
+}
+
+// Performs early memory intialisation, returns total RAM in bytes.
+uint64_t early_meminit(void)
 {
 	struct early_boot_info *info = boot_info();
 
@@ -89,6 +105,9 @@ void early_meminit(void)
 	sort_e820(info);
 	merge_e820(info);
 
-	// 2. Determine available free memory
+	uint64_t total_ram_bytes = get_total_ram(info);
+
 	// 3. Initialise physical memblock
+
+	return total_ram_bytes;
 }

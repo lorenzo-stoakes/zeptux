@@ -171,6 +171,34 @@ static const char *assert_e820_merged(struct early_boot_info *info)
 	return NULL;
 }
 
+static const char *assert_correct_total_ram(struct early_boot_info *info)
+{
+	info->num_e820_entries = 4;
+
+	// This assumes e820 entries are merged so only thing to test are that
+	// we correct sum RAM entries only.
+
+	info->e820_entries[0].base = 0;
+	info->e820_entries[0].size = 100;
+	info->e820_entries[0].type = E820_TYPE_RAM;
+
+	info->e820_entries[1].base = 1000;
+	info->e820_entries[1].size = 12345;
+	info->e820_entries[1].type = E820_TYPE_RESERVED;
+
+	info->e820_entries[2].base = 2000;
+	info->e820_entries[2].size = 999;
+	info->e820_entries[2].type = E820_TYPE_RAM;
+
+	info->e820_entries[3].base = 50000;
+	info->e820_entries[3].size = 1;
+	info->e820_entries[3].type = E820_TYPE_RAM;
+
+	assert(get_total_ram(info) == 1100, "total ram != 1100");
+
+	return NULL;
+}
+
 const char *test_mem(void)
 {
 	uint8_t buf[BUF_SIZE] = {0};
@@ -182,6 +210,11 @@ const char *test_mem(void)
 
 	memset(buf, 0, BUF_SIZE);
 	ret = assert_e820_merged(info);
+	if (ret != NULL)
+		return ret;
+
+	memset(buf, 0, BUF_SIZE);
+	ret = assert_correct_total_ram(info);
 
 	return ret;
 }
