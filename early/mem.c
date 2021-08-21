@@ -13,6 +13,7 @@ static bool less(struct e820_entry *a, struct e820_entry *b)
 	return a->base < b->base || (a->base == b->base && a->size < b->size);
 }
 
+// Sort e820 entries inline.
 void sort_e820(struct early_boot_info *info)
 {
 	// Insertion sort.
@@ -28,6 +29,7 @@ void sort_e820(struct early_boot_info *info)
 	}
 }
 
+// Merge overlapping, coincidental and adjacent e820 blocks of equal type.
 void merge_e820(struct early_boot_info *info)
 {
 	// Note that we assume that all zero-size entries have been pruned out
