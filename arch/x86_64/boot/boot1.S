@@ -10,6 +10,9 @@
 #include "bootsector.h"
 
 start:
+	// Normalise CS.
+	ljmp $0, $start16
+start16:
 	/*
 	 * We can't handle being interrupted and the registers might be in an
 	 * invalid state at the outside, so clear them all.
