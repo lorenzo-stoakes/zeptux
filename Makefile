@@ -7,8 +7,8 @@ ELF_SIZE_OFFSET=2556
 # and 512 bytes for sector rounding up on boot.
 MAX_KERNEL_ELF_SIZE=473088
 
-BOOT_CFLAGS=--std=gnu2x -fno-pic -fno-pie -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -D__ZEPTUX_KERNEL
-CFLAGS=$(BOOT_CFLAGS) -O2 -g -fno-omit-frame-pointer -mcmodel=large -Wno-stringop-overflow
+BOOT_CFLAGS=--std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx  -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
+CFLAGS=$(BOOT_CFLAGS) -O2 -g
 INCLUDES=-I. -Iinclude/
 HEADERS=include/*.h include/mm/*.h
 BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
