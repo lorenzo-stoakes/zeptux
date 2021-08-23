@@ -1,5 +1,6 @@
 #pragma once
 
+#include "page.h"
 #include "types.h"
 
 // Initial kernel stack location.
