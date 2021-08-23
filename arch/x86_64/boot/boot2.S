@@ -31,12 +31,10 @@ get_e820:
 	movl $X86_E820_MAGIC_NUMBER, %edx // Magic number == "SMAP".
 	movl $20, %ecx 	// We don't care about the ACPI extended bits.
 
-	// We store the target address in ES:DI. Offset by 10 bytes to locate
-	// the first entry in the array.
+	// We store the target address in ES:DI.
 	xorw %ax, %ax
 	movw %ax, %es
-	movw $X86_EARLY_BOOT_INFO_ADDRESS_PHYS, %di
-	addw $10, %di
+	movw $X86_EARLY_BOOT_INFO_E820_ENTRY_ARRAY_ADDRESS_PHYS, %di
 
 	movl $0xe820, %eax
 	int $0x15
@@ -73,7 +71,7 @@ get_e820.skip:
 	testl %ebx, %ebx
 	jnz get_e820.loop
 get_e820.done:
-	movw %bp, X86_EARLY_BOOT_INFO_ADDRESS_PHYS + 8 // Store entry count.
+	movw %bp, X86_EARLY_BOOT_INFO_E820_ENTRY_COUNT_ADDRESS_PHYS // Store entry count.
 	// Restore clobbered regs and clear ES.
 	xorl %eax, %eax
 	xorl %ebx, %ebx
