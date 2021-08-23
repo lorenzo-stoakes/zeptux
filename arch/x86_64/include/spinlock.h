@@ -7,11 +7,8 @@
 
 // Implementation heavily inspired by https://rigtorp.se/spinlock/
 
-// Represents a spinlock object. Use a struct wrapper as a cheap form of C type
-// safety.
-typedef struct {
-	atomic_t x;
-} spinlock_t;
+// Represents a spinlock object.
+TYPE_WRAP(spinlock_t, atomic_t);
 
 // Simple mechanism for assigning an empty unlocked spinlock.
 static inline spinlock_t empty_spinlock(void)

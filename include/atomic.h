@@ -1,13 +1,11 @@
 #pragma once
 
 #include "compiler.h"
+#include "macros.h"
 #include "types.h"
 
-// Represents an atomic value. Use a struct wrapper as a cheap form of C type
-// safety.
-typedef struct {
-	uint32_t x;
-} atomic_t;
+// Represents an atomic value.
+TYPE_WRAP(atomic_t, uint32_t);
 
 // Wrappers around built-in atomic functions. These use the C++ memory model
 // concepts e.g. 'relaxed', 'acquire', 'release' etc.

@@ -4,6 +4,9 @@
 #include <sstream>
 #include <string>
 
+// To prevent duplicate definition in zeptux headers and standard imports.
+#undef NULL
+
 // Duplicated from macros.h but userland tests can't import that so appears
 // necessary.
 #define STRINGIFY(_x) STRINGIFY2(_x)

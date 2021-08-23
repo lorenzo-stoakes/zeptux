@@ -20,3 +20,9 @@
 // Helpful bitmask macros.
 #define BIT_MASK(_bit) (1UL << _bit)
 #define IS_SET(_val, _bit) !!((_val & BIT_MASK(_bit)) == BIT_MASK(_bit))
+
+// Wrap a type in a struct to establish some kind of rudimentary C type safety.
+#define TYPE_WRAP(_name, _type) \
+	typedef struct {        \
+		_type x;        \
+	} _name
