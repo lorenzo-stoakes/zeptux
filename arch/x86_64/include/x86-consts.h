@@ -26,10 +26,16 @@
 #define X86_GDTE_ACCESS_RW (1UL << 1)
 #define X86_GDTE_ACCESS_ACCESSED (1UL << 0)
 
-// Control register flags
+// Control register flags - see Intel Volume 3A, part 1, figure 2-7.
 #define X86_CR0_PROTECTED_MODE (1UL << 0)
 #define X86_CR0_PAGED_MODE (1UL << 31)
+// Enables PAE extensions, required to enter long mode.
 #define X86_CR4_PAE (1UL << 5)
+// Enables global page mappings which are not cleared between new PGDs being
+// loaded into CR3.
+#define X86_CR4_PGE (1UL << 7)
+// We want to set both
+#define X86_CR4_INIT_FLAGS (X86_CR4_PAE | X86_CR4_PGE)
 
 #define X86_MFR_EFER (0xc0000080UL)
 

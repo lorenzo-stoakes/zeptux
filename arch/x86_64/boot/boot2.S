@@ -247,13 +247,14 @@ start32:
 	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), X86_EARLY_PUD_DIRECT_MAP
 	movl $(X86_PAGE_FLAG_KERNEL | X86_PUD_FLAG_1GIB_PAGE_SIZE | 0), X86_EARLY_PUD_KERNEL_ELF
 
-	// Assign PGT to CR3.
+	// Assign PGD to CR3.
 	movl $X86_EARLY_PGD, %edi
 	movl %edi, %cr3
 
-	// Enable PAE.
+	// Enable PAE addressing (requied for long mode) and the ability to set
+	// the global page table flag.
 	movl %cr4, %eax
-	orl $X86_CR4_PAE, %eax
+	orl $X86_CR4_INIT_FLAGS, %eax
 	movl %eax, %cr4
 
 	// Enable long mode.
