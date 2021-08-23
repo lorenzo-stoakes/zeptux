@@ -53,7 +53,7 @@ struct e820_entry {
 // booted.
 struct early_boot_info {
 	uint64_t kernel_elf_size_bytes;
-	uint16_t num_e820_entries;
+	uint64_t num_e820_entries;
 	struct e820_entry e820_entries[0];
 } PACKED;
 
