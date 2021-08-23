@@ -34,7 +34,7 @@ static void prelude(uint64_t total_ram_bytes)
 	char buf[10];
 	early_printf("\n%56s\n",
 		     bytes_to_human(total_size, buf, ARRAY_COUNT(buf)));
-	early_printf("total free RAM: %s (%lu bytes)\n",
+	early_printf("\ntotal available RAM: %s (%lu bytes)\n",
 		     bytes_to_human(total_ram_bytes, buf, sizeof(buf)),
 		     total_ram_bytes);
 }
