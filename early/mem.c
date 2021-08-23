@@ -96,15 +96,12 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 	return ret;
 }
 
-uint64_t early_mem_init(void)
+void early_mem_init(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
 
 	drop_direct0();
 	early_sort_e820(info);
 	early_merge_e820(info);
-
-	uint64_t total_ram_bytes = early_get_total_ram(info);
-
-	return total_ram_bytes;
+	info->total_avail_ram_bytes = early_get_total_ram(info);
 }
