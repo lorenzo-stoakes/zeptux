@@ -14,7 +14,7 @@
 #define NUM_READER_THREADS (100)
 #define NUM_WRITER_THREADS (100)
 
-#define DURATION_SECS (5)
+#define DURATION_MS (500)
 
 #define BUF_SIZE (1000)
 
@@ -93,7 +93,7 @@ std::string test_spinlock()
 {
 	std::cout << "test_spinlock: starting run across " << NUM_READER_THREADS
 		  << " readers and " << NUM_WRITER_THREADS << " writers for "
-		  << DURATION_SECS << "s (buffer size " << BUF_SIZE << " bytes)"
+		  << DURATION_MS << "ms (buffer size " << BUF_SIZE << " bytes)"
 		  << std::endl;
 
 	std::vector<std::thread> writer_threads;
@@ -121,7 +121,7 @@ std::string test_spinlock()
 		});
 	}
 
-	std::this_thread::sleep_for(std::chrono::seconds(DURATION_SECS));
+	std::this_thread::sleep_for(std::chrono::milliseconds(DURATION_MS));
 
 	set_stop();
 	for (auto &r : reader_threads) {
