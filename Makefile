@@ -86,7 +86,7 @@ test-early.img: boot.bin test-early.elf
 	dd if=test-early.elf of=test-early.img seek=5 conv=notrunc 2>/dev/null
 
 clean:
-	rm -f *.o *.img *.bin *.elf
+	rm -f *.o *.img *.bin *.elf test_user
 
 qemu: zeptux.img
 	qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=zeptux.img,format=raw
