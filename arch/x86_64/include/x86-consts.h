@@ -35,7 +35,7 @@
 
 #define X86_MFR_EFER_LME (1UL << 8) // Enable long mode.
 
-// Page table constants
+// Page table constants:
 
 #define X86_PAGE_FLAG_PRESENT_BIT (0)
 #define X86_PAGE_FLAG_RW_BIT (1)
@@ -113,6 +113,8 @@
 #define X86_EARLY_BOOT_INFO_ADDRESS \
 	(X86_KERNEL_DIRECT_MAP_BASE + X86_EARLY_BOOT_INFO_ADDRESS_PHYS)
 
+// The magic number used by E820 BIOS operations to assert that you want to
+// write E820 entries to memory.
 #define X86_E820_MAGIC_NUMBER (0x534d4150)
 
 // Offset into physical memory where we can output video characters to be

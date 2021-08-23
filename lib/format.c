@@ -125,10 +125,6 @@ static void _vsnprintf_int64(struct vsnprintf_state *state, int64_t val,
 	_vsnprintf_uint64(state, un, format);
 }
 
-// Output at most `n` bytes to buffer `buf` (which will be of at most `n - 1` in
-// STRING length) using variable list ap for arguments. We append a null
-// terminator. Returns the number of characters that would have been written had
-// `n` been sufficiently large.
 int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 {
 	if (n == 0)
@@ -241,9 +237,6 @@ out:
 	return (int)state.count;
 }
 
-// Output at most `n` bytes to buffer `buf` (which will be of at most `n - 1` in
-// STRING length). We append a null terminator. Returns the number of characters
-// that would have been written had `n` been sufficiently large.
 int snprintf(char *buf, size_t n, const char *fmt, ...)
 {
 	va_list list;

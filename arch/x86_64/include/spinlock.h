@@ -19,6 +19,7 @@ static inline spinlock_t empty_spinlock(void)
 	return (spinlock_t){0};
 }
 
+// Acquire a spinlock.
 static inline void spinlock_acquire(spinlock_t *lock)
 {
 	while (true) {
@@ -36,6 +37,7 @@ static inline void spinlock_acquire(spinlock_t *lock)
 	}
 }
 
+// Release a spinlock.
 static inline void spinlock_release(spinlock_t *lock)
 {
 	atomic_store_release(&lock->x, 0);

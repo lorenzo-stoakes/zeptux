@@ -24,11 +24,13 @@
 
 struct early_boot_info; // To avoid circular declaration.
 
+// Sort e820 entries inline.
 void early_sort_e820(struct early_boot_info *info);
-// Assumes e820 entries sorted.
+// Merge overlapping, coincidental and adjacent e820 blocks of equal type.
+// IMPORTANT: Assumes e820 entries have been sorted.
 void early_merge_e820(struct early_boot_info *info);
-// Assumes e820 entries merged.
+// Extract the total available memory in bytes.
+// IMPORTANT: Assumes e820 entries have been merged.
 uint64_t early_get_total_ram(struct early_boot_info *info);
-
-// Returns total RAM in bytes.
+// Performs early memory intialisation, returning total available RAM in bytes.
 uint64_t early_meminit(void);

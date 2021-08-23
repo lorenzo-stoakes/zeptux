@@ -1,5 +1,7 @@
 #pragma once
 
+// General convenience header for zeptux kernel functionality.
+
 #include "asm.h"
 #include "elf.h"
 #include "macros.h"

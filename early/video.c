@@ -82,8 +82,6 @@ static void puttab(void)
 	}
 }
 
-// Clear the area of memory we have assigned to the video buffer which we will
-// be copying to video memory.
 void early_video_init(void)
 {
 	char *buf = (char *)EARLY_VIDEO_BUFFER_ADDRESS;
@@ -91,7 +89,6 @@ void early_video_init(void)
 	memset(buf, 0, BUFFER_SIZE);
 }
 
-// Put string to video buffer as best we can.
 void early_video_puts(const char *str)
 {
 	if (str == NULL)

@@ -20,13 +20,19 @@
 #define GDTE_TEMPLATE_ENTRY \
 	(0b0000000000001111000000000000000000000000000000001111111111111111ULL)
 
+// Generate GDTE based on the template above.
 #define MAKE_GDTE(_flag, _access) \
 	(GDTE_TEMPLATE_ENTRY | ((_flag) << 52) | ((_access) << 40))
 
+// We define the indexes of our GDTEs (base-1) according to how we use them,
+// which are treated like 'segments' in long jumps in protected/long mode.
 #define GDT_SEGMENT_CODE32_INDEX (1)
 #define GDT_SEGMENT_CODE64_INDEX (2)
 #define GDT_SEGMENT_DATA_INDEX (3)
 
+// When we reference the GDT we are using on long jump we have to specify it as
+// a byte offset. We are using base-1 as 'segment' 0 cannot be selected, and we
+// will have specified a zero GDTE which we skip over.
 #define GDT_SEGMENT_CODE32 (GDT_SEGMENT_CODE32_INDEX * 8)
 #define GDT_SEGMENT_CODE64 (GDT_SEGMENT_CODE64_INDEX * 8)
 #define GDT_SEGMENT_DATA (GDT_SEGMENT_DATA_INDEX * 8)

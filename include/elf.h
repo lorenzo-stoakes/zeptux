@@ -8,6 +8,7 @@
 // 0x7f followed by 'ELF' in ASCII. Little endian so in reverse.
 #define ELF_MAGIC_NUMBER (0x464c457fUL)
 
+// Represents the 'program' type.
 enum elf_pt_type {
 	ELF_PT_NULL = 0,
 	ELF_PT_LOAD = 1,
@@ -19,6 +20,7 @@ enum elf_pt_type {
 	ELF_PT_TLS = 7,
 };
 
+// Represents the section header type.
 enum elf_sh_type {
 	ELF_SHT_NULL = 0,
 	ELF_SHT_PROGBITS = 1,
@@ -40,6 +42,7 @@ enum elf_sh_type {
 	ELF_SHT_NUM = 19,
 };
 
+// Directly maps to initial ELF header.
 struct elf_header {
 	uint32_t magic;	       // Must = ELF_MAGIC_NUMBER.
 	uint8_t ident_class;   // 1 = 32-bit, 2 = 64-bit.
@@ -65,6 +68,7 @@ struct elf_header {
 } PACKED;
 static_assert(sizeof(struct elf_header) == 64);
 
+// Directly maps to ELF 'program' headers.
 struct elf_program_header {
 	uint32_t type;	 // Program header type.
 	uint32_t flags;	 // Segment-dependent flags.
@@ -78,6 +82,7 @@ struct elf_program_header {
 } PACKED;
 static_assert(sizeof(struct elf_program_header) == 56);
 
+// Directly maps to ELF section headers.
 struct elf_section_header {
 	uint32_t name;	    // Offset in .shstrtab to name of section.
 	uint32_t type;	    // Type of header.

@@ -8,15 +8,17 @@ static void drop_direct0(void)
 	global_flush_tlb();
 }
 
+// Compare 2 e820 entries and determine which one is 'less' than the other. If
+// the bases are equal we tie-break on size.
 static bool less(struct e820_entry *a, struct e820_entry *b)
 {
 	return a->base < b->base || (a->base == b->base && a->size < b->size);
 }
 
-// Sort e820 entries inline.
 void early_sort_e820(struct early_boot_info *info)
 {
-	// Insertion sort.
+	// Insertion sort both because n is small and it's highly likely this
+	// will already be sorted which would make this O(n).
 	for (int i = 1; i < (int)info->num_e820_entries; i++) {
 		struct e820_entry key = info->e820_entries[i];
 
@@ -29,8 +31,6 @@ void early_sort_e820(struct early_boot_info *info)
 	}
 }
 
-// Merge overlapping, coincidental and adjacent e820 blocks of equal type.
-// IMPORTANT: Assumes e820 entries have been sorted.
 void early_merge_e820(struct early_boot_info *info)
 {
 	// Note that we assume that all zero-size entries have been pruned out
@@ -82,8 +82,6 @@ void early_merge_e820(struct early_boot_info *info)
 	info->num_e820_entries = curr_index + 1;
 }
 
-// Extract the total available memory in bytes.
-// IMPORTANT: Assumes e820 entries have been merged.
 uint64_t early_get_total_ram(struct early_boot_info *info)
 {
 	uint64_t ret = 0;
@@ -98,7 +96,6 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 	return ret;
 }
 
-// Performs early memory intialisation, returns total RAM in bytes.
 uint64_t early_meminit(void)
 {
 	struct early_boot_info *info = early_get_boot_info();

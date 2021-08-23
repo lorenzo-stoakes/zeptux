@@ -2,6 +2,7 @@
 
 #include "types.h"
 
+// Input a single byte from the specified port.
 static inline uint8_t inb(uint16_t port)
 {
 	uint8_t val;
@@ -9,16 +10,19 @@ static inline uint8_t inb(uint16_t port)
 	return val;
 }
 
+// Output a single byte to the specfied port.
 static inline void outb(uint16_t port, uint8_t data)
 {
 	asm volatile("outb %0,%1" : : "a"(data), "d"(port));
 }
 
+// Output a single 16-bit 'word' to the specified port.
 static inline void outw(uint16_t port, uint16_t data)
 {
 	asm volatile("outw %0,%1" : : "a"(data), "d"(port));
 }
 
+// Read `count` bytes of data from the specified port.
 static inline void insl(void *ptr, uint16_t port, int count)
 {
 	asm volatile("cld; rep insl"
@@ -27,9 +31,10 @@ static inline void insl(void *ptr, uint16_t port, int count)
 		     : "memory", "cc");
 }
 
-// Hint to the CPU that we're spin-waiting. TODO: x86-64 specific.
+// Hint to the CPU that we're spin-waiting.
 #define hint_spinwait() __builtin_ia32_pause()
 
+// Force a global TLB (Translation Lookahead Buffer) flush by reloading the PGD.
 static inline void global_flush_tlb(void)
 {
 	asm volatile("movq %%cr3, %%rax; movq %%rax, %%cr3"

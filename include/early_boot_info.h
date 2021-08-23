@@ -17,6 +17,7 @@ enum e820_type {
 	E820_TYPE_PERSISTENT = 7,
 };
 
+// Convert an e820 entry type to string for debug output.
 static inline const char *e820_type_to_string(enum e820_type type)
 {
 	switch (type) {
@@ -46,12 +47,17 @@ struct e820_entry {
 	uint32_t type;
 } PACKED;
 
+// Represents system information we can only obtain on boot in real mode or
+// externally (in the case of kernel ELF bytes). This data structure is stored
+// at a specific known location in memory which the kernel can access once
+// booted.
 struct early_boot_info {
 	uint64_t kernel_elf_size_bytes;
 	uint16_t num_e820_entries;
 	struct e820_entry e820_entries[0];
 } PACKED;
 
+// Obtains the early boot information structure via the direct mapping.
 static inline struct early_boot_info *early_get_boot_info(void)
 {
 	return (struct early_boot_info *)EARLY_BOOT_INFO_ADDRESS;

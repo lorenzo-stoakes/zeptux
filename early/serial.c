@@ -9,7 +9,8 @@
 #define MODE_8N1 (3)
 #define LSR_THR (0x20)
 
-static bool is_transmit_empty()
+// Are we ready to output a character?
+static bool can_output_char()
 {
 	return inb(COM1 + 5) & LSR_THR;
 }
@@ -35,7 +36,7 @@ void early_serial_init_poll(void)
 
 void early_serial_putc(char chr)
 {
-	while (!is_transmit_empty())
+	while (!can_output_char())
 		;
 
 	outb(COM1, (uint8_t)chr);

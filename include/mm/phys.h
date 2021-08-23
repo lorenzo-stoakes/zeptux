@@ -4,6 +4,8 @@
 #include "spinlock.h"
 #include "types.h"
 
+// Represents the state of the physical memory block. Multiple flags can be
+// assigned at the same time.
 enum phys_flag {
 	PHYS_ALLOCATED_BIT = 0,
 	PHYS_PINNED_BIT = 1,
