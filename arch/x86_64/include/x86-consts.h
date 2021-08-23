@@ -138,3 +138,7 @@
 
 // The default page size for x86-64 is 4 KiB.
 #define X86_PAGE_SHIFT (12)
+
+#define X86_PMD_SHIFT (21)
+#define X86_PUD_SHIFT (30)
+#define X86_PGD_SHIFT (39)
