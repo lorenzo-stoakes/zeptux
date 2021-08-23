@@ -9,7 +9,7 @@ MAX_KERNEL_ELF_SIZE=473088
 
 BOOT_CFLAGS=--std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
 CFLAGS=$(BOOT_CFLAGS) -O2 -g
-INCLUDES=-I. -Iinclude/
+INCLUDES=-I. -Iinclude/ -Iarch/x86_64/include
 HEADERS=include/*.h include/mm/*.h
 BOOTSECTOR_HEADERS=$(HEADERS) arch/x86_64/include/*.h
 TEST_EARLY_HEADERS=test/include/test_helpers.h test/include/test_early.h
@@ -41,7 +41,7 @@ boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS) $(ADDITIONAL_SOURCES)
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o
 	objcopy --remove-section .note.gnu.property boot2.o
-	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -Iarch/x86_64/include -o loader.o
+	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -I -o loader.o
 	objcopy --only-section=.text loader.o
 
 	ld -T arch/x86_64/boot/boot1.ld -o boot1.bin boot1.o
