@@ -258,7 +258,7 @@ static struct elf_header *load_ata_pio(void)
 	if (!load2(buf, &state))
 		return NULL;
 
-	boot_info()->kernel_elf_size_bytes = state.bytes_loaded;
+	early_get_boot_info()->kernel_elf_size_bytes = state.bytes_loaded;
 
 	return state.header;
 }
@@ -273,7 +273,7 @@ static struct elf_header *copy_kernel_elf_image(void)
 {
 	memcpy((void *)KERNEL_ELF_ADDRESS,
 	       (void *)BIOS_KERNEL_ELF_LOAD_PHYS_ADDRESS,
-	       boot_info()->kernel_elf_size_bytes);
+	       early_get_boot_info()->kernel_elf_size_bytes);
 
 	return (struct elf_header *)KERNEL_ELF_ADDRESS;
 }

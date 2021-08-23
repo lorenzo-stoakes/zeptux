@@ -14,7 +14,7 @@ static bool less(struct e820_entry *a, struct e820_entry *b)
 }
 
 // Sort e820 entries inline.
-void sort_e820(struct early_boot_info *info)
+void early_sort_e820(struct early_boot_info *info)
 {
 	// Insertion sort.
 	for (int i = 1; i < (int)info->num_e820_entries; i++) {
@@ -31,7 +31,7 @@ void sort_e820(struct early_boot_info *info)
 
 // Merge overlapping, coincidental and adjacent e820 blocks of equal type.
 // IMPORTANT: Assumes e820 entries have been sorted.
-void merge_e820(struct early_boot_info *info)
+void early_merge_e820(struct early_boot_info *info)
 {
 	// Note that we assume that all zero-size entries have been pruned out
 	// by the boot code AND that the entries have been sorted.
@@ -84,7 +84,7 @@ void merge_e820(struct early_boot_info *info)
 
 // Extract the total available memory in bytes.
 // IMPORTANT: Assumes e820 entries have been merged.
-uint64_t get_total_ram(struct early_boot_info *info)
+uint64_t early_get_total_ram(struct early_boot_info *info)
 {
 	uint64_t ret = 0;
 
@@ -101,13 +101,13 @@ uint64_t get_total_ram(struct early_boot_info *info)
 // Performs early memory intialisation, returns total RAM in bytes.
 uint64_t early_meminit(void)
 {
-	struct early_boot_info *info = boot_info();
+	struct early_boot_info *info = early_get_boot_info();
 
 	drop_direct0();
-	sort_e820(info);
-	merge_e820(info);
+	early_sort_e820(info);
+	early_merge_e820(info);
 
-	uint64_t total_ram_bytes = get_total_ram(info);
+	uint64_t total_ram_bytes = early_get_total_ram(info);
 
 	// 3. Initialise physical memblock
 

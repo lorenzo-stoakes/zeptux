@@ -52,7 +52,7 @@ struct early_boot_info {
 	struct e820_entry e820_entries[0];
 } PACKED;
 
-static inline struct early_boot_info *boot_info()
+static inline struct early_boot_info *early_get_boot_info(void)
 {
 	return (struct early_boot_info *)EARLY_BOOT_INFO_ADDRESS;
 }

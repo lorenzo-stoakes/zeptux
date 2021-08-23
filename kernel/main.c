@@ -8,16 +8,17 @@ static void prelude(uint64_t total_ram_bytes)
 	early_printf("-- zeptux %u.%u.%u --\n", zeptux_ver.maj, zeptux_ver.min,
 		     zeptux_ver.rev);
 	early_printf("kernel ELF size = %lu\n",
-		     boot_info()->kernel_elf_size_bytes);
+		     early_get_boot_info()->kernel_elf_size_bytes);
 
 	// Dump raw E820 memory structure.
 
-	uint16_t count = boot_info()->num_e820_entries;
+	uint16_t count = early_get_boot_info()->num_e820_entries;
 	early_printf("\ne820 entries (%u):\n", count);
 
 	uint64_t total_size = 0;
 	for (uint64_t i = 0; i < count; i++) {
-		struct e820_entry *entry = &boot_info()->e820_entries[i];
+		struct e820_entry *entry =
+			&early_get_boot_info()->e820_entries[i];
 		uint64_t from = entry->base;
 		uint64_t size = entry->size;
 		uint64_t to = from + size;

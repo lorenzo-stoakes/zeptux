@@ -20,7 +20,7 @@ static const char *assert_e820_sorted(struct early_boot_info *info)
 	info->e820_entries[3].base = 501;
 	info->e820_entries[3].size = 10;
 
-	sort_e820(info);
+	early_sort_e820(info);
 
 	assert(info->e820_entries[0].base == 500, "unsorted");
 	assert(info->e820_entries[0].size == 10, "unsorted");
@@ -38,7 +38,7 @@ static const char *assert_e820_sorted(struct early_boot_info *info)
 		info->e820_entries[i].size = 10;
 	}
 
-	sort_e820(info);
+	early_sort_e820(info);
 
 	for (int i = 0; i < MAX_NUM_E820_ENTRIES; i++) {
 		if (info->e820_entries[i].base != (uint64_t)i + 1) {
@@ -112,7 +112,7 @@ static const char *assert_e820_merged(struct early_boot_info *info)
 	// As memory is zeroed, all will have the same type == 0.
 
 	setup_merge_entries(info);
-	merge_e820(info);
+	early_merge_e820(info);
 
 	// We should end up with:
 	// 0 - 9; 11 - 21; 30 - 51; 55 - 66;
@@ -139,7 +139,7 @@ static const char *assert_e820_merged(struct early_boot_info *info)
 	setup_merge_entries(info);
 	info->e820_entries[8].type = E820_TYPE_RESERVED;
 
-	merge_e820(info);
+	early_merge_e820(info);
 
 	// We should end up with:
 	// 0 - 9; 11 - 21; 30 - 51; 55 - 58; [RAM] 59 - 63; [0] 64 - 66
@@ -194,7 +194,7 @@ static const char *assert_correct_total_ram(struct early_boot_info *info)
 	info->e820_entries[3].size = 1;
 	info->e820_entries[3].type = E820_TYPE_RAM;
 
-	assert(get_total_ram(info) == 1100, "total ram != 1100");
+	assert(early_get_total_ram(info) == 1100, "total ram != 1100");
 
 	return NULL;
 }

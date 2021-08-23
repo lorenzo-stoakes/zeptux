@@ -29,7 +29,7 @@ static inline int early_puts(const char *str)
 	return early_printf("%s\n", str);
 }
 
-static inline void panic(const char *why)
+static inline void early_panic(const char *why)
 {
 	early_printf("panic: %s\n", why);
 	while (true)
