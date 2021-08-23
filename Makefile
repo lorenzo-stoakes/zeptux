@@ -41,7 +41,7 @@ boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS) $(ADDITIONAL_SOURCES)
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o
 	objcopy --remove-section .note.gnu.property boot2.o
-	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -I -o loader.o
+	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -o loader.o
 	objcopy --only-section=.text loader.o
 
 	ld -T arch/x86_64/boot/boot1.ld -o boot1.bin boot1.o
@@ -98,7 +98,7 @@ test-early: test-early.img
 	@qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
 
 test-user: $(TEST_USER_FILES) $(BOOTSECTOR_HEADERS) $(TEST_USER_HEADERS) Makefile
-	@g++ -Wall -Werror --std=c++2a -g -lpthread -Iinclude -Iarch/x86-64/include -Itest/include $(TEST_USER_CFILES) -o test_user
+	@g++ -Wall -Werror --std=c++2a -g -lpthread $(INCLUDES) -Itest/include $(TEST_USER_CFILES) -o test_user
 	@./test_user
 
 test: test-early test-user
