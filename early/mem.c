@@ -96,7 +96,7 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 	return ret;
 }
 
-uint64_t early_meminit(void)
+uint64_t early_mem_init(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
 
@@ -105,8 +105,6 @@ uint64_t early_meminit(void)
 	early_merge_e820(info);
 
 	uint64_t total_ram_bytes = early_get_total_ram(info);
-
-	// 3. Initialise physical memblock
 
 	return total_ram_bytes;
 }

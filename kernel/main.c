@@ -42,7 +42,7 @@ static void prelude(uint64_t total_ram_bytes)
 void main(void)
 {
 	early_init();
-	uint64_t total_ram_bytes = early_meminit();
+	uint64_t total_ram_bytes = early_mem_init();
 
 	prelude(total_ram_bytes);
 

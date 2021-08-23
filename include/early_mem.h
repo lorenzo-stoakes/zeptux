@@ -33,4 +33,4 @@ void early_merge_e820(struct early_boot_info *info);
 // IMPORTANT: Assumes e820 entries have been merged.
 uint64_t early_get_total_ram(struct early_boot_info *info);
 // Performs early memory intialisation, returning total available RAM in bytes.
-uint64_t early_meminit(void);
+uint64_t early_mem_init(void);
