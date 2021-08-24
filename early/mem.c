@@ -1,5 +1,9 @@
 #include "zeptux_early.h"
 
+// Stores scratch allocator state. We will only access this single-threaded so
+// it's ok to keep this static.
+static struct scratch_alloc_state scratch_state;
+
 // Drop the direct mapping from VA 0 / PA 0. We don't need it any more.
 static void drop_direct0(void)
 {
@@ -13,6 +17,18 @@ static void drop_direct0(void)
 static bool less(struct e820_entry *a, struct e820_entry *b)
 {
 	return a->base < b->base || (a->base == b->base && a->size < b->size);
+}
+
+// Initialise the early scratch allocator, using pages placed immediately after
+// the ELF. These pages will _not_ be kept later.
+static void early_scratch_alloc_init(struct early_boot_info *info)
+{
+	// We place the scratch buffer immediately after the ELF...
+	uint64_t offset = KERNEL_ELF_ADDRESS_PHYS + info->kernel_elf_size_bytes;
+	// ...page aligned.
+	physaddr_t addr = {ALIGN_UP(offset, 0x1000)};
+	scratch_state.start = addr;
+	scratch_state.pages = 0;
 }
 
 void early_sort_e820(struct early_boot_info *info)
@@ -104,4 +120,23 @@ void early_mem_init(void)
 	early_sort_e820(info);
 	early_merge_e820(info);
 	info->total_avail_ram_bytes = early_get_total_ram(info);
+	early_scratch_alloc_init(info);
+}
+
+struct scratch_alloc_state *early_scratch_alloc_state(void)
+{
+	return &scratch_state;
+}
+
+physaddr_t early_scratch_page_alloc(void)
+{
+	// About as simplistic as it gets.
+	physaddr_t addr = {scratch_state.start.x +
+			   0x1000 * scratch_state.pages++};
+
+	// Zero the page.
+	uint8_t *ptr = phys_to_virt_ptr(addr);
+	memset(ptr, 0, 0x1000);
+
+	return addr;
 }

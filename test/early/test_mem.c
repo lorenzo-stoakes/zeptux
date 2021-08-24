@@ -218,13 +218,39 @@ const char *assert_correct_virtaddr(void)
 	// Data page offset.
 	offset |= 1234;
 
-	virtaddr_t va = { offset };
+	virtaddr_t va = {offset};
 
 	assert(virt_data_offset(va) == 1234, "data offset != 1234");
 	assert(virt_ptde_index(va) == 0xef, "ptde index != 0xef");
 	assert(virt_pmde_index(va) == 0xbe, "pmde index != 0xbe");
 	assert(virt_pude_index(va) == 0xad, "pude index != 0xad");
 	assert(virt_pgde_index(va) == 0xde, "pgde index != 0xde");
+
+	return NULL;
+}
+
+const char *assert_correct_scratch_alloc(void)
+{
+	struct scratch_alloc_state *state = early_scratch_alloc_state();
+	struct early_boot_info *info = early_get_boot_info();
+
+	assert(state->pages == 0, "init scratch pages != 0");
+	uint64_t offset = state->start.x - KERNEL_ELF_ADDRESS_PHYS;
+	assert(offset == ALIGN_UP(info->kernel_elf_size_bytes, 0x1000),
+	       "offset from kernel ELF PA != page-aligned kernel ELF size");
+
+	for (int i = 0; i < 10; i++) {
+		physaddr_t pa = early_scratch_page_alloc();
+		assert(state->pages == (uint64_t)(i + 1), "Scratch page count incorrect");
+
+		uint8_t *ptr = phys_to_virt_ptr(pa);
+		for (int j = 0; j < 0x1000; j++) {
+			if (ptr[j] != 0) {
+				early_printf("test_mem: non-zeroed page at %d (alloc %d)\n", j, i);
+				assert(false, "non-zeroed scratch page");
+			}
+		}
+	}
 
 	return NULL;
 }
@@ -249,6 +275,10 @@ const char *test_mem(void)
 		return ret;
 
 	ret = assert_correct_virtaddr();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_correct_scratch_alloc();
 	if (ret != NULL)
 		return ret;
 

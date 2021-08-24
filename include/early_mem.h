@@ -25,6 +25,17 @@
 
 struct early_boot_info; // To avoid circular declaration.
 
+// The scratch allocator is our super-early allocator. Nothing from this
+// allocated is kept when we move to our full-fat buddy allocator and its
+// primary purpose is to hold state for our early allocator.
+//
+// We simply allocate pages from the page-aligned end of the ELF image in memory
+// as nothing else will be using this memory at this stage.
+struct scratch_alloc_state {
+	physaddr_t start;
+	uint64_t pages;
+};
+
 // Sort e820 entries inline.
 void early_sort_e820(struct early_boot_info *info);
 // Merge overlapping, coincidental and adjacent e820 blocks of equal type.
@@ -33,6 +44,11 @@ void early_merge_e820(struct early_boot_info *info);
 // Extract the total available memory in bytes.
 // IMPORTANT: Assumes e820 entries have been merged.
 uint64_t early_get_total_ram(struct early_boot_info *info);
+
+// Retrieve scratch allocator state.
+struct scratch_alloc_state *early_scratch_alloc_state(void);
+// Allocate single, zeroed, page from scratch allocator.
+physaddr_t early_scratch_page_alloc(void);
 
 // Performs early memory intialisation.
 void early_mem_init(void);
