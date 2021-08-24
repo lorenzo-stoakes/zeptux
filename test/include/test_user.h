@@ -28,3 +28,6 @@ std::string test_spinlock();
 
 // test_misc.cpp
 std::string test_misc();
+
+// test_bitmap.cpp
+std::string test_bitmap();

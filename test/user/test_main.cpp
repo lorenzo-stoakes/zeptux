@@ -12,6 +12,7 @@ int main()
 	check(test_range());
 	check(test_spinlock());
 	check(test_misc());
+	check(test_bitmap());
 
 	std::cout << "// zeptux USER  test run complete" << std::endl;
 

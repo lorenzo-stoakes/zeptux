@@ -3,6 +3,7 @@
 // General convenience header for zeptux kernel functionality.
 
 #include "asm.h"
+#include "bitmap.h"
 #include "elf.h"
 #include "macros.h"
 #include "mem.h"
