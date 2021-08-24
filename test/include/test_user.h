@@ -25,3 +25,6 @@ std::string test_range();
 
 // test_spinlock.cpp
 std::string test_spinlock();
+
+// test_misc.cpp
+std::string test_misc();

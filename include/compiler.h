@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.h"
+
 // Tell the compiler that we don't want struct padding.
 #define PACKED __attribute__((packed))
 // Tell the compiler that this function is of the printf-ilk and ask that
@@ -23,3 +25,19 @@
 
 // Emits a full memory fence.
 #define memory_fence() __sync_synchronize()
+
+// Hint to the CPU that we're spin-waiting.
+#define hint_spinwait() __builtin_ia32_pause()
+
+// Returns the index of the first set LEAST SIGNIFICANT bit in x, or -1 if 0.
+static inline int64_t find_first_set_bit(uint64_t x)
+{
+	return __builtin_ffsl(x) - 1;
+}
+
+// Returns the index of the first clear LEAST SIGNIFICANT bit in x, or -1 if all
+// bits set.
+static inline int64_t find_first_clear_bit(uint64_t x)
+{
+	return find_first_set_bit(~x);
+}

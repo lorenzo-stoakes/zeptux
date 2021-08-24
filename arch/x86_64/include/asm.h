@@ -32,9 +32,6 @@ static inline void insl(void *ptr, uint16_t port, int count)
 		     : "memory", "cc");
 }
 
-// Hint to the CPU that we're spin-waiting.
-#define hint_spinwait() __builtin_ia32_pause()
-
 // Force a global TLB (Translation Lookahead Buffer) flush by reloading the PGD.
 // Will NOT clear entries marked with the PAGE_GLOBAL flag.
 static inline void global_flush_tlb(void)
