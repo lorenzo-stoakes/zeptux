@@ -20,3 +20,6 @@
 	__atomic_exchange_n(_ptr, _val, __ATOMIC_ACQUIRE)
 #define _atomic_store_release(_ptr, _val) \
 	__atomic_store_n(_ptr, _val, __ATOMIC_RELEASE)
+
+// Emits a full memory fence.
+#define memory_fence() __sync_synchronize()

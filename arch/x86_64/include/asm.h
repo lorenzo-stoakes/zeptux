@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compiler.h"
 #include "types.h"
 
 // Input a single byte from the specified port.
@@ -38,6 +39,7 @@ static inline void insl(void *ptr, uint16_t port, int count)
 // Will NOT clear entries marked with the PAGE_GLOBAL flag.
 static inline void global_flush_tlb(void)
 {
+	memory_fence();
 	asm volatile("movq %%cr3, %%rax; movq %%rax, %%cr3"
 		     :
 		     :
