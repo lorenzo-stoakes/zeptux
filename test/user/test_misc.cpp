@@ -6,8 +6,7 @@
 #include <sstream>
 #include <string>
 
-namespace
-{
+namespace {
 std::string assert_bit_ops_correct()
 {
 	uint64_t x = 0;
@@ -20,7 +19,8 @@ std::string assert_bit_ops_correct()
 		int64_t bit = find_first_set_bit(x);
 		if (bit != i) {
 			std::ostringstream oss;
-			oss << "bit " << i << " set but find_first_set_bit() == " << bit;
+			oss << "bit " << i
+			    << " set but find_first_set_bit() == " << bit;
 			assert(false, oss.str());
 		}
 
@@ -28,7 +28,8 @@ std::string assert_bit_ops_correct()
 	}
 
 	x = ~0UL;
-	assert(find_first_clear_bit(x) == -1, "find_first_clear_bit(~0) != -1?");
+	assert(find_first_clear_bit(x) == -1,
+	       "find_first_clear_bit(~0) != -1?");
 	// Test each individual bit.
 	for (int i = 0; i < 64; i++) {
 		uint64_t mask = 1UL << i;
@@ -37,7 +38,8 @@ std::string assert_bit_ops_correct()
 		int64_t bit = find_first_clear_bit(x);
 		if (bit != i) {
 			std::ostringstream oss;
-			oss << "bit " << i << " cleared but find_first_clear_bit() == " << bit;
+			oss << "bit " << i
+			    << " cleared but find_first_clear_bit() == " << bit;
 			assert(false, oss.str());
 		}
 
