@@ -241,12 +241,15 @@ const char *assert_correct_scratch_alloc(void)
 
 	for (int i = 0; i < 10; i++) {
 		physaddr_t pa = early_scratch_page_alloc();
-		assert(state->pages == (uint64_t)(i + 1), "Scratch page count incorrect");
+		assert(state->pages == (uint64_t)(i + 1),
+		       "Scratch page count incorrect");
 
 		uint8_t *ptr = phys_to_virt_ptr(pa);
 		for (int j = 0; j < 0x1000; j++) {
 			if (ptr[j] != 0) {
-				early_printf("test_mem: non-zeroed page at %d (alloc %d)\n", j, i);
+				early_printf(
+					"test_mem: non-zeroed page at %d (alloc %d)\n",
+					j, i);
 				assert(false, "non-zeroed scratch page");
 			}
 		}
