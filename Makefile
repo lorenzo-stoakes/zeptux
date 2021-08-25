@@ -98,8 +98,8 @@ test-early: test-early.img
 	@qemu-system-x86_64 -nographic $(QEMU_OPT) -drive file=test-early.img,format=raw
 
 test-user: $(TEST_USER_FILES) $(BOOTSECTOR_HEADERS) $(TEST_USER_HEADERS) Makefile
-	@g++ -Wall -Werror --std=c++2a -g -lpthread $(INCLUDES) -Itest/include $(TEST_USER_CFILES) -o test_user
-	@./test_user
+	@g++ -Wall -Werror --std=c++2a -g -lpthread $(INCLUDES) -Itest/include $(TEST_USER_CFILES) -o test-user
+	@./test-user
 
 test: test-early test-user
 
