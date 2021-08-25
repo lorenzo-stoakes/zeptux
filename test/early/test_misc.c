@@ -17,5 +17,10 @@ const char *test_misc(void)
 	const uint64_t empty[] = {};
 	assert(ARRAY_COUNT(empty) == 0, "ARRAY_COUNT({}) != 0");
 
+	assert(IS_ALIGNED(24, 8), "!IS_ALIGNED(24, 8)?");
+	assert(!IS_ALIGNED(25, 8), "IS_ALIGNED(25, 8)?");
+	assert(IS_ALIGNED(0x5000, 0x1000), "!IS_ALIGNED(0x5000, 0x1000)?");
+	assert(!IS_ALIGNED(0x5fff, 0x1000), "IS_ALIGNED(0x5fff, 0x1000)?");
+
 	return NULL;
 }
