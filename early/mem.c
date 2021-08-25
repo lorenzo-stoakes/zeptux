@@ -31,6 +31,20 @@ static void early_scratch_alloc_init(struct early_boot_info *info)
 	scratch_state.pages = 0;
 }
 
+// Delete an entry at `index` in the e820 array. This is O(n).
+static void delete_e820_entry(struct early_boot_info *info, int index)
+{
+	// This should never happen but for the sake of avoiding underflow,
+	// check for it.
+	if (info->num_e820_entries == 0)
+		early_panic("0 e820 entries?");
+
+	for (int i = index; i < (int)info->num_e820_entries - 1; i++) {
+		info->e820_entries[i] = info->e820_entries[i + 1];
+	}
+	info->num_e820_entries--;
+}
+
 void early_sort_e820(struct early_boot_info *info)
 {
 	// Insertion sort both because n is small and it's highly likely this
@@ -98,6 +112,53 @@ void early_merge_e820(struct early_boot_info *info)
 	info->num_e820_entries = curr_index + 1;
 }
 
+void early_normalise_e820(struct early_boot_info *info)
+{
+	// Since we can only map page-aligned physical addresses those parts of
+	// available physical memory that start or end unaligned are simply not
+	// safely available to us. To ensure we only access available memory,
+	// page align all RAM entries.
+	for (int i = 0; i < (int)info->num_e820_entries; i++) {
+		struct e820_entry *entry = &info->e820_entries[i];
+
+		if (entry->type != E820_TYPE_RAM)
+			continue;
+
+		uint64_t start = entry->base;
+		uint64_t end = entry->base + entry->size; // Exclusive.
+
+		// Most likely situation - we are already page-aligned and so
+		// have nothing to do.
+		if (IS_ALIGNED(start, PAGE_SIZE) && IS_ALIGNED(end, PAGE_SIZE))
+			continue;
+
+		// Align start to page size, rounding up so we don't access
+		// unavailable memory.
+		start = ALIGN_UP(start, PAGE_SIZE);
+		// Align end to page size, rounding down so we don't access
+		// unavailable memory.
+		end = ALIGN(end, PAGE_SIZE);
+
+		// We had to page-align, but the entry wasn't so tiny that it
+		// meant a page-aligned page of data wasn't available.
+		if (start < end) {
+			entry->base = start;
+			entry->size = end - start;
+			continue;
+		}
+
+		// This is rather unlikely but conceivable - the entry is so
+		// small that it doesn't have a page-aligned page of data
+		// available, so we have to delete it.
+
+		// If we had to do this for enough entries this would be
+		// O(n^2). However this scenario is unlikely and n is small in
+		// any case.
+		delete_e820_entry(info, i);
+		i--;
+	}
+}
+
 uint64_t early_get_total_ram(struct early_boot_info *info)
 {
 	uint64_t ret = 0;
@@ -119,6 +180,7 @@ void early_mem_init(void)
 	drop_direct0();
 	early_sort_e820(info);
 	early_merge_e820(info);
+	early_normalise_e820(info);
 	info->total_avail_ram_bytes = early_get_total_ram(info);
 	early_scratch_alloc_init(info);
 }

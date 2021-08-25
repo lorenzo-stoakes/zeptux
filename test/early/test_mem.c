@@ -171,6 +171,57 @@ static const char *assert_e820_merged(struct early_boot_info *info)
 	return NULL;
 }
 
+static const char *assert_e820_normalised(struct early_boot_info *info)
+{
+	info->num_e820_entries = 6;
+
+	// Too small and must be deleted.
+	info->e820_entries[0].base = 1;
+	info->e820_entries[0].size = 0x1000;
+	info->e820_entries[0].type = E820_TYPE_RAM;
+
+	// Only just big enough for both start and end to need to be adjusted.
+	info->e820_entries[1].base = 0x1001;
+	info->e820_entries[1].size = 0x3001;
+	info->e820_entries[1].type = E820_TYPE_RAM;
+
+	// Too small and must be deleted.
+	info->e820_entries[2].base = 0x5000;
+	info->e820_entries[2].size = 0x999;
+	info->e820_entries[2].type = E820_TYPE_RAM;
+
+	// Start fine, end needs adjustment.
+	info->e820_entries[3].base = 0x10000;
+	info->e820_entries[3].size = 0x1001;
+	info->e820_entries[3].type = E820_TYPE_RAM;
+
+	// Totally fine.
+	info->e820_entries[4].base = 0x20000;
+	info->e820_entries[4].size = 0x3000;
+	info->e820_entries[4].type = E820_TYPE_RAM;
+
+	// Too small and must be deleted.
+	info->e820_entries[5].base = 0xffffffff00000001UL;
+	info->e820_entries[5].size = 0x1ffe;
+	info->e820_entries[5].type = E820_TYPE_RAM;
+
+	early_normalise_e820(info);
+
+	assert(info->num_e820_entries == 3, "Empty entries still present?");
+
+	// Was at index 1.
+	assert(info->e820_entries[0].base == 0x2000, "[0].base != 0x2000?");
+	assert(info->e820_entries[0].size == 0x2000, "[0].size != 0x2000?");
+	// Was at index 3.
+	assert(info->e820_entries[1].base == 0x10000, "[1].base != 0x10000?");
+	assert(info->e820_entries[1].size == 0x1000, "[1].size != 0x1000?");
+	// Was at index 4.
+	assert(info->e820_entries[2].base == 0x20000, "[2].base != 0x20000?");
+	assert(info->e820_entries[2].size == 0x3000, "[2].size != 0x3000?");
+
+	return NULL;
+}
+
 static const char *assert_correct_total_ram(struct early_boot_info *info)
 {
 	info->num_e820_entries = 4;
@@ -269,6 +320,11 @@ const char *test_mem(void)
 
 	memset(buf, 0, BUF_SIZE);
 	ret = assert_e820_merged(info);
+	if (ret != NULL)
+		return ret;
+
+	memset(buf, 0, BUF_SIZE);
+	ret = assert_e820_normalised(info);
 	if (ret != NULL)
 		return ret;
 

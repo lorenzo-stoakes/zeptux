@@ -41,6 +41,9 @@ void early_sort_e820(struct early_boot_info *info);
 // Merge overlapping, coincidental and adjacent e820 blocks of equal type.
 // IMPORTANT: Assumes e820 entries have been sorted.
 void early_merge_e820(struct early_boot_info *info);
+// Normalise e820 RAM entries to page boundaries.
+// IMPORTANT: Assumes e820 entries have been merged.
+void early_normalise_e820(struct early_boot_info *info);
 // Extract the total available memory in bytes.
 // IMPORTANT: Assumes e820 entries have been merged.
 uint64_t early_get_total_ram(struct early_boot_info *info);
