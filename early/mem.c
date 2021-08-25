@@ -7,7 +7,7 @@ static struct scratch_alloc_state scratch_state;
 // Drop the direct mapping from VA 0 / PA 0. We don't need it any more.
 static void drop_direct0(void)
 {
-	memset((void *)EARLY_PUD_DIRECT0_ADDRESS, 0, 0x1000);
+	memset((void *)EARLY_PUD_DIRECT0_ADDRESS, 0, PAGE_SIZE);
 	memset((void *)EARLY_PGD_ADDRESS, 0, 8);
 	global_flush_tlb();
 }
@@ -26,7 +26,7 @@ static void early_scratch_alloc_init(struct early_boot_info *info)
 	// We place the scratch buffer immediately after the ELF...
 	uint64_t offset = KERNEL_ELF_ADDRESS_PHYS + info->kernel_elf_size_bytes;
 	// ...page aligned.
-	physaddr_t addr = {ALIGN_UP(offset, 0x1000)};
+	physaddr_t addr = {ALIGN_UP(offset, PAGE_SIZE)};
 	scratch_state.start = addr;
 	scratch_state.pages = 0;
 }
@@ -132,11 +132,11 @@ physaddr_t early_scratch_page_alloc(void)
 {
 	// About as simplistic as it gets.
 	physaddr_t addr = {scratch_state.start.x +
-			   0x1000 * scratch_state.pages++};
+			   PAGE_SIZE * scratch_state.pages++};
 
 	// Zero the page.
 	uint8_t *ptr = phys_to_virt_ptr(addr);
-	memset(ptr, 0, 0x1000);
+	memset(ptr, 0, PAGE_SIZE);
 
 	return addr;
 }
