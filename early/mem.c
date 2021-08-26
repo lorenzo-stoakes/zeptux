@@ -8,7 +8,7 @@ static struct scratch_alloc_state scratch_state;
 static void drop_direct0(void)
 {
 	memset((void *)EARLY_PUD_DIRECT0_ADDRESS, 0, PAGE_SIZE);
-	memset((void *)EARLY_PGD_ADDRESS, 0, 8);
+	memset((void *)EARLY_PGD_ADDRESS, 0, sizeof(uint64_t));
 	global_flush_tlb();
 }
 
