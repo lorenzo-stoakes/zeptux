@@ -7,15 +7,6 @@ It is, rather unfashionably, implemented in C and assembly.
 
 It is released under an MIT license.
 
-## Status
-_"Almost non-existent."_
-
-- Self-loading 2-stage boot sector (via ATA).
-- Early PIO serial port output support.
-- Fairly functional [v]snprintf.
-- Reads e820 records.
-- Early kernel unit test framework.
-
 ## Roadmap
 
 ### Next steps
