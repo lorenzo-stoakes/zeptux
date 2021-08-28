@@ -163,12 +163,21 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 {
 	uint64_t ret = 0;
 
+	uint64_t num_ram_entries = 0;
 	for (int i = 0; i < (int)info->num_e820_entries; i++) {
 		struct e820_entry *entry = &info->e820_entries[i];
 
-		if (entry->type == E820_TYPE_RAM)
-			ret += entry->size;
+		if (entry->type != E820_TYPE_RAM)
+			continue;
+
+		ret += entry->size;
+		num_ram_entries++;
 	}
+
+	if (num_ram_entries > MAX_E820_RAM_ENTRIES)
+		early_panic(
+			"There are %lu E820 RAM entries present, maximum permitted is %lu",
+			num_ram_entries, MAX_E820_RAM_ENTRIES);
 
 	return ret;
 }
