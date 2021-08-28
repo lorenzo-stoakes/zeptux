@@ -47,11 +47,22 @@ static inline int early_puts(const char *str)
 	return early_printf("%s\n", str);
 }
 
-// Early kernel panic function, simply outputs the specified panic reason. The
-// full fat version will output additional useful information for debugging.
-static inline void early_panic(const char *why)
+// Early kernel panic function, simply outputs the specified panic reason then
+// halts. The full fat version will output additional useful information for
+// debugging.
+static inline PRINTF(1, 2) void early_panic(const char *fmt, ...)
 {
-	early_printf("panic: %s\n", why);
+	va_list list;
+
+	early_printf("panic: ");
+
+	va_start(list, fmt);
+	early_vprintf(fmt, list);
+	va_end(list);
+
+	early_printf("\n");
+
+	// Busy-wait halt.
 	while (true)
 		;
 }
