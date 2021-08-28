@@ -161,6 +161,10 @@ void early_normalise_e820(struct early_boot_info *info)
 
 uint64_t early_get_total_ram(struct early_boot_info *info)
 {
+	// Note that we assume we have sorted, merged and normalised e820
+	// entries at this stage, meaning the total ram figure will be for
+	// page-aligned physical memory and be a multiple of the page size.
+
 	uint64_t ret = 0;
 
 	uint64_t num_ram_entries = 0;
@@ -178,6 +182,10 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 		early_panic(
 			"There are %lu E820 RAM entries present, maximum permitted is %lu",
 			num_ram_entries, MAX_E820_RAM_ENTRIES);
+
+	// There is a one-to-one mapping between e820 RAM entries and spans of
+	// physical RAM.
+	info->num_ram_spans = num_ram_entries;
 
 	return ret;
 }

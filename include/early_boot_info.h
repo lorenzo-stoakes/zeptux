@@ -54,6 +54,7 @@ struct e820_entry {
 struct early_boot_info {
 	uint64_t kernel_elf_size_bytes;
 	uint64_t total_avail_ram_bytes;
+	uint64_t num_ram_spans;
 	uint64_t num_e820_entries;
 	struct e820_entry e820_entries[0];
 } PACKED;

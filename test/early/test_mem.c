@@ -246,6 +246,7 @@ static const char *assert_correct_total_ram(struct early_boot_info *info)
 	info->e820_entries[3].type = E820_TYPE_RAM;
 
 	assert(early_get_total_ram(info) == 1100, "total ram != 1100");
+	assert(info->num_ram_spans == 3, "RAM spans not set to 3?");
 
 	return NULL;
 }
