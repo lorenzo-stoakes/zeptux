@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitmap.h"
 #include "page.h"
 #include "types.h"
 
@@ -35,6 +36,32 @@ struct scratch_alloc_state {
 	physaddr_t start;
 	uint64_t pages;
 };
+
+// Represents a span of page-aligned contiguous physical memory managed by the
+// early page allocator.
+struct early_page_alloc_span {
+	physaddr_t start;
+	uint64_t num_pages;
+	struct bitmap *alloc_bitmap;
+	struct bitmap *ephemeral_bitmap;
+};
+
+// Represents the state of the early page allocator. All non-ephemeral allocated
+// pages will be preserved when switching to the 'real' physical allocator.
+struct early_page_alloc_state {
+	uint64_t total_pages;
+	uint64_t allocated_pages; // Includes ephemeral pages.
+	uint64_t ephemeral_pages;
+	uint64_t num_spans;
+	struct early_page_alloc_span spans[];
+};
+// We place the early page allocator state and span structs in a single memory
+// page allocated by the scratch allocator. This puts a natural limit on how
+// many spans we can have (which maps one-to-one to the number of e820 RAM
+// entries) equal to the page size less the size of the allocator state.
+#define MAX_E820_RAM_ENTRIES                                   \
+	((PAGE_SIZE - sizeof(struct early_page_alloc_state)) / \
+	 sizeof(struct early_page_alloc_span))
 
 // Sort e820 entries inline.
 void early_sort_e820(struct early_boot_info *info);
