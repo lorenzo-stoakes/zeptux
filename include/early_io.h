@@ -11,20 +11,32 @@
 #define EARLY_PRINTF_BUFFER_SIZE (1024)
 
 // Early kernel logging function, outputting using early serial and early video
-// output. Once the kernel is initialised all such output will instead be output
-// via the kernel ring buffer.
-static inline PRINTF(1, 2) int early_printf(const char *fmt, ...)
+// output, with provided variadic argument list. Once the kernel is initialised
+// all such output will instead be output via the kernel ring buffer. Returns
+// the number of characters that would have been written had they fit in the
+// early printf buffer.
+static inline PRINTF(1, 0) int early_vprintf(const char *fmt, va_list ap)
 {
-	va_list list;
-	va_start(list, fmt);
-
 	char buf[EARLY_PRINTF_BUFFER_SIZE];
-	int ret = vsnprintf(buf, EARLY_PRINTF_BUFFER_SIZE, fmt, list);
-
-	va_end(list);
+	int ret = vsnprintf(buf, EARLY_PRINTF_BUFFER_SIZE, fmt, ap);
 
 	early_serial_puts(buf);
 	early_video_puts(buf);
+
+	return ret;
+}
+
+// Early kernel logging function, outputting using early serial and early video
+// output. Once the kernel is initialised all such output will instead be output
+// via the kernel ring buffer. Returns the number of characters that would have
+// been written had they fit in the early printf buffer.
+static inline PRINTF(1, 2) int early_printf(const char *fmt, ...)
+{
+	va_list list;
+
+	va_start(list, fmt);
+	int ret = early_vprintf(fmt, list);
+	va_end(list);
 
 	return ret;
 }
