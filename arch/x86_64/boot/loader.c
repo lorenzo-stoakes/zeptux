@@ -1,7 +1,7 @@
 #include "asm.h"
 #include "bootsector.h"
 #include "config.h"
-#include "early_boot_info.h"
+#include "early_mem.h"
 #include "elf.h"
 #include "macros.h"
 #include "mem.h"
