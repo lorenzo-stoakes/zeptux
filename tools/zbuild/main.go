@@ -950,6 +950,7 @@ func parse_parameterised_string(str string) *parameterised_string {
 			curr = ""
 			in_embedded = false
 		default:
+			escaped = false
 			curr += string(chr)
 		}
 	}
