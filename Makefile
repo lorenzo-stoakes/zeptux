@@ -7,7 +7,7 @@ ELF_SIZE_OFFSET=2556
 # and 512 bytes for sector rounding up on boot.
 MAX_KERNEL_ELF_SIZE=473088
 
-BOOT_CFLAGS=--std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
+BOOT_CFLAGS=--std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
 CFLAGS=$(BOOT_CFLAGS) -O2 -g
 INCLUDES=-I. -Iinclude/ -Iarch/x86_64/include
 HEADERS=include/*.h include/mm/*.h
@@ -49,7 +49,7 @@ boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS) $(ADDITIONAL_SOURCES)
 	cat boot1.bin boot2.bin > boot.bin
 
 kernel.elf: $(KERNEL_FILES) $(HEADERS) Makefile
-	gcc $(CFLAGS) -c $(INCLUDES) -Wno-main kernel/main.c -o main.o
+	gcc $(CFLAGS) -c $(INCLUDES) kernel/main.c -o main.o
 	gcc $(CFLAGS) -c $(INCLUDES) lib/format.c -o format.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/serial.c -o early_serial.o
 	gcc $(CFLAGS) -c $(INCLUDES) early/video.c -o early_video.o
