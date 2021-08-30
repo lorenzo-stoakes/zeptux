@@ -68,7 +68,7 @@ zeptux.img: boot.bin kernel.elf
 	dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
 
 test-early.elf: zeptux.img $(TEST_EARLY_FILES) $(HEADERS) $(TEST_EARLY_HEADERS) Makefile
-	gcc $(CFLAGS) -c $(INCLUDES) -I test/include -Wno-main test/early/test_main.c -o test_main.o
+	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_main.c -o test_main.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_format.c -o test_format.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_string.c -o test_string.o
 	gcc $(CFLAGS) -c $(INCLUDES) -I test/include test/early/test_mem.c -o test_mem.o
