@@ -42,7 +42,7 @@ boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o
 	objcopy --remove-section .note.gnu.property boot2.o
 	gcc $(BOOT_CFLAGS) -c -Os arch/x86_64/boot/loader.c $(INCLUDES) -o loader.o
-	objcopy --only-section=.text loader.o
+	objcopy --remove-section .note.gnu.property loader.o
 
 	ld -T arch/x86_64/boot/boot1.ld -o boot1.bin boot1.o
 	ld -T arch/x86_64/boot/boot2.ld -o boot2.bin boot2.o loader.o
