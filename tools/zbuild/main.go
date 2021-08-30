@@ -985,7 +985,13 @@ func dump_statement(indent int, statement interface{}) {
 		} else {
 			fmt.Printf("var ")
 		}
-		fmt.Printf("%s = %s\n", val.key, val.val)
+		fmt.Printf("%s", val.key)
+		if val.is_append {
+			fmt.Printf(" += ")
+		} else {
+			fmt.Printf(" = ")
+		}
+		fmt.Printf("%s\n", val.val)
 	case *option_statement:
 		fmt.Printf("option %s\n", val.opt)
 	case *prehook_statement:
