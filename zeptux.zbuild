@@ -1,0 +1,114 @@
+set special default = zeptux.img
+set special build_dir = build
+
+set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
+set var cflags = boot_cflags
+set var cflags += -O2 -g
+
+ # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
+ # 2 bootsectors increases.
+set var ELF_SIZE_OFFSET = 2556
+# The BIOS ELF loader is loaded at 0x8600 and conventional memory ends at
+# 0x80000. That leaves 0x77a00, but we want to leave 16 KiB for the kernel stack
+# and 512 bytes for sector rounding up on boot.
+set var MAX_KERNEL_ELF_SIZE = 473088
+
+set var QEMU_OPT = -serial mon:stdio -smp 1
+
+set special includes = include arch/x86_64/include
+
+# Check build environment for all builds.
+prehook * always {
+	shell ./scripts/check_build_env.sh
+}
+
+# Format source files when they change.
+prehook source=[**.h,**.c,**.S,**.cpp] on change {
+	shell clang-format -style=file -i $source
+}
+
+# This option causes `cc` to automatically set -MD and causes build steps to use
+# generated dependency files to determine whether build steps must take place.
+option compute_dependencies
+
+build [*.o] in arch/x86_64/boot from [*.S, *.c, *.ld] as boot_obj {
+	foreach source to output excluding *.ld {
+		cc $boot_cflags -c $source -o $output
+		shell objcopy --remove-section .note.gnu.property $output
+	}
+}
+
+build boot.bin in arch/x86_64/boot from boot_obj {
+	ld -T boot1.ld -o boot1.bin boot1.o
+	ld -T boot2.ld -o boot2.bin boot2.o
+	shell cat boot1.bin boot2.bin > boot.bin
+}
+
+build [kernel/*.o, lib/*.o, early/*.o] from source=[*.c] as kernel_obj {
+	foreach source to output {
+		cc $cflags -c $source -o $output
+	}
+}
+
+build kernel.elf from [kernel_obj, kernel/kernel.ld] {
+	ld -T kernel/kernel.ld -o kernel.elf $kernel_obj
+	shell find kernel.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
+}
+
+build zeptux.img from [boot.bin, kernel.elf] {
+	shell scripts/patch_bin_int.py boot.bin $ELF_SIZE_OFFSET $$shell{stat -c%s kernel.elf}
+
+	shell dd if=/dev/zero of=zeptux.img count=2000 2>/dev/null
+	shell dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
+	shell dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
+}
+
+build [*.o] in test/early from [*.c] as test_early_obj {
+	foreach source to output {
+		cc $cflags -Itest/include/ -c $source -o $output
+	}
+}
+
+build test-early.elf from [boot.bin, test_early_obj] {
+	shell cp boot.bin boot-test.bin
+	shell scripts/patch_bin_int.py boot-test.bin $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
+
+	shell dd if=/dev/zero of=test-early.img count=2000 2>/dev/null
+	shell dd if=boot-test.bin of=test-early.img conv=notrunc 2>/dev/null
+	shell dd if=test-early.elf of=test-early.img seek=5 conv=notrunc 2>/dev/null
+}
+
+build [*.o] in test/user from [*.cpp] as test_user_obj {
+	foreach source to output {
+		c++ -Wall -Werror --std=c++2a -g -lpthread -Itest/include/ $source -o $output
+	}
+}
+
+build test-user-runner from test_user_obj {
+	ld -o test-user-runner $test_user_obj
+}
+
+command clean {
+	shell rm -rf $build_dir
+}
+
+command qemu needs zeptux.img {
+	shell qemu-system-x86_64 -nographic $QEMU_OPT -drive file=zeptux.img,format=raw
+}
+
+command qemu-vga needs zeptux.img {
+	shell qemu-system-x86_64 $QEMU_OPT -drive file=zeptux.img,format=raw
+}
+
+command test-early needs test-early.img {
+	shell qemu-system-x86_64 -nographic $QEMU_OPT -drive file=test-early.img,format=raw
+}
+
+command test-user needs test-user-runner {
+	shell ./test-user-runner
+}
+
+command test {
+	call test-early
+	call test-user
+}
