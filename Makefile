@@ -36,7 +36,7 @@ pre_step:
 	./scripts/check_build_env.sh
 	clang-format -style=file -i $(shell find $(ALL_CSOURCE) -type f)
 
-boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS) $(ADDITIONAL_SOURCES)
+boot.bin: $(BOOTSECTOR_FILES) $(BOOTSECTOR_HEADERS)
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot1.S -Iarch/x86_64/include -o boot1.o
 	objcopy --remove-section .note.gnu.property boot1.o
 	gcc $(BOOT_CFLAGS) -c arch/x86_64/boot/boot2.S -Iinclude -Iarch/x86_64/include -o boot2.o
