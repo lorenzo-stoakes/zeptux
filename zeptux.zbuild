@@ -44,7 +44,7 @@ build boot.bin in arch/x86_64/boot from boot_obj {
 	shell cat boot1.bin boot2.bin > boot.bin
 }
 
-build [kernel/*.o, lib/*.o, early/*.o] from source=[*.c] as kernel_obj {
+build [*.o] from source=[kernel/*.c,lib/*.c,early/*.c] as kernel_obj {
 	foreach source to output {
 		cc $cflags -c $source -o $output
 	}
