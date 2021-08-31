@@ -4,3 +4,4 @@ a.out
 *.elf
 *.img
 test-user-runner
+/zbuild
