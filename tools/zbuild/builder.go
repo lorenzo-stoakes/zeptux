@@ -550,7 +550,7 @@ func (b *build_graph) init(state *parse_state) {
 	b.init_commands(state)
 	b.init_builds(state)
 
-	//b.check_rule_deps()
+	b.check_rule_deps()
 }
 
 func do_build(state *parse_state) {
