@@ -212,6 +212,7 @@ type build_statement struct {
 type command_statement struct {
 	name         string
 	local_dir    string
+	has_nested_calls bool
 	dependencies depgetset
 	statements   statements
 }
@@ -670,6 +671,9 @@ func (s *parse_state) parse_command_line() {
 	case "shell":
 		s.parse_shell_line()
 	case "call":
+		// Ass we are parsing a command we know this exists.
+		cmd := s.statements[len(s.statements)-1].(*command_statement)
+		cmd.has_nested_calls = true
 		s.parse_call_line()
 	case "cc":
 		s.parse_cc_line()
