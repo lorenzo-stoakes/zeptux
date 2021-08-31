@@ -210,11 +210,11 @@ type build_statement struct {
 
 // Represents a COMMAND statement.
 type command_statement struct {
-	name         string
-	local_dir    string
+	name             string
+	local_dir        string
 	has_nested_calls bool
-	dependencies depgetset
-	statements   statements
+	dependencies     depgetset
+	statements       statements
 }
 
 // Represents generic list of statements. TODO: interface{} abuse.
