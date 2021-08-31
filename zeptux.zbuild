@@ -2,7 +2,8 @@ set special default = zeptux.img
 set special build_dir = build
 
 set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
-set var cflags = boot_cflags
+# TODO: Don't support referencing other vars when setting vars yet.
+set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
 set var cflags += -O2 -g
 
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
@@ -18,14 +19,14 @@ set var QEMU_OPT = -serial mon:stdio -smp 1
 set special includes = include arch/x86_64/include
 
 # Check build environment for all builds.
-prehook * always {
-	shell ./scripts/check_build_env.sh
-}
+#prehook * always {
+#	shell ./scripts/check_build_env.sh
+#}
 
-# Format source files when they change.
-prehook source=[**.h,**.c,**.S,**.cpp] on change {
-	shell clang-format -style=file -i $source
-}
+# TODO: Format source files when they change.
+#prehook source=[**.h,**.c,**.S,**.cpp] on change {
+#	shell clang-format -style=file -i $source
+#}
 
 # This option causes `cc` to automatically set -MD and causes build steps to use
 # generated dependency files to determine whether build steps must take place.
@@ -44,7 +45,7 @@ build boot.bin in arch/x86_64/boot from boot_obj {
 	shell cat boot1.bin boot2.bin > boot.bin
 }
 
-build [*.o] from source=[kernel/*.c,lib/*.c,early/*.c] as kernel_obj {
+build [*.o] from [kernel/*.c,lib/*.c,early/*.c] as kernel_obj {
 	foreach source to output {
 		cc $cflags -c $source -o $output
 	}
@@ -94,7 +95,7 @@ build test-user-runner from test_user_obj {
 }
 
 command clean {
-	shell rm -rf $build_dir
+	shell rm -f *.o *.img *.bin *.elf test-user-runner
 }
 
 command qemu needs zeptux.img {
