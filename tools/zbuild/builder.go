@@ -9,9 +9,11 @@ import (
 
 // TODO: Make configurable
 const (
-	CC_BINARY  = "gcc"
-	CPP_BINARY = "g++"
-	LD_BINARY  = "ld"
+	CC_BINARY             = "gcc"
+	CPP_BINARY            = "g++"
+	LD_BINARY             = "ld"
+	VERBOSE               = true
+	ZBUILD_TMPFILE_PREFIX = ".zbuild."
 )
 
 type rule struct {
@@ -219,8 +221,13 @@ func (b *build_graph) expand_foreach_statement(rule *rule, additional_vars map[s
 			continue
 		}
 
+		full_source := source
+		if len(rule.dir) > 0 {
+			full_source = path.Join(rule.dir, source)
+		}
+
 		// Now generate the shell commands for each foreach iteration.
-		additional_vars["source"] = source
+		additional_vars["source"] = full_source
 		additional_vars["output"] = output
 		ss := b.extract_shell_commands(rule, additional_vars, foreach.statements)
 		ret = append(ret, ss...)
@@ -252,7 +259,7 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 			ret = append(ret, str)
 		case *ld_statement:
 			suffix := b.substitute_vars(name, additional_vars, (*parameterised_string)(s))
-			str := CPP_BINARY + " " + suffix
+			str := LD_BINARY + " " + suffix
 			ret = append(ret, str)
 		case *foreach_statement:
 			ret = append(ret, b.expand_foreach_statement(rule, additional_vars, s)...)
@@ -342,13 +349,18 @@ func (b *build_graph) init_command(cmd *command_statement) {
 			cmd.name, cmd.local_dir)
 	}
 
+	file_deps := extract_file_dependencies(cmd.name, cmd.local_dir, &cmd.dependencies)
+	if len(file_deps) > 0 {
+		fatal("Rule '%s': Commands cannot have file dependencies",
+			cmd.name)
+	}
+
 	r := rule{
 		name:      cmd.name,
 		dir:       cmd.local_dir,
 		target:    cmd.name,
 		is_phony:  true,
 		rule_deps: extract_rule_dependencies(&cmd.dependencies),
-		file_deps: extract_file_dependencies(cmd.name, cmd.local_dir, &cmd.dependencies),
 	}
 
 	additional_vars := make(map[string]string)
@@ -502,7 +514,8 @@ func (b *build_graph) init_build(build *build_statement) {
 		output_ext := path.Ext(multi_glob)
 
 		for _, name := range r.file_deps {
-			outputs = append(outputs, replace_ext(name, output_ext))
+			output := path.Base(replace_ext(name, output_ext))
+			outputs = append(outputs, output)
 		}
 
 		b.vars[build.alias] = strings.Join(outputs, " ")
@@ -553,7 +566,100 @@ func (b *build_graph) init(state *parse_state) {
 	b.check_rule_deps()
 }
 
-func do_build(state *parse_state) {
+// Actually execute build steps, recursion etc. handled elsewhere.
+func (b *build_graph) exec_build(rule *rule, target string) {
+	if VERBOSE {
+		fmt.Printf("Executing rule '%s'...\n", rule.name)
+	}
+
+	for _, shell := range rule.shell_commands {
+		if VERBOSE {
+			fmt.Printf("%s\n", shell)
+		}
+
+		if !shell_exec(shell) {
+			// If verbose we already output it.
+			if !VERBOSE {
+				fmt.Printf("%s\n", shell)
+			}
+			fatal("Rule '%s': Command failed with non-zero exit code",
+				rule.name)
+		}
+	}
+
+	// If a multi target rule, we touch a temporary file to keep track of
+	// whether sources have been updated.
+	if rule.is_multi {
+		touch(target)
+	}
+}
+
+// Returns true if the rule had to run.
+func (b *build_graph) run_build(rule_name string) bool {
+	rule, ok := b.rules[rule_name]
+	if !ok {
+		fatal("Cannot find rule '%s'", rule_name)
+	}
+
+	if b.rule_is_done[rule_name] {
+		return false
+	}
+
+	// File we are comparing file dependencies too.
+	target := ""
+	if rule.is_multi {
+		// In the case of multi-target, we generate a temporary file
+		// named after the alias to compare to.
+		target = ZBUILD_TMPFILE_PREFIX + rule.name
+	} else {
+		// Otherwise the target name will be the same as the rule name
+		// which will be a file.
+		target = rule.name
+	}
+
+	// Check if we need to run the rule by file dependencies...
+	should_exec := false
+	for _, filename := range rule.file_deps {
+		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
+			panic(err)
+		} else if newer {
+			should_exec = true
+			break
+
+			if VERBOSE {
+				fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
+					rule.name, filename, target)
+			}
+		}
+	}
+
+	// Now, recurse :)
+	b.rule_is_done[rule_name] = true // Guard against cycles.
+	for _, ruledep := range rule.rule_deps {
+		if b.run_build(ruledep) {
+			should_exec = true
+		}
+	}
+
+	// Commands should always run.
+	if rule.is_phony {
+		should_exec = true
+	}
+
+	if should_exec {
+		b.exec_build(rule, target)
+	}
+
+	return should_exec
+}
+
+func do_build(state *parse_state, rule_name string) {
 	var graph build_graph
 	graph.init(state)
+
+	if rule_name == "" {
+		graph.run_build(graph.def)
+	} else {
+		graph.run_build(rule_name)
+	}
 }

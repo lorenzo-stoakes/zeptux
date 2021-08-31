@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
+	"time"
 )
 
 // Output an error to STDERR.
@@ -85,4 +87,41 @@ func is_file_newer(candidate_dir, candidate, comparator string) (bool, error) {
 	}
 
 	return info1.ModTime().After(info2.ModTime()), nil
+}
+
+// 'Touch' a file at specified path.
+func touch(filename string) {
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		if file, err := os.Create(filename); err != nil {
+			panic(err)
+		} else {
+			defer file.Close()
+		}
+	} else if err != nil {
+		panic(err)
+	} else {
+		// Exists, update time.
+		now := time.Now().Local()
+		if err := os.Chtimes(filename, now, now); err != nil {
+			panic(err)
+		}
+	}
+}
+
+// Execute a command via the shell.
+func shell_exec(shell string) bool {
+	cmd := exec.Command("bash", "-c", shell)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		// Non-zero exit code.
+		if _, ok := err.(*exec.ExitError); ok {
+			return false
+		} else {
+			panic(err)
+		}
+	}
+
+	return true
 }
