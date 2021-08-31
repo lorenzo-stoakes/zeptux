@@ -19,6 +19,11 @@ var SPECIAL_VARS = []string{
 	"build_dir", "default", "includes",
 }
 
+// Reserved to avoid conflicts.
+var RESERVED_VARS = []string{
+	"source", "output",
+}
+
 // The different 'operations' that can be performed.
 type operation int
 
@@ -332,6 +337,10 @@ func (s *parse_state) parse_set_line() {
 	statement.is_special = mode == "special"
 	if !statement.is_special && mode != "var" {
 		s.syntax_error()
+	}
+
+	if is_reserved_var(statement.key) {
+		s.fatal_line_error("'%s' is a reserved variable name", statement.key)
 	}
 
 	if statement.is_special && !is_special_var(statement.key) {
@@ -748,6 +757,17 @@ func assert_statement_is_pointer(statement interface{}) {
 // Is the specified variable name 'special', e.g. subject to `set special xxx`?
 func is_special_var(name string) bool {
 	for _, v := range SPECIAL_VARS {
+		if name == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Is the specified variable name reserved to avoid conflicts?
+func is_reserved_var(name string) bool {
+	for _, v := range RESERVED_VARS {
 		if name == v {
 			return true
 		}
