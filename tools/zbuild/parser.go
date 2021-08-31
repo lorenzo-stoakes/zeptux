@@ -232,6 +232,10 @@ type parse_state struct {
 	// appending to.
 	statements_stack []*statements
 
+	// Set of rule names.
+	rule_set map[string]bool
+
+	// List of all statements.
 	statements statements
 }
 
@@ -1052,6 +1056,62 @@ func (s *parse_state) dump() {
 	dump_statements(0, s.statements)
 }
 
+// Extract all rule names from parse state.
+func (s *parse_state) extract_rule_names() []string {
+	var ret []string
+
+	for _, statement := range s.statements {
+		switch s := statement.(type) {
+		case *build_statement:
+			if len(s.alias) > 0 {
+				ret = append(ret, s.alias)
+				continue
+			}
+
+			// Ignore broken (will error out at next stage) or multi build targets
+			if len(s.target.depgets) != 1 || s.target.depgets[0].kind != FILE {
+				continue
+			}
+			ret = append(ret, s.target.depgets[0].name)
+		case *command_statement:
+			ret = append(ret, s.name)
+		}
+	}
+
+	return ret
+}
+
+// Set depgets which refer to rules as such now we know the names of all rules.
+func (s *parse_state) fixup_depgets(dgs *depgetset) {
+	for i, dg := range dgs.depgets {
+		if dg.kind != FILE {
+			continue
+		}
+
+		if _, ok := s.rule_set[dg.name]; !ok {
+			continue
+		}
+
+		fmt.Println(dg.name)
+		dgs.depgets[i].kind = RULE
+	}
+}
+
+// Fixup dependencies that might refer to commands rather than files.
+func (s *parse_state) fixup_dependencies() {
+
+	for _, statement := range s.statements {
+		switch st := statement.(type) {
+		case *prehook_statement:
+			s.fixup_depgets(&st.dependencies)
+		case *build_statement:
+			s.fixup_depgets(&st.dependencies)
+		case *command_statement:
+			s.fixup_depgets(&st.dependencies)
+		}
+	}
+}
+
 func do_parse() *parse_state {
 	var state parse_state
 
@@ -1070,6 +1130,18 @@ func do_parse() *parse_state {
 	if len(state.statements_stack) != 0 {
 		panic("Impossible!")
 	}
+
+	// We can now extract all rule names and store in parse state.
+	rules := state.extract_rule_names()
+	rule_set := make(map[string]bool)
+	for _, rule := range rules {
+		rule_set[rule] = true
+	}
+	state.rule_set = rule_set
+
+	// Mark dependencies that rely on a rule as relying on such rather than
+	// a file.
+	state.fixup_dependencies()
 
 	return &state
 }
