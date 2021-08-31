@@ -44,14 +44,20 @@ build boot.bin from boot_obj {
 	shell cat boot1.bin boot2.bin > boot.bin
 }
 
-build [*.o] from [kernel/*.c,lib/*.c,early/*.c] as kernel_obj {
+build [*.o] from [lib/*.c,early/*.c] as kernel_obj {
 	foreach source to output {
 		cc $cflags -c $source -o $output
 	}
 }
 
-build kernel.elf from [kernel_obj, kernel/kernel.ld] {
-	ld -T kernel/kernel.ld -o kernel.elf $kernel_obj
+build [*.o] from [kernel/*.c] as kernel_main_obj {
+	foreach source to output {
+		cc $cflags -c $source -o $output
+	}
+}
+
+build kernel.elf from [kernel_obj, kernel_main_obj, kernel/kernel.ld] {
+	ld -T kernel/kernel.ld -o kernel.elf $kernel_obj $kernel_main_obj
 	shell find kernel.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 }
 
@@ -69,8 +75,8 @@ build [*.o] in test/early from [*.c] as test_early_obj {
 	}
 }
 
-build test-early.elf from [boot.bin, test_early_obj] {
-	ld -T kernel/kernel.ld -o test-early.elf test_main.o $test_early_obj
+build test-early.elf from [boot.bin, test_early_obj, kernel_obj] {
+	ld -T kernel/kernel.ld -o test-early.elf $test_early_obj $kernel_obj
 	shell find test-early.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 }
 
