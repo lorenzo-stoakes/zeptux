@@ -70,6 +70,11 @@ build [*.o] in test/early from [*.c] as test_early_obj {
 }
 
 build test-early.elf from [boot.bin, test_early_obj] {
+	ld -T kernel/kernel.ld -o test-early.elf test_main.o $test_early_obj
+	shell find test-early.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
+}
+
+build test-early.img from [boot.bin,test-early.elf] {
 	shell cp boot.bin boot-test.bin
 	shell scripts/patch_bin_int.py boot-test.bin $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
 
