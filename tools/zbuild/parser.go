@@ -1092,7 +1092,6 @@ func (s *parse_state) fixup_depgets(dgs *depgetset) {
 			continue
 		}
 
-		fmt.Println(dg.name)
 		dgs.depgets[i].kind = RULE
 	}
 }
