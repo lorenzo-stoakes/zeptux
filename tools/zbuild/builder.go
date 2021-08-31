@@ -646,6 +646,11 @@ func (b *build_graph) run_build(rule_name string) bool {
 		should_exec = true
 	}
 
+	// If target doesn't exist we should definitely run!
+	if !file_exists("", target) {
+		should_exec = true
+	}
+
 	if should_exec {
 		b.exec_build(rule, target)
 	}
