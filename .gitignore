@@ -5,3 +5,4 @@ a.out
 *.img
 test-user-runner
 /zbuild
+.zbuild.*
