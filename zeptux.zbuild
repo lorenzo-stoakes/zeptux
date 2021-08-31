@@ -5,7 +5,6 @@ set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -W
 # TODO: Don't support referencing other vars when setting vars yet.
 set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL -O2 -g
 
-
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
  # 2 bootsectors increases.
 set var ELF_SIZE_OFFSET = 2556
@@ -86,16 +85,16 @@ build test-early.img from [boot.bin,test-early.elf] {
 
 build [*.o] in test/user from [*.cpp] as test_user_obj {
 	foreach source to output {
-		c++ -Wall -Werror --std=c++2a -g -lpthread -Itest/include/ $source -o $output
+		c++ -Wall -Werror --std=c++2a -g -lpthread -Itest/include/ -c $source -o $output
 	}
 }
 
 build test-user-runner from test_user_obj {
-	ld -o test-user-runner $test_user_obj
+	c++ -lpthread -o test-user-runner $test_user_obj
 }
 
 command clean {
-	shell rm -f *.o *.img *.bin *.elf test-user-runner
+	shell rm -f *.o *.img *.bin *.elf test-user-runner .zbuild.*
 }
 
 command qemu needs zeptux.img {
