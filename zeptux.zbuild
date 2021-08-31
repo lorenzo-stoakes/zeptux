@@ -1,10 +1,10 @@
 set special default = zeptux.img
 set special build_dir = build
 
-set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
+set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
 # TODO: Don't support referencing other vars when setting vars yet.
-set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -D__ZEPTUX_KERNEL
-set var cflags += -O2 -g
+set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL -O2 -g
+
 
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
  # 2 bootsectors increases.
@@ -16,7 +16,7 @@ set var MAX_KERNEL_ELF_SIZE = 473088
 
 set var QEMU_OPT = -serial mon:stdio -smp 1
 
-set special includes = include arch/x86_64/include
+set special includes = include arch/x86_64/include .
 
 # Check build environment for all builds.
 #prehook * always {
@@ -39,9 +39,9 @@ build [*.o] in arch/x86_64/boot from [*.S, *.c, *.ld] as boot_obj {
 	}
 }
 
-build boot.bin in arch/x86_64/boot from boot_obj {
-	ld -T boot1.ld -o boot1.bin boot1.o
-	ld -T boot2.ld -o boot2.bin boot2.o
+build boot.bin from boot_obj {
+	ld -T arch/x86_64/boot/boot1.ld -o boot1.bin boot1.o
+	ld -T arch/x86_64/boot/boot2.ld -o boot2.bin boot2.o loader.o
 	shell cat boot1.bin boot2.bin > boot.bin
 }
 
@@ -114,7 +114,7 @@ command test-user needs test-user-runner {
 	shell ./test-user-runner
 }
 
-command test {
+command test needs [test-early.img, test-user-runner] {
 	call test-early
 	call test-user
 }
