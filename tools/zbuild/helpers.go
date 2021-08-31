@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 )
 
 // Output an error to STDERR.
@@ -37,4 +38,51 @@ func dir_exists(path string) bool {
 	}
 
 	return true
+}
+
+// Remove the extension from a filename, if present.
+func remove_ext(name string) string {
+	var bare string
+	if strings.Contains(name, ".") {
+		parts := strings.Split(name, ".")
+		bare = strings.TrimSpace(parts[0])
+	} else {
+		bare = name
+	}
+
+	return bare
+}
+
+// Replace file extension with that specified.
+func replace_ext(filename, ext string) string {
+	bare := remove_ext(filename)
+
+	if ext[0] != '.' {
+		ext = "." + ext
+	}
+
+	return bare + ext
+}
+
+// Determine if file `candidate` is newer than `comparator`.
+func is_file_newer(candidate_dir, candidate, comparator string) (bool, error) {
+	candidate = path.Join(candidate_dir, candidate)
+
+	info1, err1 := os.Stat(candidate)
+	if err1 != nil {
+		return false, err1
+	}
+
+	info2, err2 := os.Stat(comparator)
+	// If the comparator doesn't exist, then we consider the candidate to be
+	// newer.
+	if os.IsNotExist(err2) {
+		return true, nil
+	}
+
+	if err2 != nil {
+		return false, err2
+	}
+
+	return info1.ModTime().After(info2.ModTime()), nil
 }
