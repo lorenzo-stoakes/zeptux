@@ -111,6 +111,7 @@ func touch(filename string) {
 // Execute a command via the shell.
 func shell_exec(shell string) bool {
 	cmd := exec.Command("bash", "-c", shell)
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
