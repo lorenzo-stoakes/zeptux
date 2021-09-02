@@ -22,6 +22,7 @@ type unconditional_prehook struct {
 type conditional_prehook struct {
 	exts                    []string
 	deferred_shell_commands statements
+	seen_files              map[string]bool
 }
 
 type build_graph struct {
@@ -638,6 +639,7 @@ func (b *build_graph) init_conditional_prehook(presrc *prehook_statement) {
 	}
 
 	pre := conditional_prehook{deferred_shell_commands: presrc.statements}
+	pre.seen_files = make(map[string]bool)
 
 	for _, dg := range presrc.dependencies.depgets {
 		switch dg.kind {
@@ -766,6 +768,10 @@ func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filenam
 }
 
 func should_exec_conditional_prehook(pre *conditional_prehook, filename string) bool {
+	if pre.seen_files[filename] {
+		return false
+	}
+
 	ext := path.Ext(filename)
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
@@ -773,6 +779,7 @@ func should_exec_conditional_prehook(pre *conditional_prehook, filename string) 
 
 	for _, target_ext := range pre.exts {
 		if ext == target_ext {
+			pre.seen_files[filename] = true
 			return true
 		}
 	}
