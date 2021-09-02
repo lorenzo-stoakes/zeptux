@@ -21,10 +21,9 @@ prehook * always {
 	shell ./scripts/check_build_env.sh
 }
 
-# TODO: Format source files when they change.
-#prehook [**.h,**.c,**.S,**.cpp] on change {
-#	shell clang-format -style=file -i $source
-#}
+prehook [**.h,**.c,**.cpp] on change {
+	shell clang-format -style=file -i $source
+}
 
 # This option causes `cc` to automatically set -MD and causes build steps to use
 # generated dependency files to determine whether build steps must take place.
