@@ -98,7 +98,7 @@ build test-user-runner from test_user_obj {
 }
 
 command clean {
-	shell rm -f *.o *.img *.bin *.elf test-user-runner .zbuild.*
+	shell rm -f *.o *.img *.bin *.elf test-user-runner .zbuild.* *.d
 }
 
 command qemu needs zeptux.img {
