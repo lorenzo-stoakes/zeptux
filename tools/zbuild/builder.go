@@ -292,16 +292,6 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 	return ret
 }
 
-/*
-type rule struct {
-	name, dir, target, multi_glob string
-	is_multi, is_phony bool
-	rule_deps []string
-	file_deps []string
-	shell_commands []string
-}
-*/
-
 func extract_rule_dependencies(dgs *depgetset) []string {
 	var ret []string
 
