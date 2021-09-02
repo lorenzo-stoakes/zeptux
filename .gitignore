@@ -6,3 +6,4 @@ a.out
 test-user-runner
 /zbuild
 .zbuild.*
+*.d
