@@ -569,7 +569,13 @@ func (b *build_graph) init_options(state *parse_state) {
 		case *option_statement:
 			switch s.opt {
 			case COMPUTE_DEPENDENCIES_OPTION:
+				if VERBOSE {
+					fmt.Println("compute_dependencies option SET")
+				}
+
 				b.options["compute_dependencies"] = true
+				// Generates dependency (suffix .d) files.
+				b.default_cflags += "-MD"
 			default:
 				panic("Impossible!")
 			}
@@ -584,9 +590,9 @@ func (b *build_graph) init(state *parse_state) {
 	b.options = make(map[string]bool)
 
 	b.init_extract_vars(state) // On the first pass we pull out the variables.
+	b.init_options(state)
 	b.init_commands(state)
 	b.init_builds(state)
-	b.init_options(state)
 	b.check_rule_deps()
 
 	// We currently REQUIRE a default rule.
