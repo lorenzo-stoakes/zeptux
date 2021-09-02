@@ -400,10 +400,14 @@ func (s *parse_state) parse_prehook_first_line() {
 	if len(parts) < 2 {
 		s.syntax_error()
 	}
-	if dependencies := parse_depgets(parts[1]); dependencies == nil {
-		s.syntax_error()
-	} else {
-		statement.dependencies = *dependencies
+
+	depstr := parts[1]
+	if depstr != "*" {
+		if dependencies := parse_depgets(depstr); dependencies == nil {
+			s.syntax_error()
+		} else {
+			statement.dependencies = *dependencies
+		}
 	}
 
 	// We are now entering into a state where we are parsing nested prehook
