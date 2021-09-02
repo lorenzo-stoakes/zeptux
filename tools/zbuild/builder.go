@@ -745,7 +745,10 @@ func add_depfile_deps(rule *rule, file_deps []string) []string {
 		ret = append(ret, filename)
 
 		for _, dep := range parse_dependencies(filename) {
-			if seen[dep] {
+			// We also skip any generated dependency with an
+			// absolute path, it seems we can end up with system
+			// includes listed here!
+			if seen[dep] || (len(dep) > 0 && dep[0] == '/') {
 				continue
 			}
 			seen[dep] = true
