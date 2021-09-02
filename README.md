@@ -30,10 +30,10 @@ It is released under an MIT license.
 
 ### Usage
 
-Make sure you have gcc, binutils, python 3 and qemu installed. Then run:
+Make sure you have gcc, binutils, python 3, go and qemu installed. Then run:
 
 ```
-$ make qemu
+$ ./build
 ```
 
 #### Tests
@@ -41,7 +41,7 @@ $ make qemu
 To execute all tests, run:
 
 ```
-$ make test
+$ ./build test
 ```
 
 This will generate a test kernel image which will then be executed under qemu.

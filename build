@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function build_zbuild()
+{
+	go build -o zbuild tools/zbuild/*.go
+}
+
+function zbuild_up_to_date()
+{
+	for file in tools/zbuild/*.go; do
+		if [[ $file -nt zbuild ]]; then
+		   return 1
+		fi
+	done
+}
+
+if ! [[ -e zbuild ]] || ! zbuild_up_to_date; then
+	build_zbuild
+fi
+
+./zbuild $@
