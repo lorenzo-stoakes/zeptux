@@ -24,12 +24,17 @@ type rule struct {
 	shell_commands                []string
 }
 
+type prehook struct {
+	shell_commands []string
+}
+
 type build_graph struct {
 	vars                                     map[string]string
 	build_dir, def, includes, default_cflags string
 	rules                                    map[string]*rule
 	rule_is_done                             map[string]bool
 	options                                  map[string]bool
+	unconditional_prehooks                   []prehook
 }
 
 func (b *build_graph) dump() {
@@ -261,7 +266,13 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 	additional_vars map[string]string, statements statements) []string {
 	var ret []string
 
-	name := rule.name
+	var name string
+	if rule == nil {
+		// TODO: This is an assumption!
+		name = "prehook"
+	} else {
+		name = rule.name
+	}
 
 	// Note that call statements should already have been expanded prior to
 	// this so we don't deal with them here.
@@ -283,6 +294,10 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 			str := LD_BINARY + " " + suffix
 			ret = append(ret, str)
 		case *foreach_statement:
+			if rule == nil {
+				fatal("Invalid foreach command")
+			}
+
 			ret = append(ret, b.expand_foreach_statement(rule, additional_vars, s)...)
 		default:
 			panic("Impossible!")
@@ -610,6 +625,30 @@ func (b *build_graph) init_options(state *parse_state) {
 	}
 }
 
+func (b *build_graph) init_prehooks(state *parse_state) {
+	// Used in place of additional variables as none defined for prehooks
+	// (we don't yet support labelled dependencies).
+	dummy := make(map[string]string)
+
+	for _, statement := range state.statements {
+		switch s := statement.(type) {
+		case *prehook_statement:
+			if s.when != ALWAYS_PREHOOK {
+				fatal("Conditional prehooks are not yet supported")
+			}
+
+			if !s.dependencies.empty() {
+				fatal("Prehooks with dependencies are not yet supported")
+			}
+
+
+			shells := b.extract_shell_commands(nil, dummy, s.statements)
+			pre := prehook{shells}
+			b.unconditional_prehooks = append(b.unconditional_prehooks, pre)
+		}
+	}
+}
+
 func (b *build_graph) init(state *parse_state) {
 	b.vars = make(map[string]string)
 	b.rules = make(map[string]*rule)
@@ -620,6 +659,7 @@ func (b *build_graph) init(state *parse_state) {
 	b.init_options(state)
 	b.init_commands(state)
 	b.init_builds(state)
+	b.init_prehooks(state)
 	b.check_rule_deps()
 
 	// We currently REQUIRE a default rule.
@@ -774,9 +814,28 @@ func (b *build_graph) run_build(rule_name string) bool {
 	return should_exec
 }
 
+func (b *build_graph) run_unconditional_prehooks() {
+	for _, prehook := range b.unconditional_prehooks {
+		for _, shell := range prehook.shell_commands {
+			if VERBOSE {
+				fmt.Printf("%s\n", shell)
+			}
+
+			if !shell_exec(shell) {
+				if !VERBOSE {
+					fmt.Printf("%s\n", shell)
+				}
+				fatal("Prehook command failed with non-zero exit code")
+			}
+		}
+	}
+}
+
 func do_build(state *parse_state, rule_name string) {
 	var graph build_graph
 	graph.init(state)
+
+	graph.run_unconditional_prehooks()
 
 	if rule_name == "" {
 		graph.run_build(graph.def)
