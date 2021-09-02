@@ -25,10 +25,11 @@ type rule struct {
 }
 
 type build_graph struct {
-	vars                     map[string]string
-	build_dir, def, includes string
-	rules                    map[string]*rule
-	rule_is_done             map[string]bool
+	vars                                     map[string]string
+	build_dir, def, includes, default_cflags string
+	rules                                    map[string]*rule
+	rule_is_done                             map[string]bool
+	options                                  map[string]bool
 }
 
 func (b *build_graph) dump() {
@@ -39,6 +40,7 @@ func (b *build_graph) dump() {
 	fmt.Printf("(special) build_dir = %s\n", b.build_dir)
 	fmt.Printf("(special) default = %s\n", b.def)
 	fmt.Printf("(special) includes = %s\n", b.includes)
+	fmt.Printf("(special) default_cflags = %s\n", b.default_cflags)
 
 	fmt.Printf("\n-- RULES: --\n")
 	for name, rule := range b.rules {
@@ -101,6 +103,8 @@ func (b *build_graph) init_extract_special_var(key, val string) {
 		b.def = val
 	case "includes":
 		b.includes = prefix_includes(val)
+	case "default_cflags":
+		b.default_cflags = val
 	default:
 		panic("Impossible!")
 	}
@@ -139,6 +143,7 @@ func (b *build_graph) combine_vars(additional_vars map[string]string) map[string
 	vars["build_dir"] = b.build_dir
 	vars["default"] = b.def
 	vars["includes"] = b.includes
+	vars["default_cflags"] = b.default_cflags
 
 	return vars
 }
@@ -236,6 +241,22 @@ func (b *build_graph) expand_foreach_statement(rule *rule, additional_vars map[s
 	return ret
 }
 
+// Generates special variable params for CC and CPP statements, e.g. the
+// 'includes' and 'default_cflags' params.
+func (b *build_graph) gen_special_cc_params() string {
+	ret := ""
+
+	if len(b.includes) > 0 {
+		ret += " " + b.includes
+	}
+
+	if len(b.default_cflags) > 0 {
+		ret += " " + b.default_cflags
+	}
+
+	return ret
+}
+
 func (b *build_graph) extract_shell_commands(rule *rule,
 	additional_vars map[string]string, statements statements) []string {
 	var ret []string
@@ -251,11 +272,11 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 				b.substitute_vars(name, additional_vars, &s.expression))
 		case *cc_statement:
 			suffix := b.substitute_vars(name, additional_vars, (*parameterised_string)(s))
-			str := CC_BINARY + " " + b.includes + " " + suffix
+			str := CC_BINARY + b.gen_special_cc_params() + " " + suffix
 			ret = append(ret, str)
 		case *cpp_statement:
 			suffix := b.substitute_vars(name, additional_vars, (*parameterised_string)(s))
-			str := CPP_BINARY + " " + b.includes + " " + suffix
+			str := CPP_BINARY + b.gen_special_cc_params() + " " + suffix
 			ret = append(ret, str)
 		case *ld_statement:
 			suffix := b.substitute_vars(name, additional_vars, (*parameterised_string)(s))
@@ -547,23 +568,36 @@ func (b *build_graph) init_builds(state *parse_state) {
 	}
 }
 
+func (b *build_graph) init_options(state *parse_state) {
+	for _, statement := range state.statements {
+		switch s := statement.(type) {
+		case *option_statement:
+			switch s.opt {
+			case COMPUTE_DEPENDENCIES_OPTION:
+				b.options["compute_dependencies"] = true
+			default:
+				panic("Impossible!")
+			}
+		}
+	}
+}
+
 func (b *build_graph) init(state *parse_state) {
 	b.vars = make(map[string]string)
 	b.rules = make(map[string]*rule)
 	b.rule_is_done = make(map[string]bool)
+	b.options = make(map[string]bool)
 
-	// On the first pass we pull out the variables.
-	b.init_extract_vars(state)
+	b.init_extract_vars(state) // On the first pass we pull out the variables.
+	b.init_commands(state)
+	b.init_builds(state)
+	b.init_options(state)
+	b.check_rule_deps()
 
 	// We currently REQUIRE a default rule.
 	if len(b.def) == 0 {
 		fatal("Default rule not specified")
 	}
-
-	b.init_commands(state)
-	b.init_builds(state)
-
-	b.check_rule_deps()
 }
 
 // Actually execute build steps, recursion etc. handled elsewhere.
