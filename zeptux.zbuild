@@ -3,8 +3,8 @@ set special build_dir = build
 set special includes = include arch/x86_64/include .
 
 set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
-# TODO: We don't support referencing other vars when setting vars yet.
-set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL -O2 -g
+set var cflags = $boot_cflags
+set var cflags += -O2 -g
 
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
  # 2 bootsectors increases.
