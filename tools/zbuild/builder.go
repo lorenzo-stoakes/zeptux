@@ -25,6 +25,8 @@ type rule struct {
 }
 
 type prehook struct {
+	on_change      bool
+	ext            []string
 	shell_commands []string
 }
 
@@ -625,26 +627,27 @@ func (b *build_graph) init_options(state *parse_state) {
 	}
 }
 
-func (b *build_graph) init_prehooks(state *parse_state) {
+func (b *build_graph) init_unconditional_prehook(statements statements) {
 	// Used in place of additional variables as none defined for prehooks
 	// (we don't yet support labelled dependencies).
 	dummy := make(map[string]string)
 
+	shells := b.extract_shell_commands(nil, dummy, statements)
+	pre := prehook{shell_commands: shells}
+	b.unconditional_prehooks = append(b.unconditional_prehooks, pre)
+}
+
+func (b *build_graph) init_prehooks(state *parse_state) {
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
 		case *prehook_statement:
-			if s.when != ALWAYS_PREHOOK {
-				fatal("Conditional prehooks are not yet supported")
+			if s.when == ALWAYS_PREHOOK {
+				if !s.dependencies.empty() {
+					fatal("Unconditional prehooks cannot have dependencies")
+				}
+
+				b.init_unconditional_prehook(s.statements)
 			}
-
-			if !s.dependencies.empty() {
-				fatal("Prehooks with dependencies are not yet supported")
-			}
-
-
-			shells := b.extract_shell_commands(nil, dummy, s.statements)
-			pre := prehook{shells}
-			b.unconditional_prehooks = append(b.unconditional_prehooks, pre)
 		}
 	}
 }
