@@ -309,7 +309,7 @@ func extract_rule_dependencies(dgs *depgetset) []string {
 }
 
 func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
-	var ret []string
+	hash := make(map[string]bool)
 
 	for _, dg := range dgs.depgets {
 		switch dg.kind {
@@ -320,7 +320,7 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 				fatal("Rule '%s': Dependency '%s' does not exist",
 					rule, dg.name)
 			}
-			ret = append(ret, dg.name)
+			hash[dg.name] = true
 		case GLOB:
 			var glob_path string
 			if len(dir) > 0 {
@@ -336,7 +336,7 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 				for _, match := range matches {
 					dir := path.Dir(dg.name)
 					name := path.Join(dir, path.Base(match))
-					ret = append(ret, name)
+					hash[name] = true
 				}
 			}
 		case RECURSIVE_GLOB:
@@ -345,6 +345,11 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 		default:
 			panic("Impossible!")
 		}
+	}
+
+	var ret []string
+	for k, _ := range hash {
+		ret = append(ret, k)
 	}
 
 	return ret
