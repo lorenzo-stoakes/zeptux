@@ -9,6 +9,18 @@ import (
 	"time"
 )
 
+// Read all lines of text from the specified file.
+func read_all(path string) []string {
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		fatal("Cannot find " + path)
+	} else if err != nil {
+		fatal("Error on opening %s: %s", path, err)
+	}
+
+	return strings.Split(string(data), "\n")
+}
+
 // Output an error to STDERR.
 func prerr(prefix, msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, "%s: ", prefix)

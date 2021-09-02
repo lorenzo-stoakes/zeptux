@@ -782,18 +782,6 @@ func line_error(prefix string, line_num int, line string, msg string, args ...in
 	prerr(prefix, msg, args...)
 }
 
-// Read all lines of text from the specified file.
-func read_all(path string) []string {
-	data, err := os.ReadFile(path)
-	if os.IsNotExist(err) {
-		fatal("Cannot find " + path)
-	} else if err != nil {
-		fatal("Error on opening %s: %s", path, err)
-	}
-
-	return strings.Split(string(data), "\n")
-}
-
 // Parse depget. Note that we do not figure out what might be referring to
 // rules, that gets handled after initial parse complete.
 func parse_depget(str string) *depget {
