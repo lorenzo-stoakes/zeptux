@@ -629,6 +629,24 @@ func (b *build_graph) exec_build(rule *rule, target string) {
 	}
 }
 
+// Determine whether file dependencies indicate a rule need be run.
+func check_file_deps(rule *rule, target string, usedepfiles bool) bool {
+	for _, filename := range rule.file_deps {
+		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
+			panic(err)
+		} else if newer {
+			if VERBOSE {
+				fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
+					rule.name, filename, target)
+			}
+
+			return true
+		}
+	}
+
+	return false
+}
+
 // Returns true if the rule had to run.
 func (b *build_graph) run_build(rule_name string) bool {
 	rule, ok := b.rules[rule_name]
@@ -653,22 +671,11 @@ func (b *build_graph) run_build(rule_name string) bool {
 	}
 
 	// Check if we need to run the rule by file dependencies...
-	should_exec := false
-	for _, filename := range rule.file_deps {
-		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
-			panic(err)
-		} else if newer {
-			should_exec = true
-			break
+	should_exec := check_file_deps(rule, target, b.options["compute_dependencies"])
 
-			if VERBOSE {
-				fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
-					rule.name, filename, target)
-			}
-		}
-	}
-
-	// Now, recurse :)
+	// Now, recurse :) we do this even if the file dependencies have already
+	// confirmed we need to rebuild because the rules above us may also need
+	// to be rebuilt themselves as additional dependencies.
 	b.rule_is_done[rule_name] = true // Guard against cycles.
 	for _, ruledep := range rule.rule_deps {
 		if b.run_build(ruledep) {
