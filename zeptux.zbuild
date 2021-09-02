@@ -18,9 +18,9 @@ set var QEMU_OPT = -serial mon:stdio -smp 1
 set special includes = include arch/x86_64/include .
 
 # Check build environment for all builds.
-#prehook * always {
-#	shell ./scripts/check_build_env.sh
-#}
+prehook * always {
+	shell ./scripts/check_build_env.sh
+}
 
 # TODO: Format source files when they change.
 #prehook source=[**.h,**.c,**.S,**.cpp] on change {
