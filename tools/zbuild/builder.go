@@ -24,10 +24,13 @@ type rule struct {
 	shell_commands                []string
 }
 
-type prehook struct {
-	on_change      bool
-	ext            []string
+type unconditional_prehook struct {
 	shell_commands []string
+}
+
+type conditional_prehook struct {
+	exts                    []string
+	deferred_shell_commands statements
 }
 
 type build_graph struct {
@@ -36,7 +39,8 @@ type build_graph struct {
 	rules                                    map[string]*rule
 	rule_is_done                             map[string]bool
 	options                                  map[string]bool
-	unconditional_prehooks                   []prehook
+	unconditional_prehooks                   []unconditional_prehook
+	conditional_prehooks                     []conditional_prehook
 }
 
 func (b *build_graph) dump() {
@@ -633,20 +637,45 @@ func (b *build_graph) init_unconditional_prehook(statements statements) {
 	dummy := make(map[string]string)
 
 	shells := b.extract_shell_commands(nil, dummy, statements)
-	pre := prehook{shell_commands: shells}
+	pre := unconditional_prehook{shell_commands: shells}
 	b.unconditional_prehooks = append(b.unconditional_prehooks, pre)
+}
+
+func (b *build_graph) init_conditional_prehook(presrc *prehook_statement) {
+	if len(presrc.dependencies.label) > 0 {
+		fatal("Labels are not supported in prehook statements")
+	}
+
+	pre := conditional_prehook{deferred_shell_commands: presrc.statements}
+
+	for _, dg := range presrc.dependencies.depgets {
+		switch dg.kind {
+		case RECURSIVE_GLOB:
+			ext := dg.name[2:]
+			pre.exts = append(pre.exts, ext)
+		default:
+			fatal("Conditional prehooks only supported for file ext only")
+		}
+	}
+
+	b.conditional_prehooks = append(b.conditional_prehooks, pre)
 }
 
 func (b *build_graph) init_prehooks(state *parse_state) {
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
 		case *prehook_statement:
-			if s.when == ALWAYS_PREHOOK {
+			switch s.when {
+			case ALWAYS_PREHOOK:
 				if !s.dependencies.empty() {
 					fatal("Unconditional prehooks cannot have dependencies")
 				}
 
 				b.init_unconditional_prehook(s.statements)
+			case ON_CHANGE_PREHOOK:
+				b.init_conditional_prehook(s)
+			default:
+				panic("Impossible!")
 			}
 		}
 	}
@@ -738,15 +767,63 @@ func add_depfile_deps(rule *rule, file_deps []string) []string {
 	return ret
 }
 
+func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filename string) {
+	// Insert the filename as variable $source.
+	additional_vars := make(map[string]string)
+	additional_vars["source"] = filename
+
+	shell_commands := b.extract_shell_commands(nil, additional_vars,
+		pre.deferred_shell_commands)
+
+	for _, shell := range shell_commands {
+		if VERBOSE {
+			fmt.Printf("%s\n", shell)
+		}
+
+		if !shell_exec(shell) {
+			// If verbose we already output it.
+			if !VERBOSE {
+				fmt.Printf("%s\n", shell)
+			}
+			fatal("Conditional prehook command failed with non-zero exit code")
+		}
+	}
+}
+
+func should_exec_conditional_prehook(pre *conditional_prehook, filename string) bool {
+	ext := path.Ext(filename)
+	if len(ext) > 0 && ext[0] == '.' {
+		ext = ext[1:]
+	}
+
+	for _, target_ext := range pre.exts {
+		if ext == target_ext {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (b *build_graph) exec_conditional_prehooks(filename string) {
+	for _, pre := range b.conditional_prehooks {
+		if should_exec_conditional_prehook(&pre, filename) {
+			b.exec_conditional_prehook(&pre, filename)
+		}
+	}
+}
+
 // Determine whether file dependencies indicate a rule need be run.
-func check_file_deps(rule *rule, target string, usedepfiles bool) bool {
+func (b *build_graph) check_file_deps(rule *rule, target string) bool {
 	var file_deps []string
 
-	if usedepfiles {
+	if b.options["compute_dependencies"] {
 		file_deps = add_depfile_deps(rule, rule.file_deps)
 	} else {
 		file_deps = rule.file_deps
 	}
+
+	ret := false
 
 	for _, filename := range file_deps {
 		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
@@ -757,11 +834,14 @@ func check_file_deps(rule *rule, target string, usedepfiles bool) bool {
 					rule.name, filename, target)
 			}
 
-			return true
+			// We don't exit early as we may need to execute prehooks.
+			ret = true
+
+			b.exec_conditional_prehooks(filename)
 		}
 	}
 
-	return false
+	return ret
 }
 
 // Returns true if the rule had to run.
@@ -788,7 +868,7 @@ func (b *build_graph) run_build(rule_name string) bool {
 	}
 
 	// Check if we need to run the rule by file dependencies...
-	should_exec := check_file_deps(rule, target, b.options["compute_dependencies"])
+	should_exec := b.check_file_deps(rule, target)
 
 	// Now, recurse :) we do this even if the file dependencies have already
 	// confirmed we need to rebuild because the rules above us may also need
