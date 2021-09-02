@@ -12,7 +12,7 @@ const (
 	CC_BINARY             = "gcc"
 	CPP_BINARY            = "g++"
 	LD_BINARY             = "ld"
-	VERBOSE               = true
+	DEBUG                 = false
 	ZBUILD_TMPFILE_PREFIX = ".zbuild."
 )
 
@@ -617,7 +617,7 @@ func (b *build_graph) init_options(state *parse_state) {
 		case *option_statement:
 			switch s.opt {
 			case COMPUTE_DEPENDENCIES_OPTION:
-				if VERBOSE {
+				if DEBUG {
 					fmt.Println("compute_dependencies option SET")
 				}
 
@@ -702,18 +702,18 @@ func (b *build_graph) init(state *parse_state) {
 
 // Actually execute build steps, recursion etc. handled elsewhere.
 func (b *build_graph) exec_build(rule *rule, target string) {
-	if VERBOSE {
+	if DEBUG {
 		fmt.Printf("Executing rule '%s'...\n", rule.name)
 	}
 
 	for _, shell := range rule.shell_commands {
-		if VERBOSE {
+		if DEBUG {
 			fmt.Printf("%s\n", shell)
 		}
 
 		if !shell_exec(shell) {
 			// If verbose we already output it.
-			if !VERBOSE {
+			if !DEBUG {
 				fmt.Printf("%s\n", shell)
 			}
 			fatal("Rule '%s': Command failed with non-zero exit code",
@@ -776,13 +776,13 @@ func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filenam
 		pre.deferred_shell_commands)
 
 	for _, shell := range shell_commands {
-		if VERBOSE {
+		if DEBUG {
 			fmt.Printf("%s\n", shell)
 		}
 
 		if !shell_exec(shell) {
 			// If verbose we already output it.
-			if !VERBOSE {
+			if !DEBUG {
 				fmt.Printf("%s\n", shell)
 			}
 			fatal("Conditional prehook command failed with non-zero exit code")
@@ -829,7 +829,7 @@ func (b *build_graph) check_file_deps(rule *rule, target string) bool {
 		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
 			panic(err)
 		} else if newer {
-			if VERBOSE {
+			if DEBUG {
 				fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
 					rule.name, filename, target)
 			}
@@ -900,12 +900,12 @@ func (b *build_graph) run_build(rule_name string) bool {
 func (b *build_graph) run_unconditional_prehooks() {
 	for _, prehook := range b.unconditional_prehooks {
 		for _, shell := range prehook.shell_commands {
-			if VERBOSE {
+			if DEBUG {
 				fmt.Printf("%s\n", shell)
 			}
 
 			if !shell_exec(shell) {
-				if !VERBOSE {
+				if !DEBUG {
 					fmt.Printf("%s\n", shell)
 				}
 				fatal("Prehook command failed with non-zero exit code")
