@@ -1,8 +1,9 @@
 set special default = zeptux.img
 set special build_dir = build
+set special includes = include arch/x86_64/include .
 
 set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
-# TODO: Don't support referencing other vars when setting vars yet.
+# TODO: We don't support referencing other vars when setting vars yet.
 set var cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL -O2 -g
 
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
@@ -15,15 +16,13 @@ set var MAX_KERNEL_ELF_SIZE = 473088
 
 set var QEMU_OPT = -serial mon:stdio -smp 1
 
-set special includes = include arch/x86_64/include .
-
 # Check build environment for all builds.
 prehook * always {
 	shell ./scripts/check_build_env.sh
 }
 
 # TODO: Format source files when they change.
-#prehook source=[**.h,**.c,**.S,**.cpp] on change {
+#prehook [**.h,**.c,**.S,**.cpp] on change {
 #	shell clang-format -style=file -i $source
 #}
 
