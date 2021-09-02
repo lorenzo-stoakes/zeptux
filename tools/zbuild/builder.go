@@ -114,20 +114,25 @@ func (b *build_graph) init_extract_special_var(key, val string) {
 }
 
 func (b *build_graph) init_extract_vars(state *parse_state) {
+	// No additional vars set when substituting variables.
+	dummy := make(map[string]string)
+
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
 		case *set_statement:
+			val := strings.TrimSpace(b.substitute_vars(s.key, dummy, &s.val))
+
 			if s.is_special {
-				b.init_extract_special_var(s.key, s.val)
+				b.init_extract_special_var(s.key, val)
 			} else if s.is_append {
 				if _, ok := b.vars[s.key]; !ok {
 					fatal("Trying to append missing variable '%s'",
 						s.key)
 				} else {
-					b.vars[s.key] += strings.TrimSpace(s.val)
+					b.vars[s.key] += " " + val // TODO: We force-insert a space.
 				}
 			} else {
-				b.vars[s.key] = strings.TrimSpace(s.val)
+				b.vars[s.key] = val
 			}
 		}
 	}
@@ -153,7 +158,7 @@ func (b *build_graph) combine_vars(additional_vars map[string]string) map[string
 
 // Substitute variables contained in parameterised string with actual string
 // values.
-func (b *build_graph) substitute_vars(rule string, additional_vars map[string]string,
+func (b *build_graph) substitute_vars(context string, additional_vars map[string]string,
 	str *parameterised_string) string {
 	var ret []string
 
@@ -165,7 +170,7 @@ func (b *build_graph) substitute_vars(rule string, additional_vars map[string]st
 			ret = append(ret, elem.str)
 		case VARIABLE_ELEM:
 			if val, ok := vars[elem.str]; !ok {
-				fatal("Rule '%s': Unrecognised variable $(%s)", rule,
+				fatal("%s: Unrecognised variable $(%s)", context,
 					elem.str)
 			} else {
 				ret = append(ret, val)

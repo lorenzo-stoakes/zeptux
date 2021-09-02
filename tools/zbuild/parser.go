@@ -115,7 +115,8 @@ func (o option) String() string {
 // Represents a SET statement.
 type set_statement struct {
 	is_special, is_append bool
-	key, val              string
+	key                   string
+	val                   parameterised_string
 }
 
 // Represents an OPTION statement.
@@ -347,7 +348,12 @@ func (s *parse_state) parse_set_line() {
 		s.fatal_line_error("'%s' is not a special variable", statement.key)
 	}
 
-	statement.val = strings.TrimSpace(strings.SplitN(s.line, operator, 2)[1])
+	valstr := strings.TrimSpace(strings.SplitN(s.line, operator, 2)[1])
+	if ptr := parse_parameterised_string(valstr); ptr == nil {
+		s.syntax_error()
+	} else {
+		statement.val = *ptr
+	}
 
 	s.append_statement(&statement)
 }
