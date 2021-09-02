@@ -7,15 +7,6 @@ import (
 	"strings"
 )
 
-// TODO: Make configurable
-const (
-	CC_BINARY             = "gcc"
-	CPP_BINARY            = "g++"
-	LD_BINARY             = "ld"
-	DEBUG                 = false
-	ZBUILD_TMPFILE_PREFIX = ".zbuild."
-)
-
 type rule struct {
 	name, dir, target, multi_glob string
 	is_multi, is_phony            bool
@@ -707,15 +698,7 @@ func (b *build_graph) exec_build(rule *rule, target string) {
 	}
 
 	for _, shell := range rule.shell_commands {
-		if DEBUG {
-			fmt.Printf("%s\n", shell)
-		}
-
 		if !shell_exec(shell) {
-			// If verbose we already output it.
-			if !DEBUG {
-				fmt.Printf("%s\n", shell)
-			}
 			fatal("Rule '%s': Command failed with non-zero exit code",
 				rule.name)
 		}
@@ -776,15 +759,7 @@ func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filenam
 		pre.deferred_shell_commands)
 
 	for _, shell := range shell_commands {
-		if DEBUG {
-			fmt.Printf("%s\n", shell)
-		}
-
 		if !shell_exec(shell) {
-			// If verbose we already output it.
-			if !DEBUG {
-				fmt.Printf("%s\n", shell)
-			}
 			fatal("Conditional prehook command failed with non-zero exit code")
 		}
 	}
@@ -900,14 +875,7 @@ func (b *build_graph) run_build(rule_name string) bool {
 func (b *build_graph) run_unconditional_prehooks() {
 	for _, prehook := range b.unconditional_prehooks {
 		for _, shell := range prehook.shell_commands {
-			if DEBUG {
-				fmt.Printf("%s\n", shell)
-			}
-
 			if !shell_exec(shell) {
-				if !DEBUG {
-					fmt.Printf("%s\n", shell)
-				}
 				fatal("Prehook command failed with non-zero exit code")
 			}
 		}

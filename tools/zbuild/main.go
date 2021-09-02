@@ -4,6 +4,16 @@ import (
 	"os"
 )
 
+// TODO: Make configurable.
+const (
+	CC_BINARY             = "gcc"
+	CPP_BINARY            = "g++"
+	LD_BINARY             = "ld"
+	DEBUG                 = false
+	UNQUIET               = true
+	ZBUILD_TMPFILE_PREFIX = ".zbuild."
+)
+
 func main() {
 	state := do_parse()
 
