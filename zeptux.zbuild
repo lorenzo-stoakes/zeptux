@@ -6,8 +6,8 @@ set var BOOT_CFLAGS = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -W
 set var CFLAGS = $BOOT_CFLAGS
 set var CFLAGS += -O2 -g
 
- # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
- # 2 bootsectors increases.
+# = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
+# 2 bootsectors increases.
 set var ELF_SIZE_OFFSET = 2556
 # The BIOS ELF loader is loaded at 0x8600 and conventional memory ends at
 # 0x80000. That leaves 0x77a00, but we want to leave 16 KiB for the kernel stack
@@ -42,7 +42,7 @@ build boot.bin from boot_obj {
 	shell cat boot1.bin boot2.bin > boot.bin
 }
 
-build [*.o] from [lib/*.c,early/*.c] as kernel_obj {
+build [*.o] from [lib/*.c, early/*.c] as kernel_obj {
 	foreach source to output {
 		cc $CFLAGS -c $source -o $output
 	}
@@ -73,12 +73,12 @@ build [*.o] in test/early from [*.c] as test_early_obj {
 	}
 }
 
-build test-early.elf from [boot.bin, test_early_obj, kernel_obj] {
+build test-early.elf from [boot.bin, test_early_obj, kernel_obj, kernel/kernel.ld] {
 	ld -T kernel/kernel.ld -o test-early.elf $test_early_obj $kernel_obj
 	shell find test-early.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 }
 
-build test-early.img from [boot.bin,test-early.elf] {
+build test-early.img from [boot.bin, test-early.elf] {
 	shell cp boot.bin boot-test.bin
 	shell scripts/patch_bin_int.py boot-test.bin $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
 
