@@ -2,9 +2,9 @@ set special default = zeptux.img
 set special build_dir = build
 set special includes = include arch/x86_64/include .
 
-set var boot_cflags = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
-set var cflags = $boot_cflags
-set var cflags += -O2 -g
+set var BOOT_CFLAGS = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
+set var CFLAGS = $BOOT_CFLAGS
+set var CFLAGS += -O2 -g
 
  # = 5 sectors into boot image - 4 bytes = 512 * 5 - 4 update if number of stage
  # 2 bootsectors increases.
@@ -31,7 +31,7 @@ option compute_dependencies
 
 build [*.o] in arch/x86_64/boot from [*.S, *.c, *.ld] as boot_obj {
 	foreach source to output excluding *.ld {
-		cc $boot_cflags -c $source -o $output
+		cc $BOOT_CFLAGS -c $source -o $output
 		shell objcopy --remove-section .note.gnu.property $output
 	}
 }
@@ -44,13 +44,13 @@ build boot.bin from boot_obj {
 
 build [*.o] from [lib/*.c,early/*.c] as kernel_obj {
 	foreach source to output {
-		cc $cflags -c $source -o $output
+		cc $CFLAGS -c $source -o $output
 	}
 }
 
 build [*.o] from [kernel/*.c] as kernel_main_obj {
 	foreach source to output {
-		cc $cflags -c $source -o $output
+		cc $CFLAGS -c $source -o $output
 	}
 }
 
@@ -69,7 +69,7 @@ build zeptux.img from [boot.bin, kernel.elf] {
 
 build [*.o] in test/early from [*.c] as test_early_obj {
 	foreach source to output {
-		cc $cflags -Itest/include/ -c $source -o $output
+		cc $CFLAGS -Itest/include/ -c $source -o $output
 	}
 }
 
