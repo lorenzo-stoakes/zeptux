@@ -28,15 +28,31 @@ It is released under an MIT license.
 * Add basic system calls.
 * Implement trivial shell.
 
-### Usage
+## Usage
 
-Make sure you have gcc, binutils, python 3, go and qemu installed. Then run:
+Make sure you have __gcc__, __binutils__, __python 3__, __go__ and __qemu__ installed.
+
+### Building
 
 ```
 $ ./build
 ```
 
-#### Tests
+### Emulation
+
+To run under qemu:
+
+```
+$ ./build qemu
+```
+
+To run under qemu using a graphical output:
+
+```
+$ ./build qemu-vga
+```
+
+### Tests
 
 To execute all tests, run:
 
