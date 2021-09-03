@@ -16,7 +16,7 @@ const (
 // 'Special' variables, e.g. ones that have an impact further than allowing
 // $varname substitution.
 var SPECIAL_VARS = []string{
-	"build_dir", "default", "includes", "default_cflags",
+	"build_dir", "default", "includes", "default_cflags", "global_file_deps",
 }
 
 // Reserved to avoid conflicts.

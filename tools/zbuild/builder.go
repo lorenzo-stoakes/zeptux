@@ -26,13 +26,15 @@ type conditional_prehook struct {
 }
 
 type build_graph struct {
-	vars                                     map[string]string
-	build_dir, def, includes, default_cflags string
-	rules                                    map[string]*rule
-	rule_is_done                             map[string]bool
-	options                                  map[string]bool
-	unconditional_prehooks                   []unconditional_prehook
-	conditional_prehooks                     []conditional_prehook
+	vars                     map[string]string
+	build_dir, def, includes string
+	default_cflags           string
+	global_file_deps         []string
+	rules                    map[string]*rule
+	rule_is_done             map[string]bool
+	options                  map[string]bool
+	unconditional_prehooks   []unconditional_prehook
+	conditional_prehooks     []conditional_prehook
 }
 
 func (b *build_graph) dump() {
@@ -44,6 +46,7 @@ func (b *build_graph) dump() {
 	fmt.Printf("(special) default = %s\n", b.def)
 	fmt.Printf("(special) includes = %s\n", b.includes)
 	fmt.Printf("(special) default_cflags = %s\n", b.default_cflags)
+	fmt.Printf("(special) global_file_deps = %s\n", strings.Join(b.global_file_deps, " "))
 
 	fmt.Printf("\n-- RULES: --\n")
 	for name, rule := range b.rules {
@@ -108,6 +111,8 @@ func (b *build_graph) init_extract_special_var(key, val string) {
 		b.includes = prefix_includes(val)
 	case "default_cflags":
 		b.default_cflags = val
+	case "global_file_deps":
+		b.global_file_deps = strings.Fields(val)
 	default:
 		panic("Impossible!")
 	}
@@ -152,6 +157,7 @@ func (b *build_graph) combine_vars(additional_vars map[string]string) map[string
 	vars["default"] = b.def
 	vars["includes"] = b.includes
 	vars["default_cflags"] = b.default_cflags
+	vars["global_file_deps"] = strings.Join(b.global_file_deps, " ")
 
 	return vars
 }
@@ -813,8 +819,11 @@ func (b *build_graph) check_file_deps(rule *rule, target string) bool {
 		file_deps = rule.file_deps
 	}
 
-	ret := false
+	for _, dep := range b.global_file_deps {
+		file_deps = append(file_deps, dep)
+	}
 
+	ret := false
 	for _, filename := range file_deps {
 		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
 			panic(err)
