@@ -33,6 +33,7 @@ type build_graph struct {
 	rules                  map[string]*rule
 	rule_is_done           map[string]bool
 	options                map[string]bool
+	known_file_comparisons map[string]bool
 	unconditional_prehooks []unconditional_prehook
 	conditional_prehooks   []conditional_prehook
 }
@@ -668,6 +669,7 @@ func (b *build_graph) init(state *parse_state) {
 	b.rules = make(map[string]*rule)
 	b.rule_is_done = make(map[string]bool)
 	b.options = make(map[string]bool)
+	b.known_file_comparisons = make(map[string]bool)
 
 	b.init_extract_vars(state) // On the first pass we pull out the variables.
 	b.init_options(state)
@@ -778,6 +780,12 @@ func normalise_rule_dir(rule *rule) {
 }
 
 func (b *build_graph) check_file_dep_newer(rule *rule, target, filename string) bool {
+	lookup := target + "|" + filename
+
+	if ret, ok := b.known_file_comparisons[lookup]; ok {
+		return ret
+	}
+
 	if newer, err := is_file_newer("", filename, target); err != nil {
 		panic(err)
 	} else if newer {
@@ -788,9 +796,11 @@ func (b *build_graph) check_file_dep_newer(rule *rule, target, filename string) 
 
 		b.exec_conditional_prehooks(filename)
 
+		b.known_file_comparisons[lookup] = true
 		return true
 	}
 
+	b.known_file_comparisons[lookup] = false
 	return false
 }
 
