@@ -96,8 +96,9 @@
 #define X86_KERNEL_ELF_BASE_PGD_OFFSET (384)
 // in x86 physical memory map, this is where extended memory lives so is safe to
 // write to.
-#define X86_KERNEL_ELF_OFFSET (0x1000000UL)
-#define X86_KERNEL_ELF_ADDRESS (X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_OFFSET)
+#define X86_KERNEL_ELF_ADDRESS_PHYS (0x1000000UL)
+#define X86_KERNEL_ELF_ADDRESS \
+	(X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_ADDRESS_PHYS)
 // We specify that the kernel text section comes first and is offset by 0x1000
 // so if booting from boot sector we can quickly load the ELF image direct and
 // jump to it as headers will never exceed 1 page in size.
@@ -114,7 +115,7 @@
 // memory map to reference it.
 #define X86_KERNEL_STACK_ADDRESS_PHYS (0x80000)
 #define X86_KERNEL_STACK_ADDRESS \
-	(X86_KERNEL_DIRECT_MAP_BASE + X86_KERNEL_INIT_STACK_ADDRESS_PHYS)
+	(X86_KERNEL_DIRECT_MAP_BASE + X86_KERNEL_STACK_ADDRESS_PHYS)
 // Place the early boot info struct into lower part of conventional
 // memory below boot sector.
 #define X86_EARLY_BOOT_INFO_ADDRESS_PHYS (0x6000)

@@ -4,8 +4,6 @@
 #include "page.h"
 #include "types.h"
 
-// Initial kernel stack location.
-#define EARLY_KERNEL_INIT_STACK (X86_KERNEL_INIT_STACK)
 // Location where we store intial boot information useful for the kernel.
 #define EARLY_BOOT_INFO_ADDRESS (X86_EARLY_BOOT_INFO_ADDRESS)
 // Location in memory where text output can be written to which gets displayed
@@ -22,7 +20,8 @@
 	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_DIRECT0)
 #define EARLY_PUD_DIRECT_MAP_ADDRESS \
 	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_DIRECT_MAP)
-#define EARLY_PUD_KERNEL_ELF (KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_KERNEL_ELF)
+#define EARLY_PUD_KERNEL_ELF_ADDRESS \
+	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_KERNEL_ELF)
 
 // See https://uefi.org/specs/ACPI/6.4/15_System_Address_Map_Interfaces/int-15h-e820h---query-system-address-map.html
 struct e820_entry {
