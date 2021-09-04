@@ -4,6 +4,8 @@ set -e; set -o pipefail
 function build_zbuild()
 {
 	go build -o zbuild tools/zbuild/*.go
+	# Force rebuild.
+	touch zeptux.zbuild
 }
 
 function zbuild_up_to_date()
