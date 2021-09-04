@@ -225,28 +225,12 @@ func (b *build_graph) expand_foreach_statement(rule *rule, additional_vars map[s
 
 	// Determine which files have actually changed - these are the only ones
 	// we loop over.
-	for _, source := range rule.file_deps {
-		if excluding[source] {
-			continue
-		}
-
+	for _, source := range b.get_changed_file_deps(rule, target_ext, excluding, true) {
 		// We always target base directory.
 		output := path.Base(replace_ext(source, target_ext))
 
-		if newer, err := is_file_newer(rule.dir, source, output); err != nil {
-			fatal("Rule '%s': Error when comparing '%s' to '%s' (dir '%s'): %s",
-				rule.name, source, output, rule.dir, err)
-		} else if !newer {
-			continue
-		}
-
-		full_source := source
-		if len(rule.dir) > 0 {
-			full_source = path.Join(rule.dir, source)
-		}
-
 		// Now generate the shell commands for each foreach iteration.
-		additional_vars["source"] = full_source
+		additional_vars["source"] = source
 		additional_vars["output"] = output
 		ss := b.extract_shell_commands(rule, additional_vars, foreach.statements)
 		ret = append(ret, ss...)
@@ -829,7 +813,8 @@ func (b *build_graph) check_file_deps_newer(rule *rule, target string,
 
 // Determine whether file dependencies indicate a rule need be run - returns a
 // list of filedeps that should run.
-func (b *build_graph) check_file_deps(rule *rule, target string) []string {
+func (b *build_graph) get_changed_file_deps(rule *rule, targeting string,
+	excluding map[string]bool, is_multi bool) []string {
 	// We normalise all file dependencies to project root to avoid issues
 	// with rule execution in a particular directory but dependencies
 	// being relative to root.
@@ -841,9 +826,16 @@ func (b *build_graph) check_file_deps(rule *rule, target string) []string {
 	// Determine any dependency-file generated dependencies.
 	dep_graph := b.compute_depfile_filedeps(rule)
 
-	// Check if file dependency is newer, including checks for
+	// Check if file dependency is newer + trigger prehooks.
 	hash := make(map[string]bool)
 	for _, filename := range rule.file_deps {
+		var target string
+		if is_multi {
+			target = path.Base(replace_ext(filename, targeting))
+		} else {
+			target = targeting
+		}
+
 		// Check file.
 		if b.check_file_dep_newer(rule, target, filename) {
 			hash[filename] = true
@@ -863,7 +855,9 @@ func (b *build_graph) check_file_deps(rule *rule, target string) []string {
 
 	var ret []string
 	for k, _ := range hash {
-		ret = append(ret, k)
+		if excluding == nil || (!excluding[k] && !excluding[path.Base(k)]) {
+			ret = append(ret, k)
+		}
 	}
 
 	return ret
@@ -893,7 +887,7 @@ func (b *build_graph) run_build(rule_name string) bool {
 	}
 
 	// Check if we need to run the rule by file dependencies...
-	should_exec := len(b.check_file_deps(rule, target)) > 0
+	should_exec := len(b.get_changed_file_deps(rule, target, nil, false)) > 0
 
 	// Now, recurse :) we do this even if the file dependencies have already
 	// confirmed we need to rebuild because the rules above us may also need
