@@ -287,7 +287,7 @@ start64:
 	movw %ax, %gs
 
 	// Setup stack.
-	movq $X86_KERNEL_INIT_STACK, %rsp
+	movq $X86_KERNEL_STACK_ADDRESS, %rsp
 	// Call the kernel ELF loader.
 	call load
 

@@ -112,7 +112,9 @@
 #define X86_EARLY_INIT_STACK (0x7c00)
 // Place the kernel stack at the top of conventional memory. Use the direct
 // memory map to reference it.
-#define X86_KERNEL_INIT_STACK (X86_KERNEL_DIRECT_MAP_BASE + 0x80000)
+#define X86_KERNEL_STACK_ADDRESS_PHYS (0x80000)
+#define X86_KERNEL_STACK_ADDRESS \
+	(X86_KERNEL_DIRECT_MAP_BASE + X86_KERNEL_INIT_STACK_ADDRESS_PHYS)
 // Place the early boot info struct into lower part of conventional
 // memory below boot sector.
 #define X86_EARLY_BOOT_INFO_ADDRESS_PHYS (0x6000)
