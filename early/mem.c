@@ -276,6 +276,32 @@ static inline uint64_t pa_to_span_offset(struct early_page_alloc_span *span,
 	return offset_bytes >> PAGE_SHIFT;
 }
 
+// Determine the physical address of an offset into an early page allocator
+// span. This assumes the offset is already known to be contained within the
+// span.
+static inline physaddr_t span_offset_to_pa(struct early_page_alloc_span *span,
+					   uint64_t offset)
+{
+	physaddr_t pa = span->start;
+	pa.x += offset << PAGE_SHIFT;
+
+	return pa;
+}
+
+// Mark a page allocated and update stats accordingly in the early page
+// allocator.
+static void mark_page_allocated(struct early_page_alloc_span *span,
+				uint64_t offset, bool ephemeral)
+{
+	bitmap_set(span->alloc_bitmap, offset);
+	alloc_state->allocated_pages++;
+
+	if (ephemeral) {
+		bitmap_set(span->ephemeral_bitmap, offset);
+		alloc_state->ephemeral_pages++;
+	}
+}
+
 // Allocate at the specific physical address in the early page allocator or
 // panic if already allocated. This will only ever be called single threaded so
 // we don't have to worry about sychronisation.
@@ -292,13 +318,28 @@ static void alloc_at(physaddr_t pa, bool ephemeral)
 		early_panic("Page containing %lx is already allocated?", pa.x);
 	}
 
-	bitmap_set(span->alloc_bitmap, offset);
-	alloc_state->allocated_pages++;
+	mark_page_allocated(span, offset, ephemeral);
+}
 
-	if (ephemeral) {
-		bitmap_set(span->ephemeral_bitmap, offset);
-		alloc_state->ephemeral_pages++;
+// Allocate a page from the early page allocator.
+static physaddr_t alloc(bool ephemeral)
+{
+	// TODO: Perhaps we should use some heuristic to avoid giving away too
+	// much physically contiguous memory to allocations who might very well
+	// not need it?
+
+	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
+		struct early_page_alloc_span *span = &alloc_state->spans[i];
+
+		int64_t offset = bitmap_first_clear(span->alloc_bitmap);
+		if (offset == -1)
+			continue;
+
+		mark_page_allocated(span, offset, ephemeral);
+		return span_offset_to_pa(span, offset);
 	}
+
+	early_panic("Out of memory!");
 }
 
 void early_page_alloc_ephemeral_at(physaddr_t pa)
@@ -309,6 +350,16 @@ void early_page_alloc_ephemeral_at(physaddr_t pa)
 void early_page_alloc_at(physaddr_t pa)
 {
 	alloc_at(pa, false);
+}
+
+physaddr_t early_page_alloc(void)
+{
+	return alloc(false);
+}
+
+physaddr_t early_page_alloc_ephemeral(void)
+{
+	return alloc(true);
 }
 
 // Allocate ephemeral pages allocated from the scratch allocator in order to

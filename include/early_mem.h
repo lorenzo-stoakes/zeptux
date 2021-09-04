@@ -148,3 +148,10 @@ void early_page_alloc_ephemeral_at(physaddr_t pa);
 
 // Allocate page at specific physical address. Panics if already allocated.
 void early_page_alloc_at(physaddr_t pa);
+
+// Allocates physical page from the early page allocator.
+physaddr_t early_page_alloc();
+
+// Allocates an ephemeral physical page from the early page allocator (will be
+// discared when switching to the full fat physical allocator).
+physaddr_t early_page_alloc_ephemeral();
