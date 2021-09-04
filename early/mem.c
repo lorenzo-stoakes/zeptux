@@ -4,6 +4,10 @@
 // it's ok to keep this static.
 static struct scratch_alloc_state scratch_state;
 
+// We allocate pages for this using the scratch allocator but keep the pointer
+// as a static pointer. We will only access this single-threaded also.
+static struct early_page_alloc_state *alloc_state;
+
 // Drop the direct mapping from VA 0 / PA 0. We don't need it any more.
 static void drop_direct0(void)
 {
@@ -200,6 +204,7 @@ void early_mem_init(void)
 	early_normalise_e820(info);
 	info->total_avail_ram_bytes = early_get_total_ram(info);
 	early_scratch_alloc_init(info);
+	early_page_alloc_init();
 }
 
 struct scratch_alloc_state *early_scratch_alloc_state(void)
@@ -218,4 +223,178 @@ physaddr_t early_scratch_page_alloc(void)
 	memset(ptr, 0, PAGE_SIZE);
 
 	return addr;
+}
+
+// Allocates bitmaps for early allocator span data, assigns the spans,
+// initialises them and returns the number of pages allocated.
+static uint64_t alloc_span_bitmaps(struct early_page_alloc_span *span)
+{
+	// We are using 1 bit per page.
+	uint64_t bytes = bitmap_calc_size(span->num_pages);
+	uint64_t pages = bytes_to_pages(bytes);
+
+	span->alloc_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
+	for (int i = 1; i < (int)pages; i++) {
+		early_scratch_page_alloc();
+	}
+
+	span->ephemeral_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
+	for (int i = 1; i < (int)pages; i++) {
+		early_scratch_page_alloc();
+	}
+
+	bitmap_init(span->alloc_bitmap, pages);
+	bitmap_init(span->ephemeral_bitmap, pages);
+
+	return pages * 2;
+}
+
+// Find the early page allocator span that contains a specified physical
+// address.
+static struct early_page_alloc_span *find_span(physaddr_t pa)
+{
+	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
+		struct early_page_alloc_span *span = &alloc_state->spans[i];
+
+		uint64_t start = span->start.x;
+		if (start <= pa.x &&
+		    pa.x < start + span->num_pages * PAGE_SIZE) {
+			return span;
+		}
+	}
+
+	return NULL;
+}
+
+// Determine the offset of a specific physical address into an early page
+// allocator span in pages. Assumes the PA has already been located within the
+// span via find_span() above.
+static inline uint64_t pa_to_span_offset(struct early_page_alloc_span *span,
+					 physaddr_t pa)
+{
+	uint64_t offset_bytes = pa.x - span->start.x;
+	return offset_bytes >> PAGE_SHIFT;
+}
+
+// Allocate at the specific physical address in the early page allocator or
+// panic if already allocated. This will only ever be called single threaded so
+// we don't have to worry about sychronisation.
+static void alloc_at(physaddr_t pa, bool ephemeral)
+{
+	struct early_page_alloc_span *span = find_span(pa);
+
+	if (span == NULL) {
+		early_panic("Unable to locate span for %lx", pa.x);
+	}
+
+	uint64_t offset = pa_to_span_offset(span, pa);
+	if (bitmap_is_set(span->alloc_bitmap, offset)) {
+		early_panic("Page containing %lx is already allocated?", pa.x);
+	}
+
+	bitmap_set(span->alloc_bitmap, offset);
+	alloc_state->allocated_pages++;
+
+	if (ephemeral) {
+		bitmap_set(span->ephemeral_bitmap, offset);
+		alloc_state->ephemeral_pages++;
+	}
+}
+
+void early_page_alloc_ephemeral_at(physaddr_t pa)
+{
+	alloc_at(pa, true);
+}
+
+void early_page_alloc_at(physaddr_t pa)
+{
+	alloc_at(pa, false);
+}
+
+// Allocate ephemeral pages allocated from the scratch allocator in order to
+// initialise the early page allocator as well as system memory already being
+// used such as the kernel stack in order that these pages are reserved.
+static void alloc_init_pages(physaddr_t first_scratch_page,
+			     uint64_t num_scratch_pages)
+{
+	// Allocate (ephemeral) scratch pages.
+	physaddr_t pa = first_scratch_page;
+	for (int i = 0; i < (int)num_scratch_pages; i++) {
+		early_page_alloc_ephemeral_at(pa);
+		pa = pa_next_page(pa);
+	}
+
+	// Allocate kernel stack.
+	pa.x = KERNEL_STACK_ADDRESS_PHYS;
+	for (int i = 0; i < KERNEL_STACK_PAGES; i++) {
+		early_page_alloc_at(pa);
+		pa = pa_prev_page(pa);
+	}
+
+	// Alloc early boot info.
+	struct early_boot_info *info = early_get_boot_info();
+	pa = virt_ptr_to_phys(info);
+	early_page_alloc_at(pa);
+
+	// Allocate ELF image pages.
+	pa.x = KERNEL_ELF_ADDRESS_PHYS;
+	uint64_t elf_pages = bytes_to_pages(info->kernel_elf_size_bytes);
+	for (int i = 0; i < (int)elf_pages; i++) {
+		early_page_alloc_at(pa);
+		pa = pa_next_page(pa);
+	}
+
+	// Allocate (ephemeral) early page tables - we will remap the page
+	// tables before moving to the full fat physical allocator.
+	pa.x = X86_EARLY_PGD;
+	early_page_alloc_ephemeral_at(pa);
+	// We have already removed the direct 0 mapping so no need to allocate
+	// that.
+	pa.x = X86_EARLY_PUD_DIRECT_MAP;
+	early_page_alloc_ephemeral_at(pa);
+	pa.x = X86_EARLY_PUD_KERNEL_ELF;
+	early_page_alloc_ephemeral_at(pa);
+
+	// Allocate (should be ephemeral) early video buffer address.
+	// TODO: Make ephemeral when we have a proper video driver.
+	pa.x = ALIGN(X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS, PAGE_SIZE);
+	early_page_alloc_at(pa);
+}
+
+void early_page_alloc_init(void)
+{
+	struct early_boot_info *info = early_get_boot_info();
+
+	// Allocate the page that contains the early page alloc metadata and all
+	// span metadata. As we know that the scratch allocator is allocating
+	// physically contiguous memory we need only track the 1st address and
+	// number allocated to know what we have used.
+	physaddr_t first_scratch_page = early_scratch_page_alloc();
+	uint64_t num_scratch_pages = 1;
+
+	if (!IS_ALIGNED(info->total_avail_ram_bytes, PAGE_SIZE))
+		early_panic("e820 entries not normalised to page size?");
+
+	alloc_state = phys_to_virt_ptr(first_scratch_page);
+	alloc_state->total_pages = bytes_to_pages(info->total_avail_ram_bytes);
+	alloc_state->num_spans = info->num_ram_spans;
+
+	uint64_t span_index = 0;
+	for (int i = 0; i < (int)info->num_e820_entries; i++) {
+		struct e820_entry *entry = &info->e820_entries[i];
+
+		if (entry->type != E820_TYPE_RAM)
+			continue;
+
+		struct early_page_alloc_span *span =
+			&alloc_state->spans[span_index++];
+
+		physaddr_t start = {entry->base};
+		span->start = start;
+		span->num_pages = entry->size >> PAGE_SHIFT;
+
+		num_scratch_pages += alloc_span_bitmaps(span);
+	}
+
+	alloc_init_pages(first_scratch_page, num_scratch_pages);
 }

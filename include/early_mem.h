@@ -138,3 +138,13 @@ physaddr_t early_scratch_page_alloc(void);
 
 // Performs early memory intialisation.
 void early_mem_init(void);
+
+// Initialise the early page allocator.
+void early_page_alloc_init(void);
+
+// Allocate ephemeral page at specific physical address. Panics if already
+// allocated.
+void early_page_alloc_ephemeral_at(physaddr_t pa);
+
+// Allocate page at specific physical address. Panics if already allocated.
+void early_page_alloc_at(physaddr_t pa);
