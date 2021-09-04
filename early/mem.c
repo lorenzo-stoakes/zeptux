@@ -229,24 +229,28 @@ physaddr_t early_scratch_page_alloc(void)
 // initialises them and returns the number of pages allocated.
 static uint64_t alloc_span_bitmaps(struct early_page_alloc_span *span)
 {
-	// We are using 1 bit per page.
-	uint64_t bytes = bitmap_calc_size(span->num_pages);
-	uint64_t pages = bytes_to_pages(bytes);
+	// The number of pages this bitmap will keep track of.
+	uint64_t num_pages = span->num_pages;
+	// The number of bytes/pages the actual bitmap itself will occupy.
+	uint64_t bitmap_bytes = bitmap_calc_size(num_pages);
+	uint64_t bitmap_pages = bytes_to_pages(bitmap_bytes);
 
+	// We rely on the fact that the scratch allocator is giving us
+	// physically (and this via direct mapping virtually) contiguous memory.
 	span->alloc_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
-	for (int i = 1; i < (int)pages; i++) {
+	for (int i = 1; i < (int)bitmap_pages; i++) {
 		early_scratch_page_alloc();
 	}
 
 	span->ephemeral_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
-	for (int i = 1; i < (int)pages; i++) {
+	for (int i = 1; i < (int)bitmap_pages; i++) {
 		early_scratch_page_alloc();
 	}
 
-	bitmap_init(span->alloc_bitmap, pages);
-	bitmap_init(span->ephemeral_bitmap, pages);
+	bitmap_init(span->alloc_bitmap, num_pages);
+	bitmap_init(span->ephemeral_bitmap, num_pages);
 
-	return pages * 2;
+	return bitmap_pages * 2;
 }
 
 // Find the early page allocator span that contains a specified physical
