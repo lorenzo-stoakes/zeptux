@@ -230,16 +230,16 @@ static inline void *phys_to_virt_ptr(physaddr_t addr)
 }
 
 // Get physical address from virtual address.
-static inline physaddr_t virt_to_phys(virtaddr_t addr)
+static inline physaddr_t virt_to_phys(virtaddr_t va)
 {
 	// Determine whether the VA is a direct mapping or part of the kernel
 	// ELF.
 	uint64_t offset;
-	if (addr.x > KERNEL_ELF_ADDRESS)
+	if (va.x > KERNEL_ELF_ADDRESS)
 		offset = KERNEL_ELF_ADDRESS;
 	else
 		offset = KERNEL_DIRECT_MAP_BASE;
 
-	physaddr_t pa = {addr.x - offset};
+	physaddr_t pa = {va.x - offset};
 	return pa;
 }
