@@ -148,6 +148,12 @@ TYPE_WRAP(pude_t, uint64_t);
 TYPE_WRAP(pmde_t, uint64_t);
 TYPE_WRAP(ptde_t, uint64_t);
 
+// Convert bytes to the number of pages required to hold them.
+static inline uint64_t bytes_to_pages(uint64_t bytes)
+{
+	return ALIGN_UP(bytes, PAGE_SIZE) >> PAGE_SHIFT;
+}
+
 // Convert a physical address to a page frame number.
 static inline pfn_t pa_to_pfn(physaddr_t pa)
 {
@@ -160,6 +166,23 @@ static inline physaddr_t pfn_to_pa(pfn_t pfn)
 {
 	physaddr_t pa = {pfn.x << PAGE_SHIFT};
 	return pa;
+}
+
+// Return the physical address of the page after this PA.
+static inline physaddr_t pa_next_page(physaddr_t pa)
+{
+	pfn_t pfn = pa_to_pfn(pa);
+	pfn.x++;
+	return pfn_to_pa(pfn);
+}
+
+// Return the physical address of the page before this PA. Doesn't check for
+// underflow?
+static inline physaddr_t pa_prev_page(physaddr_t pa)
+{
+	pfn_t pfn = pa_to_pfn(pa);
+	pfn.x--;
+	return pfn_to_pa(pfn);
 }
 
 // Get data offset from virtual address.
