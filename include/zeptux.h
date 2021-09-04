@@ -7,7 +7,6 @@
 #include "elf.h"
 #include "macros.h"
 #include "mem.h"
-#include "mm/phys.h"
 #include "page.h"
 #include "range.h"
 #include "spinlock.h"
