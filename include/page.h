@@ -243,3 +243,10 @@ static inline physaddr_t virt_to_phys(virtaddr_t va)
 	physaddr_t pa = {va.x - offset};
 	return pa;
 }
+
+// Get physical address from (kernel!) pointer.
+static inline physaddr_t virt_ptr_to_phys(void *ptr)
+{
+	virtaddr_t va = {(uint64_t)ptr};
+	return virt_to_phys(va);
+}
