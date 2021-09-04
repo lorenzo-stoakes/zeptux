@@ -53,11 +53,11 @@ const (
 	RULE
 )
 
+// Represents a dependency/target.
 type depget struct {
 	kind depget_kind
 	name string
 }
-
 func (d depget) String() string {
 	if d.kind == RECURSIVE_GLOB {
 		return "*" + d.name
@@ -71,7 +71,6 @@ type depgetset struct {
 	label   string
 	depgets []depget
 }
-
 func (d depgetset) String() string {
 	ret := ""
 
@@ -102,7 +101,6 @@ type option int
 const (
 	COMPUTE_DEPENDENCIES_OPTION option = iota
 )
-
 func (o option) String() string {
 	switch o {
 	case COMPUTE_DEPENDENCIES_OPTION:
@@ -711,7 +709,8 @@ func (s *parse_state) parse_command_line() {
 	}
 }
 
-func (s *parse_state) parse_top_line() {
+// Parse a non-nested line.
+func (s *parse_state) parse_toplevel_line() {
 	opstr, nonblank := s.parse_operation_name()
 	if !nonblank {
 		return
@@ -735,9 +734,10 @@ func (s *parse_state) parse_top_line() {
 	}
 }
 
+// Parse a line of input.
 func (s *parse_state) parse_line() {
 	if len(s.currop_stack) == 0 {
-		s.parse_top_line()
+		s.parse_toplevel_line()
 		return
 	}
 
@@ -758,6 +758,7 @@ func (s *parse_state) parse_line() {
 	}
 }
 
+// Check function to ensure an interface{} is a pointer. Something of a hack!
 func assert_statement_is_pointer(statement interface{}) {
 	if reflect.ValueOf(statement).Kind() != reflect.Ptr {
 		panic("append_statement() passed a non-pointer?")
@@ -988,6 +989,7 @@ func parse_parameterised_string(str string) *parameterised_string {
 	return &ret
 }
 
+// Dump a statement to stdout.
 func dump_statement(indent int, statement interface{}) {
 	print_indent := func() {
 		for i := 0; i < indent; i++ {
@@ -1064,12 +1066,14 @@ func dump_statement(indent int, statement interface{}) {
 	}
 }
 
+// Dump statements to stdout.
 func dump_statements(indent int, statements statements) {
 	for _, s := range statements {
 		dump_statement(indent, s)
 	}
 }
 
+// Dump all statements to stdout.
 func (s *parse_state) dump() {
 	dump_statements(0, s.statements)
 }
@@ -1129,6 +1133,7 @@ func (s *parse_state) fixup_dependencies() {
 	}
 }
 
+// Parse zeptux.zbuild into an AST of type parse_state.
 func do_parse() *parse_state {
 	var state parse_state
 
