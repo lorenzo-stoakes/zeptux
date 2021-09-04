@@ -840,7 +840,7 @@ func (b *build_graph) check_file_deps(rule *rule, target string) []string {
 			// We don't exit early as we may need to execute prehooks.
 			ret = append(ret, filename)
 
-			b.exec_conditional_prehooks(filename)
+			b.exec_conditional_prehooks(path.Join(rule.dir, filename))
 		}
 	}
 
