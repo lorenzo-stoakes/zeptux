@@ -723,33 +723,24 @@ func (b *build_graph) exec_build(rule *rule, target string) {
 }
 
 // Expand file dependency list to include dependencies obtained from the .d
-// dependency file. Deduplicates output.
-func (b *build_graph) add_depfile_filedeps(rule *rule) []string {
+// dependency file. Returns a map of source file -> dependencies.
+func (b *build_graph) compute_depfile_filedeps(rule *rule) map[string][]string {
+	ret := make(map[string][]string)
+
 	if !b.options["compute_dependencies"] {
-		return rule.file_deps
+		return ret
 	}
 
-	var ret []string
-
-	seen := make(map[string]bool)
-
 	for _, filename := range rule.file_deps {
-		if seen[filename] {
-			continue
-		}
-		seen[filename] = true
-		ret = append(ret, filename)
-
 		for _, dep := range parse_dependencies(filename) {
 			// We also skip any generated dependency with an
 			// absolute path, it seems we can end up with system
 			// includes listed here!
-			if seen[dep] || (len(dep) > 0 && dep[0] == '/') {
+			if len(dep) > 0 && dep[0] == '/' {
 				continue
 			}
-			seen[dep] = true
 
-			ret = append(ret, dep)
+			ret[filename] = append(ret[filename], dep)
 		}
 	}
 
@@ -799,22 +790,41 @@ func (b *build_graph) exec_conditional_prehooks(filename string) {
 	}
 }
 
-func (b *build_graph) add_global_filedeps(rule *rule, file_deps []string) []string {
-	ret := file_deps
-
-	for _, dep := range b.global_file_deps {
-		ret = append(ret, dep)
-	}
-
-	return ret
-}
-
-
 func normalise_rule_dir(rule *rule) {
 	for i, file := range rule.file_deps {
 		rule.file_deps[i] = path.Join(rule.dir, file)
 	}
 	rule.dir = ""
+}
+
+func (b *build_graph) check_file_dep_newer(rule *rule, target, filename string) bool {
+	if newer, err := is_file_newer("", filename, target); err != nil {
+		panic(err)
+	} else if newer {
+		if DEBUG {
+			fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
+				rule.name, filename, target)
+		}
+
+		b.exec_conditional_prehooks(filename)
+
+		return true
+	}
+
+	return false
+}
+
+func (b *build_graph) check_file_deps_newer(rule *rule, target string,
+	filenames []string) bool {
+	ret := false
+	for _, filename := range filenames {
+		if b.check_file_dep_newer(rule, target, filename) {
+			// We don't exit early as we may need to execute prehooks.
+			ret = true
+		}
+	}
+
+	return ret
 }
 
 // Determine whether file dependencies indicate a rule need be run - returns a
@@ -828,24 +838,32 @@ func (b *build_graph) check_file_deps(rule *rule, target string) []string {
 	// dependency generation and no longer referenced.
 	normalise_rule_dir(rule)
 
-	file_deps := b.add_depfile_filedeps(rule)
-	file_deps = b.add_global_filedeps(rule, file_deps)
+	// Determine any dependency-file generated dependencies.
+	dep_graph := b.compute_depfile_filedeps(rule)
+
+	// Check if file dependency is newer, including checks for
+	hash := make(map[string]bool)
+	for _, filename := range rule.file_deps {
+		// Check file.
+		if b.check_file_dep_newer(rule, target, filename) {
+			hash[filename] = true
+		}
+
+		// Check file's dependencies.
+		if b.check_file_deps_newer(rule, target, dep_graph[filename]) {
+			hash[filename] = true
+		}
+
+		// Check global dependencies (which will trigger rebuild if
+		// changed).
+		if b.check_file_deps_newer(rule, target, b.global_file_deps) {
+			hash[filename] = true
+		}
+	}
 
 	var ret []string
-	for _, filename := range file_deps {
-		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
-			panic(err)
-		} else if newer {
-			if DEBUG {
-				fmt.Printf("%s: '%s' is newer than '%s' so will run!\n",
-					rule.name, filename, target)
-			}
-
-			// We don't exit early as we may need to execute prehooks.
-			ret = append(ret, filename)
-
-			b.exec_conditional_prehooks(path.Join(rule.dir, filename))
-		}
+	for k, _ := range hash {
+		ret = append(ret, k)
 	}
 
 	return ret
