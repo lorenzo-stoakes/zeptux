@@ -299,6 +299,7 @@ static void mark_page_allocated(struct early_page_alloc_span *span,
 {
 	bitmap_set(span->alloc_bitmap, offset);
 	alloc_state->allocated_pages++;
+	span->allocated_pages++;
 
 	if (ephemeral) {
 		bitmap_set(span->ephemeral_bitmap, offset);
@@ -380,6 +381,7 @@ void early_page_free(physaddr_t pa)
 
 	bitmap_clear(span->alloc_bitmap, offset);
 	alloc_state->allocated_pages--;
+	span->allocated_pages--;
 
 	if (bitmap_is_set(span->ephemeral_bitmap, offset)) {
 		bitmap_clear(span->ephemeral_bitmap, offset);

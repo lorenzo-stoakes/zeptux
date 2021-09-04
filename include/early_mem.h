@@ -58,6 +58,7 @@ struct scratch_alloc_state {
 struct early_page_alloc_span {
 	physaddr_t start;
 	uint64_t num_pages;
+	uint64_t allocated_pages;
 	struct bitmap *alloc_bitmap;
 	struct bitmap *ephemeral_bitmap;
 };
