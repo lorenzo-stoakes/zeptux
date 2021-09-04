@@ -442,9 +442,7 @@ func (b *build_graph) init_command(cmd *command_statement) {
 		additional_vars[label] = strings.Join(r.file_deps, " ")
 	}
 
-	r.shell_commands = b.extract_shell_commands(&r, additional_vars,
-		cmd.statements)
-
+	r.shell_commands = b.extract_shell_commands(&r, additional_vars, cmd.statements)
 	b.rules[r.name] = &r
 }
 
