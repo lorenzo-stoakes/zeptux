@@ -54,7 +54,7 @@ static inline int early_puts(const char *str)
 // Early kernel panic function, simply outputs the specified panic reason then
 // halts. The full fat version will output additional useful information for
 // debugging.
-static inline PRINTF(1, 2) void _early_panic(const char *fmt, ...)
+static inline NORETURN PRINTF(1, 2) void _early_panic(const char *fmt, ...)
 {
 	va_list list;
 

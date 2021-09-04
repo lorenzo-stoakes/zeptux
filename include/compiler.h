@@ -8,6 +8,8 @@
 // arguments are checked accordingly.
 #define PRINTF(__string_idx, __first_check_idx) \
 	__attribute__((format(printf, (__string_idx), (__first_check_idx))))
+#define NORETURN __attribute__((noreturn))
+
 #define static_assert _Static_assert
 
 // Since parameters get put in registers we need help from the compiler to
