@@ -26,15 +26,15 @@ type conditional_prehook struct {
 }
 
 type build_graph struct {
-	vars                     map[string]string
-	build_dir, def, includes string
-	default_cflags           string
-	global_file_deps         []string
-	rules                    map[string]*rule
-	rule_is_done             map[string]bool
-	options                  map[string]bool
-	unconditional_prehooks   []unconditional_prehook
-	conditional_prehooks     []conditional_prehook
+	vars                   map[string]string
+	def, includes          string
+	default_cflags         string
+	global_file_deps       []string
+	rules                  map[string]*rule
+	rule_is_done           map[string]bool
+	options                map[string]bool
+	unconditional_prehooks []unconditional_prehook
+	conditional_prehooks   []conditional_prehook
 }
 
 func (b *build_graph) dump() {
@@ -42,7 +42,6 @@ func (b *build_graph) dump() {
 	for key, value := range b.vars {
 		fmt.Printf("%s -> %s\n", key, value)
 	}
-	fmt.Printf("(special) build_dir = %s\n", b.build_dir)
 	fmt.Printf("(special) default = %s\n", b.def)
 	fmt.Printf("(special) includes = %s\n", b.includes)
 	fmt.Printf("(special) default_cflags = %s\n", b.default_cflags)
@@ -103,8 +102,6 @@ func prefix_includes(str string) string {
 
 func (b *build_graph) init_extract_special_var(key, val string) {
 	switch key {
-	case "build_dir":
-		b.build_dir = val
 	case "default":
 		b.def = val
 	case "includes":
@@ -153,7 +150,6 @@ func (b *build_graph) combine_vars(additional_vars map[string]string) map[string
 		vars[k] = v
 	}
 
-	vars["build_dir"] = b.build_dir
 	vars["default"] = b.def
 	vars["includes"] = b.includes
 	vars["default_cflags"] = b.default_cflags
