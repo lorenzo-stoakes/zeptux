@@ -28,11 +28,6 @@ set var MAX_KERNEL_ELF_SIZE = 473088
 # Shared qemu options.
 set var QEMU_OPT = -serial mon:stdio -smp 1
 
-# Check build environment for all builds.
-prehook * always {
-	shell ./scripts/check_build_env.sh
-}
-
 # Format source files when they change.
 prehook [**.h,**.c,**.cpp] on change {
 	shell clang-format -style=file -i $source

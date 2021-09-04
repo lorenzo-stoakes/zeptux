@@ -3,6 +3,7 @@ set -e; set -o pipefail
 
 function build_zbuild()
 {
+	scripts/check_build_env.sh
 	go build -o zbuild tools/zbuild/*.go
 	# Force rebuild.
 	touch zeptux.zbuild
