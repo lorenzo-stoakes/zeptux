@@ -138,11 +138,29 @@
 TYPE_WRAP(physaddr_t, uint64_t);
 TYPE_WRAP(virtaddr_t, uint64_t);
 
+// Represents a 'page frame number', essentially the index of a page in an array
+// of pages, equal to the physical address shifted by PAGE_SHIFT.
+TYPE_WRAP(pfn_t, uint64_t);
+
 // Page table entry types.
 TYPE_WRAP(pgde_t, uint64_t);
 TYPE_WRAP(pude_t, uint64_t);
 TYPE_WRAP(pmde_t, uint64_t);
 TYPE_WRAP(ptde_t, uint64_t);
+
+// Convert a physical address to a page frame number.
+static inline pfn_t pa_to_pfn(physaddr_t pa)
+{
+	pfn_t pfn = {pa.x >> PAGE_SHIFT};
+	return pfn;
+}
+
+// Convert a physical address to a page frame number.
+static inline physaddr_t pfn_to_pa(pfn_t pfn)
+{
+	physaddr_t pa = {pfn.x << PAGE_SHIFT};
+	return pa;
+}
 
 // Get data offset from virtual address.
 static inline uint64_t virt_data_offset(virtaddr_t addr)
