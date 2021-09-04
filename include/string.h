@@ -2,8 +2,8 @@
 
 #include "types.h"
 
-// Compare 2 strings returning 0 if they are equal, a negative value if the
-// first differing character is greater in string `a` than `b` or positive if
+// Compare 2 strings returning 0 if they are equal, a positive value if the
+// first differing character is greater in string `a` than `b` or negative if
 // vice-versa.
 static inline int strcmp(const char *a, const char *b)
 {
