@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Represents a build/command rule.
 type rule struct {
 	name, dir, target, multi_glob string
 	is_multi, is_phony            bool
@@ -15,16 +16,19 @@ type rule struct {
 	shell_commands                []string
 }
 
+// Represents an unconditional prehook of the form 'prehook * always { ... }'
 type unconditional_prehook struct {
 	shell_commands []string
 }
 
+// Represents a conditional prehook of the form 'prehook [**.c,**.h] on change { ... }'
 type conditional_prehook struct {
 	exts                    []string
 	deferred_shell_commands statements
 	seen_files              map[string]bool
 }
 
+// Represents the entire build graph.
 type build_graph struct {
 	vars                   map[string]string
 	def, includes          string
@@ -38,6 +42,7 @@ type build_graph struct {
 	conditional_prehooks   []conditional_prehook
 }
 
+// Dump all build graph data to stdout.
 func (b *build_graph) dump() {
 	fmt.Printf("-- VARS: --\n")
 	for key, value := range b.vars {
@@ -90,7 +95,7 @@ func (b *build_graph) dump() {
 	}
 }
 
-// Prefixes each include with -I
+// Prefix each include with -I.
 func prefix_includes(str string) string {
 	var ret []string
 
@@ -101,6 +106,7 @@ func prefix_includes(str string) string {
 	return strings.Join(ret, " ")
 }
 
+// Initialise a specific 'special' variable.
 func (b *build_graph) init_extract_special_var(key, val string) {
 	switch key {
 	case "default":
@@ -116,6 +122,8 @@ func (b *build_graph) init_extract_special_var(key, val string) {
 	}
 }
 
+// Initialise our variable state and extract all variables from the parsed set
+// statements.
 func (b *build_graph) init_extract_vars(state *parse_state) {
 	// No additional vars set when substituting variables.
 	dummy := make(map[string]string)
@@ -141,6 +149,7 @@ func (b *build_graph) init_extract_vars(state *parse_state) {
 	}
 }
 
+// Combine the variable environment with additional and special variables.
 func (b *build_graph) combine_vars(additional_vars map[string]string) map[string]string {
 	// TODO: Inefficient!
 	vars := make(map[string]string)
@@ -189,6 +198,9 @@ func (b *build_graph) substitute_vars(context string, additional_vars map[string
 	return subst
 }
 
+// Expand a foreach statement into multiple shell statements. We are essentially
+// 'inlining' foreach statements, but only if the sourc efile or a dependency
+// has changed.
 func (b *build_graph) expand_foreach_statement(rule *rule, additional_vars map[string]string,
 	foreach *foreach_statement) []string {
 	// Commands cannot do foreach, only multi build statements.
@@ -252,6 +264,7 @@ func (b *build_graph) gen_special_cc_params() string {
 	return ret
 }
 
+// Extract shell commands from shell statements, substituting variables as required.
 func (b *build_graph) extract_shell_commands(rule *rule,
 	additional_vars map[string]string, statements statements) []string {
 	var ret []string
@@ -297,6 +310,8 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 	return ret
 }
 
+// Extract rule (as opposed to file) dependencies from the specific
+// dependency/target set.
 func extract_rule_dependencies(dgs *depgetset) []string {
 	var ret []string
 
@@ -340,6 +355,8 @@ func parse_dependencies(file string) []string {
 	return strings.Fields(parts[1])
 }
 
+// Extract file (as opposed to rule) dependencies from the specific
+// dependency/target set.
 func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 	hash := make(map[string]bool)
 
@@ -387,6 +404,7 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 	return ret
 }
 
+// Initialise the build graph to add the specified command statement.
 func (b *build_graph) init_command(cmd *command_statement) {
 	if _, ok := b.rules[cmd.name]; ok {
 		fatal("Duplicate command '%s'", cmd.name)
@@ -439,6 +457,9 @@ func (b *build_graph) check_rule_deps() {
 	}
 }
 
+// Something of a hack, we do 2 passes of commands - the first extracts the
+// command statements from the AST, and this pass 'inlines' comamnds invoked via
+// 'call' which is only supported in command blocks.
 func (b *build_graph) fixup_nested_command_calls(cmd *command_statement) {
 	var new_statements statements
 
@@ -467,6 +488,7 @@ func (b *build_graph) fixup_nested_command_calls(cmd *command_statement) {
 	cmd.statements = new_statements
 }
 
+// Initialises the build graph to add commands from the AST.
 func (b *build_graph) init_commands(state *parse_state) {
 	// Process non-nested commands (ones that invoke 'call') first.
 	for _, statement := range state.statements {
@@ -492,6 +514,7 @@ func (b *build_graph) init_commands(state *parse_state) {
 	}
 }
 
+// Initialises the build graph to add a specific build statement from the AST.
 func (b *build_graph) init_build(build *build_statement) {
 	if len(build.target.depgets) != 1 {
 		fatal("Build statements currently only support a single target (multi glob or target file)")
@@ -584,6 +607,7 @@ func (b *build_graph) init_build(build *build_statement) {
 	b.rules[r.name] = &r
 }
 
+// Initialises the build graph to add build statements from the AST.
 func (b *build_graph) init_builds(state *parse_state) {
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
@@ -593,6 +617,7 @@ func (b *build_graph) init_builds(state *parse_state) {
 	}
 }
 
+// Initialises the build graph to add option statements from the AST.
 func (b *build_graph) init_options(state *parse_state) {
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
@@ -613,6 +638,8 @@ func (b *build_graph) init_options(state *parse_state) {
 	}
 }
 
+// Initialises the build graph to add unconditional prehook statements of the
+// form 'prehook * always { ... }' from the AST.
 func (b *build_graph) init_unconditional_prehook(statements statements) {
 	// Used in place of additional variables as none defined for prehooks
 	// (we don't yet support labelled dependencies).
@@ -623,6 +650,8 @@ func (b *build_graph) init_unconditional_prehook(statements statements) {
 	b.unconditional_prehooks = append(b.unconditional_prehooks, pre)
 }
 
+// Initialises the build graph to add conditional prehook statements of the
+// form 'prehook [**.c,**.h] on change { ... }' from the AST.
 func (b *build_graph) init_conditional_prehook(presrc *prehook_statement) {
 	if len(presrc.dependencies.label) > 0 {
 		fatal("Labels are not supported in prehook statements")
@@ -644,6 +673,7 @@ func (b *build_graph) init_conditional_prehook(presrc *prehook_statement) {
 	b.conditional_prehooks = append(b.conditional_prehooks, pre)
 }
 
+// Initialises the build graph to add prehook statements from the AST.
 func (b *build_graph) init_prehooks(state *parse_state) {
 	for _, statement := range state.statements {
 		switch s := statement.(type) {
@@ -664,6 +694,8 @@ func (b *build_graph) init_prehooks(state *parse_state) {
 	}
 }
 
+// Initialises the build graph, importing the build graph definition from the
+// AST.
 func (b *build_graph) init(state *parse_state) {
 	b.vars = make(map[string]string)
 	b.rules = make(map[string]*rule)
@@ -729,6 +761,7 @@ func (b *build_graph) compute_depfile_filedeps(rule *rule) map[string][]string {
 	return ret
 }
 
+// Execute a conditional prehook for a specific file.
 func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filename string) {
 	// Insert the filename as variable $source.
 	additional_vars := make(map[string]string)
@@ -744,6 +777,9 @@ func (b *build_graph) exec_conditional_prehook(pre *conditional_prehook, filenam
 	}
 }
 
+// Determine whether a conditional prehook should execute. We have already
+// determined that the file has changed, so this is checking whether the
+// specific file extension is hooked.
 func should_exec_conditional_prehook(pre *conditional_prehook, filename string) bool {
 	if pre.seen_files[filename] {
 		return false
@@ -764,6 +800,7 @@ func should_exec_conditional_prehook(pre *conditional_prehook, filename string) 
 	return false
 }
 
+// Execute all conditional prehooks on the specified file.
 func (b *build_graph) exec_conditional_prehooks(filename string) {
 	for _, pre := range b.conditional_prehooks {
 		if should_exec_conditional_prehook(&pre, filename) {
@@ -772,6 +809,9 @@ func (b *build_graph) exec_conditional_prehooks(filename string) {
 	}
 }
 
+// 'Normalise' the rule directory - i.e. prefix all file dependencies with the
+// directory and clear the directory parameter.
+// TODO: Rework the whole local directory implementation, it's a confusing mess.
 func normalise_rule_dir(rule *rule) {
 	for i, file := range rule.file_deps {
 		rule.file_deps[i] = path.Join(rule.dir, file)
@@ -779,6 +819,9 @@ func normalise_rule_dir(rule *rule) {
 	rule.dir = ""
 }
 
+// Check whether a file dependency is newer than its target (thus triggering a
+// file dependency). This also invokes conditional prehooks. We memoise file
+// comparisons to reduce I/O.
 func (b *build_graph) check_file_dep_newer(rule *rule, target, filename string) bool {
 	lookup := target + "|" + filename
 
@@ -804,6 +847,7 @@ func (b *build_graph) check_file_dep_newer(rule *rule, target, filename string) 
 	return false
 }
 
+// Check whether file dependencies are newer for all input files.
 func (b *build_graph) check_file_deps_newer(rule *rule, target string,
 	filenames []string) bool {
 	ret := false
@@ -869,7 +913,8 @@ func (b *build_graph) get_changed_file_deps(rule *rule, targeting string,
 	return ret
 }
 
-// Returns true if the rule had to run.
+// The key build runner. Actually runs a build rule, checking file and rule
+// dependencies and recursing into rule depedencies.
 func (b *build_graph) run_build(rule_name string) bool {
 	rule, ok := b.rules[rule_name]
 	if !ok {
@@ -922,6 +967,7 @@ func (b *build_graph) run_build(rule_name string) bool {
 	return should_exec
 }
 
+// Run all unconditional prehooks for the build graph.
 func (b *build_graph) run_unconditional_prehooks() {
 	for _, prehook := range b.unconditional_prehooks {
 		for _, shell := range prehook.shell_commands {
@@ -932,6 +978,8 @@ func (b *build_graph) run_unconditional_prehooks() {
 	}
 }
 
+// Main build function - actually executes build steps starting at the specified
+// rule or the default rule if not specified.
 func do_build(state *parse_state, rule_name string) {
 	var graph build_graph
 	graph.init(state)
