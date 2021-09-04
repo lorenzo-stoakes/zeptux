@@ -476,3 +476,8 @@ void early_page_alloc_init(void)
 
 	alloc_init_pages(first_scratch_page, num_scratch_pages);
 }
+
+struct early_page_alloc_state *early_get_page_alloc_state(void)
+{
+	return alloc_state;
+}

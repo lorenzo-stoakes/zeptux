@@ -161,3 +161,6 @@ physaddr_t early_page_alloc_ephemeral();
 // allocated, this function will panic (early page allocation/freeing should not
 // be done casually!)
 void early_page_free(physaddr_t pa);
+
+// Retrieve early page alloc state. Mostly exposed for testability.
+struct early_page_alloc_state *early_get_page_alloc_state(void);
