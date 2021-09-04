@@ -311,6 +311,85 @@ const char *assert_correct_scratch_alloc(void)
 	return NULL;
 }
 
+const char *assert_early_page_alloc_correct(void)
+{
+	// Fundamentally the bitmap checks should catch a lot of the potential
+	// bugs in the early page allocator so we will take a fairly cursory
+	// look at it.
+
+	struct early_page_alloc_state *state = early_get_page_alloc_state();
+	struct early_boot_info *info = early_get_boot_info();
+
+	assert(state->total_pages > 0,
+	       "early page alloc state total pages zero?");
+
+	assert(state->num_spans == info->num_ram_spans,
+	       "RAM span count mismatch between early boot info and early allocator");
+
+	// Find first span with free memory.
+	struct early_page_alloc_span *span = NULL;
+	int span_index = 0;
+	for (int i = 0; i < (int)state->num_spans; i++) {
+		span = &state->spans[i];
+		if (span->allocated_pages < span->num_pages) {
+			span_index = i;
+			break;
+		}
+	}
+	// We'll allow the code to segfault in the bizarre (or broken!) scenario
+	// where there is none... But check to see that there is another span
+	// after us so we can test moving to it.
+	assert(span_index < (int)state->num_spans,
+	       "Insufficient spans to test");
+
+	uint64_t prev_total_alloc = state->allocated_pages;
+	uint64_t prev_span_alloc = span->allocated_pages;
+
+	// Allocate the rest of the span.
+	physaddr_t first_pa;
+	uint64_t num_free = span->num_pages - span->allocated_pages;
+	assert(num_free > 0, "Not enough free pages available in span to test");
+	for (uint64_t i = 0; i < num_free; i++) {
+		physaddr_t pa = early_page_alloc();
+		if (i == 0)
+			first_pa = pa;
+
+		assert(state->allocated_pages == prev_total_alloc + 1,
+		       "Alloc state total alloc count not incremented?");
+		assert(span->allocated_pages == prev_span_alloc + 1,
+		       "Span total alloc count not incremented?");
+
+		prev_total_alloc = state->allocated_pages;
+		prev_span_alloc = span->allocated_pages;
+
+		assert(IS_ALIGNED(pa.x, PAGE_SIZE),
+		       "Allocated page not page-aligned?");
+	}
+
+	struct early_page_alloc_span *next_span = &state->spans[span_index + 1];
+	prev_span_alloc = next_span->allocated_pages;
+
+	physaddr_t pa = early_page_alloc();
+	assert(next_span->allocated_pages == prev_span_alloc + 1,
+	       "Not allocated from next span?");
+	assert(pa.x >= next_span->start.x, "Not allocated from next span?");
+
+	// Now free from the first span.
+	prev_total_alloc = state->allocated_pages;
+	prev_span_alloc = span->allocated_pages;
+	early_page_free(first_pa);
+	assert(state->allocated_pages == prev_total_alloc - 1,
+	       "Freeing didn't reduce allocated?");
+	assert(span->allocated_pages == prev_span_alloc - 1,
+	       "Freeing didn't reduce allocated?");
+
+	// We should expect to get it right back.
+	pa = early_page_alloc();
+	assert(pa.x == first_pa.x, "Freeing doesn't allow us to reobtain PA?");
+
+	return NULL;
+}
+
 const char *test_mem(void)
 {
 	uint8_t buf[BUF_SIZE] = {0};
@@ -340,6 +419,10 @@ const char *test_mem(void)
 		return ret;
 
 	ret = assert_correct_scratch_alloc();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_early_page_alloc_correct();
 	if (ret != NULL)
 		return ret;
 
