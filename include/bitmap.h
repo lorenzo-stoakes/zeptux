@@ -109,6 +109,7 @@ static inline int64_t bitmap_first_clear(struct bitmap *bitmap)
 	for (uint32_t i = 0; i < bitmap->num_words; i++) {
 		uint64_t word = bitmap->data[i];
 		int64_t index = find_first_clear_bit(word);
+
 		if (index != -1) {
 			ret = i * 64 + index;
 			break;
