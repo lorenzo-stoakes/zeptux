@@ -726,7 +726,11 @@ func (b *build_graph) exec_build(rule *rule, target string) {
 
 // Expand file dependency list to include dependencies obtained from the .d
 // dependency file. Deduplicates output.
-func add_depfile_deps(rule *rule, file_deps []string) []string {
+func (b *build_graph) add_depfile_filedeps(rule *rule) []string {
+	if !b.options["compute_dependencies"] {
+		return rule.file_deps
+	}
+
 	var ret []string
 
 	seen := make(map[string]bool)
@@ -740,7 +744,7 @@ func add_depfile_deps(rule *rule, file_deps []string) []string {
 	dir := rule.dir
 	rule.dir = ""
 
-	for _, filename := range file_deps {
+	for _, filename := range rule.file_deps {
 		// Normalise.
 		filename = path.Join(dir, filename)
 
@@ -809,21 +813,23 @@ func (b *build_graph) exec_conditional_prehooks(filename string) {
 	}
 }
 
-// Determine whether file dependencies indicate a rule need be run.
-func (b *build_graph) check_file_deps(rule *rule, target string) bool {
-	var file_deps []string
-
-	if b.options["compute_dependencies"] {
-		file_deps = add_depfile_deps(rule, rule.file_deps)
-	} else {
-		file_deps = rule.file_deps
-	}
+func (b *build_graph) add_global_filedeps(rule *rule, file_deps []string) []string {
+	ret := file_deps
 
 	for _, dep := range b.global_file_deps {
-		file_deps = append(file_deps, dep)
+		ret = append(ret, dep)
 	}
 
-	ret := false
+	return ret
+}
+
+// Determine whether file dependencies indicate a rule need be run - returns a
+// list of filedeps that should run.
+func (b *build_graph) check_file_deps(rule *rule, target string) []string {
+	file_deps := b.add_depfile_filedeps(rule)
+	file_deps = b.add_global_filedeps(rule, file_deps)
+
+	var ret []string
 	for _, filename := range file_deps {
 		if newer, err := is_file_newer(rule.dir, filename, target); err != nil {
 			panic(err)
@@ -834,7 +840,7 @@ func (b *build_graph) check_file_deps(rule *rule, target string) bool {
 			}
 
 			// We don't exit early as we may need to execute prehooks.
-			ret = true
+			ret = append(ret, filename)
 
 			b.exec_conditional_prehooks(filename)
 		}
@@ -867,7 +873,7 @@ func (b *build_graph) run_build(rule_name string) bool {
 	}
 
 	// Check if we need to run the rule by file dependencies...
-	should_exec := b.check_file_deps(rule, target)
+	should_exec := len(b.check_file_deps(rule, target)) > 0
 
 	// Now, recurse :) we do this even if the file dependencies have already
 	// confirmed we need to rebuild because the rules above us may also need
