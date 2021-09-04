@@ -155,3 +155,8 @@ physaddr_t early_page_alloc();
 // Allocates an ephemeral physical page from the early page allocator (will be
 // discared when switching to the full fat physical allocator).
 physaddr_t early_page_alloc_ephemeral();
+
+// Free a page from the early page allocator. If the page is not currently
+// allocated, this function will panic (early page allocation/freeing should not
+// be done casually!)
+void early_page_free(physaddr_t pa);

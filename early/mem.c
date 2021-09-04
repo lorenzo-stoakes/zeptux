@@ -362,6 +362,27 @@ physaddr_t early_page_alloc_ephemeral(void)
 	return alloc(true);
 }
 
+void early_page_free(physaddr_t pa)
+{
+	struct early_page_alloc_span *span = find_span(pa);
+	if (span == NULL)
+		early_panic("Cannot find span for PA %lx", pa.x);
+
+	uint64_t offset = pa_to_span_offset(span, pa);
+
+	if (!bitmap_is_set(span->alloc_bitmap, offset)) {
+		early_panic("Attempt to free unallocated PA %lx", pa.x);
+	}
+
+	bitmap_clear(span->alloc_bitmap, offset);
+	alloc_state->allocated_pages--;
+
+	if (bitmap_is_set(span->ephemeral_bitmap, offset)) {
+		bitmap_clear(span->ephemeral_bitmap, offset);
+		alloc_state->ephemeral_pages--;
+	}
+}
+
 // Allocate ephemeral pages allocated from the scratch allocator in order to
 // initialise the early page allocator as well as system memory already being
 // used such as the kernel stack in order that these pages are reserved.
