@@ -733,19 +733,7 @@ func (b *build_graph) add_depfile_filedeps(rule *rule) []string {
 
 	seen := make(map[string]bool)
 
-	// We normalise all file dependencies to project root to avoid issues
-	// with rule execution in a particular directory but dependencies
-	// being relative to root.
-	// TODO: Do this better, the relative directory stuff would likely be
-	// handled fair more cleanly and consistently by being set on file
-	// dependency generation and no longer referenced.
-	dir := rule.dir
-	rule.dir = ""
-
 	for _, filename := range rule.file_deps {
-		// Normalise.
-		filename = path.Join(dir, filename)
-
 		if seen[filename] {
 			continue
 		}
@@ -821,9 +809,25 @@ func (b *build_graph) add_global_filedeps(rule *rule, file_deps []string) []stri
 	return ret
 }
 
+
+func normalise_rule_dir(rule *rule) {
+	for i, file := range rule.file_deps {
+		rule.file_deps[i] = path.Join(rule.dir, file)
+	}
+	rule.dir = ""
+}
+
 // Determine whether file dependencies indicate a rule need be run - returns a
 // list of filedeps that should run.
 func (b *build_graph) check_file_deps(rule *rule, target string) []string {
+	// We normalise all file dependencies to project root to avoid issues
+	// with rule execution in a particular directory but dependencies
+	// being relative to root.
+	// TODO: Do this better, the relative directory stuff would likely be
+	// handled fair more cleanly and consistently by being set on file
+	// dependency generation and no longer referenced.
+	normalise_rule_dir(rule)
+
 	file_deps := b.add_depfile_filedeps(rule)
 	file_deps = b.add_global_filedeps(rule, file_deps)
 
