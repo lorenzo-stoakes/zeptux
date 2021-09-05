@@ -166,3 +166,7 @@ void early_page_free(physaddr_t pa);
 
 // Retrieve early page alloc state. Mostly exposed for testability.
 struct early_page_alloc_state *early_get_page_alloc_state(void);
+
+// Move from the early page table structure (1 GiB direct, ELF image mpaping) to
+// an actually correct mapping.
+void early_remap_page_tables(void);

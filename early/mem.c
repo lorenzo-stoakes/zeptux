@@ -205,6 +205,7 @@ void early_mem_init(void)
 	info->total_avail_ram_bytes = early_get_total_ram(info);
 	early_scratch_alloc_init(info);
 	early_page_alloc_init();
+	early_remap_page_tables();
 }
 
 struct scratch_alloc_state *early_scratch_alloc_state(void)
@@ -480,4 +481,16 @@ void early_page_alloc_init(void)
 struct early_page_alloc_state *early_get_page_alloc_state(void)
 {
 	return alloc_state;
+}
+
+void early_remap_page_tables(void)
+{
+	// TODO: Map the early video range uncached!
+
+	// Allocate a PGD which is where we will build our new page table
+	// mappings.
+	physaddr_t pgdaddr = early_page_alloc();
+	zero_page(pgdaddr);
+
+	// TODO: Rest of implementation.
 }
