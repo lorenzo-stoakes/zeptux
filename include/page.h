@@ -250,3 +250,9 @@ static inline physaddr_t virt_ptr_to_phys(void *ptr)
 	virtaddr_t va = {(uint64_t)ptr};
 	return virt_to_phys(va);
 }
+
+// Zero a page of memory at the specified physical address.
+static inline void zero_page(physaddr_t pa)
+{
+	memset(phys_to_virt_ptr(pa), 0, PAGE_SIZE);
+}
