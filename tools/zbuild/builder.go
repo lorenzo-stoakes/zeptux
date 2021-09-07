@@ -219,9 +219,11 @@ func (b *build_graph) expand_foreach_statement(rule *rule, additional_vars map[s
 	}
 
 	// Extract 'excluding' filter.
+	// TODO: Adapt to use excluding param in extract_file_dependencies?
 	excluding := make(map[string]bool)
 	if !foreach.excluding.empty() {
-		exclude_files := extract_file_dependencies(rule.name, rule.dir, &foreach.excluding)
+		exclude_files := extract_file_dependencies(rule.name, rule.dir,
+			&foreach.excluding, nil)
 		for _, f := range exclude_files {
 			excluding[f] = true
 		}
@@ -355,11 +357,12 @@ func parse_dependencies(file string) []string {
 	return strings.Fields(parts[1])
 }
 
-// Extract file (as opposed to rule) dependencies from the specific
-// dependency/target set.
-func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
-	hash := make(map[string]bool)
-
+// Read file dependencies from specific depgetset and update hash with keys set
+// to true if they ought to be kept (determined by keep parameter) or false if
+// not. Essentially an implementation detail function for
+// extract_file_dependencies().
+func read_file_dependencies(rule, dir string, dgs *depgetset, hash map[string]bool,
+	keep bool) {
 	for _, dg := range dgs.depgets {
 		switch dg.kind {
 		case RULE:
@@ -369,7 +372,7 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 				fatal("Rule '%s': Dependency '%s' does not exist",
 					rule, dg.name)
 			}
-			hash[dg.name] = true
+			hash[dg.name] = keep
 		case GLOB:
 			var glob_path string
 			if len(dir) > 0 {
@@ -385,7 +388,7 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 				for _, match := range matches {
 					dir := path.Dir(dg.name)
 					name := path.Join(dir, path.Base(match))
-					hash[name] = true
+					hash[name] = keep
 				}
 			}
 		case RECURSIVE_GLOB:
@@ -395,10 +398,25 @@ func extract_file_dependencies(rule, dir string, dgs *depgetset) []string {
 			panic("Impossible!")
 		}
 	}
+}
+
+// Extract file (as opposed to rule) dependencies from the specific
+// dependency/target set.
+func extract_file_dependencies(rule, dir string, dgs *depgetset, excluding *depgetset) []string {
+	hash := make(map[string]bool)
+
+	// Add file dependencies.
+	read_file_dependencies(rule, dir, dgs, hash, true)
+	// Remove excluded dependencies.
+	if excluding != nil {
+		read_file_dependencies(rule, dir, excluding, hash, false)
+	}
 
 	var ret []string
-	for k, _ := range hash {
-		ret = append(ret, k)
+	for k, include := range hash {
+		if include {
+			ret = append(ret, k)
+		}
 	}
 
 	return ret
@@ -415,7 +433,7 @@ func (b *build_graph) init_command(cmd *command_statement) {
 			cmd.name, cmd.local_dir)
 	}
 
-	file_deps := extract_file_dependencies(cmd.name, cmd.local_dir, &cmd.dependencies)
+	file_deps := extract_file_dependencies(cmd.name, cmd.local_dir, &cmd.dependencies, nil)
 	if len(file_deps) > 0 {
 		fatal("Rule '%s': Commands cannot have file dependencies",
 			cmd.name)
@@ -572,7 +590,7 @@ func (b *build_graph) init_build(build *build_statement) {
 		multi_glob: multi_glob,
 		is_phony:   false,
 		rule_deps:  extract_rule_dependencies(&build.dependencies),
-		file_deps:  extract_file_dependencies(name, build.local_dir, &build.dependencies),
+		file_deps:  extract_file_dependencies(name, build.local_dir, &build.dependencies, build.excluding),
 	}
 
 	// We need to insert the alias as a global (!) variable containing the

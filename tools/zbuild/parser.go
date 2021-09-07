@@ -58,6 +58,7 @@ type depget struct {
 	kind depget_kind
 	name string
 }
+
 func (d depget) String() string {
 	if d.kind == RECURSIVE_GLOB {
 		return "*" + d.name
@@ -71,6 +72,7 @@ type depgetset struct {
 	label   string
 	depgets []depget
 }
+
 func (d depgetset) String() string {
 	ret := ""
 
@@ -101,6 +103,7 @@ type option int
 const (
 	COMPUTE_DEPENDENCIES_OPTION option = iota
 )
+
 func (o option) String() string {
 	switch o {
 	case COMPUTE_DEPENDENCIES_OPTION:
@@ -208,6 +211,7 @@ type foreach_statement struct {
 // Represents a BUILD statement.
 type build_statement struct {
 	target, dependencies depgetset
+	excluding            *depgetset
 	local_dir, alias     string
 	statements           statements
 }
@@ -579,6 +583,18 @@ func (s *parse_state) parse_build_first_line() {
 	if words := strings.Fields(line); len(words) > 2 && words[len(words)-2] == "as" {
 		statement.alias = words[len(words)-1]
 		line = strings.Join(words[:len(words)-2], " ")
+	}
+
+	// Extract excluding clause, if present.
+	if parts := strings.SplitN(line, " excluding ", 2); len(parts) == 2 {
+		excluding := parse_depgets(strings.TrimSpace(parts[1]))
+		if excluding == nil {
+			s.syntax_error()
+		}
+		statement.excluding = excluding
+
+		// Chop excluding from line.
+		line = strings.TrimSpace(parts[0])
 	}
 
 	// Now extract dependencies, which MUST be present.
