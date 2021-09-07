@@ -47,18 +47,14 @@ build boot.bin from boot_obj {
 }
 
 # Generate kernel.elf (kernel ELF image).
-build [*.o] from [lib/*.c, early/*.c] as kernel_obj {
+build [*.o] from [lib/*.c, early/*.c, kernel/*.c] excluding kernel/main.c as kernel_obj {
 	foreach source to output {
 		cc $CFLAGS -c $source -o $output
 	}
 }
-build [*.o] from [kernel/*.c] as kernel_main_obj {
-	foreach source to output {
-		cc $CFLAGS -c $source -o $output
-	}
-}
-build kernel.elf from [kernel_obj, kernel_main_obj, kernel/kernel.ld] {
-	ld -T kernel/kernel.ld -o kernel.elf $kernel_obj $kernel_main_obj
+build kernel.elf from [kernel_obj, kernel/main.c, kernel/kernel.ld] {
+	cc $CFLAGS -c kernel/main.c -o main.o
+	ld -T kernel/kernel.ld -o kernel.elf $kernel_obj main.o
 	shell find kernel.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 }
 
