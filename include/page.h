@@ -142,6 +142,12 @@ TYPE_WRAP(virtaddr_t, uint64_t);
 // of pages, equal to the physical address shifted by PAGE_SHIFT.
 TYPE_WRAP(pfn_t, uint64_t);
 
+// Physical addresses for page tables.
+TYPE_WRAP(pgdaddr_t, uint64_t);
+TYPE_WRAP(pudaddr_t, uint64_t);
+TYPE_WRAP(pmdaddr_t, uint64_t);
+TYPE_WRAP(ptdaddr_t, uint64_t);
+
 // Page table entry types.
 TYPE_WRAP(pgde_t, uint64_t);
 TYPE_WRAP(pude_t, uint64_t);

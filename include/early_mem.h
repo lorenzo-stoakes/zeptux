@@ -179,3 +179,16 @@ struct early_page_alloc_state *early_get_page_alloc_state(void);
 // Move from the early page table structure (1 GiB direct, ELF image mpaping) to
 // an actually correct mapping.
 void early_remap_page_tables(void);
+
+// Generate early page allocation functions for each page level.
+#define GEN_PAGE_ALLOC(pagelevel)                                     \
+	static inline pagelevel##addr_t early_alloc_##pagelevel(void) \
+	{                                                             \
+		physaddr_t pa = early_page_alloc_zero();              \
+		pagelevel##addr_t ret = {pa.x};                       \
+		return ret;                                           \
+	}
+GEN_PAGE_ALLOC(pgd);
+GEN_PAGE_ALLOC(pud);
+GEN_PAGE_ALLOC(pmd);
+GEN_PAGE_ALLOC(ptd);

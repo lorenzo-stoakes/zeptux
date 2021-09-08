@@ -387,11 +387,25 @@ const char *assert_early_page_alloc_correct(void)
 	pa = early_page_alloc();
 	assert(pa.x == first_pa.x, "Freeing doesn't allow us to reobtain PA?");
 
-	pa = early_page_alloc_zero();
-	uint8_t *ptr = phys_to_virt_ptr(pa);
-	for (int i = 0; i < (int)PAGE_SIZE; i++) {
-		assert(*ptr == 0, "early_page_alloc_zero() not zeroing?");
+#define CHECK_ZEROED(addr)                                 \
+	{                                                  \
+		physaddr_t phys = {addr.x};                \
+		uint8_t *ptr = phys_to_virt_ptr(phys);     \
+		for (int i = 0; i < (int)PAGE_SIZE; i++) { \
+			assert(*ptr == 0, "not zeroing?"); \
+		}                                          \
 	}
+
+	pa = early_page_alloc_zero();
+	CHECK_ZEROED(pa);
+	pgdaddr_t pgd = early_alloc_pgd();
+	CHECK_ZEROED(pgd);
+	pudaddr_t pud = early_alloc_pud();
+	CHECK_ZEROED(pud);
+	pmdaddr_t pmd = early_alloc_pmd();
+	CHECK_ZEROED(pmd);
+	ptdaddr_t ptd = early_alloc_ptd();
+	CHECK_ZEROED(ptd);
 
 	return NULL;
 }
