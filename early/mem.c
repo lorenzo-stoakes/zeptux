@@ -12,6 +12,7 @@ static struct page_allocators early_allocators = {
 	.pud = early_alloc_pud,
 	.pmd = early_alloc_pmd,
 	.ptd = early_alloc_ptd,
+	.data = early_page_alloc_zero,
 };
 
 // Drop the direct mapping from VA 0 / PA 0. We don't need it any more.

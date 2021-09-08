@@ -159,6 +159,7 @@ struct page_allocators {
 	pudaddr_t (*pud)(void);
 	pmdaddr_t (*pmd)(void);
 	ptdaddr_t (*ptd)(void);
+	physaddr_t (*data)(void);
 };
 
 // Convert bytes to the number of pages required to hold them.
