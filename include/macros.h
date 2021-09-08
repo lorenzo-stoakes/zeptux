@@ -29,3 +29,6 @@
 	typedef struct {        \
 		_type x;        \
 	} _name
+
+// Suppresses unused parameter warnings.
+#define IGNORE_PARAM(_param) (void)_param
