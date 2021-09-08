@@ -154,6 +154,15 @@ void early_page_alloc_at(physaddr_t pa);
 // Allocates physical page from the early page allocator. It will NOT be zeroed.
 physaddr_t early_page_alloc(void);
 
+// Allocates physical page from the early page allocator and zeroes it.
+static inline physaddr_t early_page_alloc_zero(void)
+{
+	physaddr_t pa = early_page_alloc();
+
+	zero_page(pa);
+	return pa;
+}
+
 // Allocates an ephemeral physical page from the early page allocator (will be
 // discared when switching to the full fat physical allocator). It will NOT be
 // zeroed.

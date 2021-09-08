@@ -387,6 +387,12 @@ const char *assert_early_page_alloc_correct(void)
 	pa = early_page_alloc();
 	assert(pa.x == first_pa.x, "Freeing doesn't allow us to reobtain PA?");
 
+	pa = early_page_alloc_zero();
+	uint8_t *ptr = phys_to_virt_ptr(pa);
+	for (int i = 0; i < (int)PAGE_SIZE; i++) {
+		assert(*ptr == 0, "early_page_alloc_zero() not zeroing?");
+	}
+
 	return NULL;
 }
 
