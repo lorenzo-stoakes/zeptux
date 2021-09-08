@@ -60,11 +60,14 @@ build kernel.elf from [kernel_obj, kernel/main.c, kernel/kernel.ld] {
 
 # Generate zeptux.img, final image file combining boot image and kernel.elf.
 build zeptux.img from [boot.bin, kernel.elf] {
-	shell scripts/patch_bin_int.py boot.bin $ELF_SIZE_OFFSET $$shell{stat -c%s kernel.elf}
+	# TODO: Implement zbuild feature to share this with test-early.img.
+	shell cp boot.bin zeptux.img
+	shell truncate -s 2560 zeptux.img # We reserve boot sector + 5 sectors for stage 2.
+	shell cat kernel.elf >> zeptux.img
+	shell truncate -s 1M zeptux.img
 
-	shell dd if=/dev/zero of=zeptux.img count=2000 2>/dev/null
-	shell dd if=boot.bin of=zeptux.img conv=notrunc 2>/dev/null
-	shell dd if=kernel.elf of=zeptux.img seek=5 conv=notrunc 2>/dev/null
+	# Patch in the ELF image size for the bootloader.
+	shell scripts/patch_bin_int.py zeptux.img $ELF_SIZE_OFFSET $$shell{stat -c%s kernel.elf}
 }
 
 # Generate test-early.img for early kernel tests.
@@ -78,12 +81,12 @@ build test-early.elf from [boot.bin, test_early_obj, kernel_obj, kernel/kernel.l
 	shell find test-early.elf -size -$(MAX_KERNEL_ELF_SIZE)c | grep -q . # Assert less than maximum size
 }
 build test-early.img from [boot.bin, test-early.elf] {
-	shell cp boot.bin boot-test.bin
-	shell scripts/patch_bin_int.py boot-test.bin $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
+	shell cp boot.bin test-early.img
+	shell truncate -s 2560 test-early.img # We reserve boot sector + 5 sectors for stage 2.
+	shell cat test-early.elf >> test-early.img
+	shell truncate -s 1M test-early.img
 
-	shell dd if=/dev/zero of=test-early.img count=2000 2>/dev/null
-	shell dd if=boot-test.bin of=test-early.img conv=notrunc 2>/dev/null
-	shell dd if=test-early.elf of=test-early.img seek=5 conv=notrunc 2>/dev/null
+	shell scripts/patch_bin_int.py test-early.img $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
 }
 
 # Generate test-user-runner for running tests in userland.
