@@ -190,7 +190,7 @@ static inline physaddr_t pa_next_page(physaddr_t pa)
 }
 
 // Return the physical address of the page before this PA. Doesn't check for
-// underflow?
+// underflow.
 static inline physaddr_t pa_prev_page(physaddr_t pa)
 {
 	pfn_t pfn = pa_to_pfn(pa);
