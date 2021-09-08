@@ -154,6 +154,13 @@ TYPE_WRAP(pude_t, uint64_t);
 TYPE_WRAP(pmde_t, uint64_t);
 TYPE_WRAP(ptde_t, uint64_t);
 
+// Represents allocators for each page level.
+struct page_allocators {
+	pudaddr_t (*pud)(void);
+	pmdaddr_t (*pmd)(void);
+	ptdaddr_t (*ptd)(void);
+};
+
 // Convert bytes to the number of pages required to hold them.
 static inline uint64_t bytes_to_pages(uint64_t bytes)
 {
@@ -262,3 +269,10 @@ static inline void zero_page(physaddr_t pa)
 {
 	memset(phys_to_virt_ptr(pa), 0, PAGE_SIZE);
 }
+
+// Map a range of virtual addresses from [start_va, start_va + num_pages) to
+// [start_pa, start_pa + num_pages) under PGD and allocating new pages as
+// required using alloc functions. Returns the number of pages allocated.
+uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
+			 physaddr_t start_pa, uint64_t num_pages,
+			 struct page_allocators *alloc);

@@ -173,6 +173,10 @@ physaddr_t early_page_alloc_ephemeral(void);
 // be done casually!)
 void early_page_free(physaddr_t pa);
 
+// Maps physical memory as specified in RAM entries in the boot info to the
+// specified PGD.
+void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd);
+
 // Retrieve early page alloc state. Mostly exposed for testability.
 struct early_page_alloc_state *early_get_page_alloc_state(void);
 

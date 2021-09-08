@@ -8,6 +8,12 @@ static struct scratch_alloc_state scratch_state;
 // as a static pointer. We will only access this single-threaded also.
 static struct early_page_alloc_state *alloc_state;
 
+static struct page_allocators early_allocators = {
+	.pud = early_alloc_pud,
+	.pmd = early_alloc_pmd,
+	.ptd = early_alloc_ptd,
+};
+
 // Drop the direct mapping from VA 0 / PA 0. We don't need it any more.
 static void drop_direct0(void)
 {
@@ -483,14 +489,32 @@ struct early_page_alloc_state *early_get_page_alloc_state(void)
 	return alloc_state;
 }
 
+void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd)
+{
+	for (int i = 0; i < (int)info->num_e820_entries; i++) {
+		struct e820_entry *entry = &info->e820_entries[i];
+
+		if (entry->type != E820_TYPE_RAM)
+			continue;
+
+		physaddr_t pa = {entry->base};
+		virtaddr_t va = phys_to_virt(pa);
+		uint64_t num_pages = bytes_to_pages(entry->size);
+
+		_map_page_range(pgd, va, pa, num_pages, &early_allocators);
+	}
+}
+
 void early_remap_page_tables(void)
 {
-	// TODO: Map the early video range uncached!
+	struct early_boot_info *info = early_get_boot_info();
 
 	// Allocate a PGD which is where we will build our new page table
 	// mappings.
-	physaddr_t pgdaddr = early_page_alloc();
-	zero_page(pgdaddr);
+	pgdaddr_t pgd = early_alloc_pgd();
 
+	early_map_direct(info, pgd);
+
+	// TODO: Map the early video range uncached!
 	// TODO: Rest of implementation.
 }
