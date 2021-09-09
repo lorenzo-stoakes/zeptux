@@ -12,6 +12,7 @@
 #define STRINGIFY(_x) STRINGIFY2(_x)
 #define STRINGIFY2(_x) #_x
 
+// Assert helper, designed to be run from a function which returns a string.
 #define assert(_expr, _msg)                                    \
 	if (!(_expr)) {                                        \
 		std::ostringstream _oss;                       \
