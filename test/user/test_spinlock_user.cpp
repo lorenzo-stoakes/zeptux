@@ -5,7 +5,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <iostream>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -91,11 +90,6 @@ void writer()
 
 std::string test_spinlock()
 {
-	std::cout << "test_spinlock: starting run across " << NUM_READER_THREADS
-		  << " readers and " << NUM_WRITER_THREADS << " writers for "
-		  << DURATION_MS << "ms (buffer size " << BUF_SIZE << " bytes)"
-		  << std::endl;
-
 	std::vector<std::thread> writer_threads;
 	for (int i = 0; i < NUM_WRITER_THREADS; i++) {
 		writer_threads.emplace_back([&]() {
@@ -131,8 +125,6 @@ std::string test_spinlock()
 		w.join();
 	}
 
-	std::cout << "test_spinlock: " << test_state.reads << " reads, "
-		  << test_state.writes << " writes" << std::endl;
 	assert(test_state.faults == 0,
 	       std::to_string(test_state.faults) + " faults!");
 
