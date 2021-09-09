@@ -236,6 +236,30 @@ static inline virtaddr_t phys_to_virt(physaddr_t addr)
 	return va;
 }
 
+// Determine whether pgde is present.
+static inline bool pgde_present(pgde_t pgde)
+{
+	return !!(pgde.x & PAGE_FLAG_PRESENT);
+}
+
+// Determine whether pude is present.
+static inline bool pude_present(pude_t pude)
+{
+	return !!(pude.x & PAGE_FLAG_PRESENT);
+}
+
+// Determine whether pmde is present.
+static inline bool pmde_present(pmde_t pmde)
+{
+	return !!(pmde.x & PAGE_FLAG_PRESENT);
+}
+
+// Determine whether ptde is present.
+static inline bool ptde_present(ptde_t ptde)
+{
+	return !!(ptde.x & PAGE_FLAG_PRESENT);
+}
+
 // Get pointer for virtual address (via direct mapping) from physical
 // address.
 static inline void *phys_to_virt_ptr(physaddr_t addr)
