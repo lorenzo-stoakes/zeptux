@@ -289,25 +289,25 @@ static inline uint64_t virt_pgde_index(virtaddr_t addr)
 	return (addr.x >> PGD_SHIFT) & PAGE_DIR_INDEX_MASK;
 }
 
-// Determine whether pgde is present.
+// Determine whether PGDE is present.
 static inline bool pgde_present(pgde_t pgde)
 {
 	return !!(pgde.x & PAGE_FLAG_PRESENT);
 }
 
-// Determine whether pude is present.
+// Determine whether PUDE is present.
 static inline bool pude_present(pude_t pude)
 {
 	return !!(pude.x & PAGE_FLAG_PRESENT);
 }
 
-// Determine whether pmde is present.
+// Determine whether PMDE is present.
 static inline bool pmde_present(pmde_t pmde)
 {
 	return !!(pmde.x & PAGE_FLAG_PRESENT);
 }
 
-// Determine whether ptde is present.
+// Determine whether PTDE is present.
 static inline bool ptde_present(ptde_t ptde)
 {
 	return !!(ptde.x & PAGE_FLAG_PRESENT);
