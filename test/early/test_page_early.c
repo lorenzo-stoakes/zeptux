@@ -30,6 +30,23 @@ const char *assert_correct_virtaddr(void)
 	return NULL;
 }
 
+/*
+ * TODO:
+ * bytes_to_pages()
+ * phys_to_virt()
+ * phys_to_virt_ptr()
+ * p*d_to_virt_ptr()
+ * virt_to_phys()
+ * virt_ptr_to_phys()
+ * zero_page()
+ * pa_to_pfn()
+ * pfn_to_pa()
+ * pa_next|prev_page()
+ * p*de_present()
+ * p*d_index()
+ * assign_p*d()
+ */
+
 const char *test_page(void)
 {
 	const char *ret = assert_correct_virtaddr();
