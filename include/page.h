@@ -172,6 +172,62 @@ static inline uint64_t bytes_to_pages(uint64_t bytes)
 	return ALIGN_UP(bytes, PAGE_SIZE) >> PAGE_SHIFT;
 }
 
+// Get virtual address (via direct mapping) from physical address.
+static inline virtaddr_t phys_to_virt(physaddr_t addr)
+{
+	virtaddr_t va = {KERNEL_DIRECT_MAP_BASE + addr.x};
+	return va;
+}
+
+// Get pointer for virtual address (via direct mapping) from physical
+// address.
+static inline void *phys_to_virt_ptr(physaddr_t addr)
+{
+	return (void *)phys_to_virt(addr).x;
+}
+
+// Get pointer for virtual address (via direct mapping) from page table
+// addresses.
+#define GEN_PAGE_TO_VIRT_PTR(pagelevel)                                     \
+	static inline void *pagelevel##_to_virt_ptr(pagelevel##addr_t addr) \
+	{                                                                   \
+		physaddr_t pa = {addr.x};                                   \
+		return phys_to_virt_ptr(pa);                                \
+	}
+GEN_PAGE_TO_VIRT_PTR(pgd);
+GEN_PAGE_TO_VIRT_PTR(pud);
+GEN_PAGE_TO_VIRT_PTR(pmd);
+GEN_PAGE_TO_VIRT_PTR(ptd);
+#undef GEN_PAGE_TO_VIRT_PTR
+
+// Get physical address from virtual address.
+static inline physaddr_t virt_to_phys(virtaddr_t va)
+{
+	// Determine whether the VA is a direct mapping or part of the kernel
+	// ELF.
+	uint64_t offset;
+	if (va.x > KERNEL_ELF_ADDRESS)
+		offset = KERNEL_ELF_ADDRESS;
+	else
+		offset = KERNEL_DIRECT_MAP_BASE;
+
+	physaddr_t pa = {va.x - offset};
+	return pa;
+}
+
+// Get physical address from (kernel!) pointer.
+static inline physaddr_t virt_ptr_to_phys(void *ptr)
+{
+	virtaddr_t va = {(uint64_t)ptr};
+	return virt_to_phys(va);
+}
+
+// Zero a page of memory at the specified physical address.
+static inline void zero_page(physaddr_t pa)
+{
+	memset(phys_to_virt_ptr(pa), 0, PAGE_SIZE);
+}
+
 // Convert a physical address to a page frame number.
 static inline pfn_t pa_to_pfn(physaddr_t pa)
 {
@@ -233,13 +289,6 @@ static inline uint64_t virt_pgde_index(virtaddr_t addr)
 	return (addr.x >> PGD_SHIFT) & PAGE_DIR_INDEX_MASK;
 }
 
-// Get virtual address (via direct mapping) from physical address.
-static inline virtaddr_t phys_to_virt(physaddr_t addr)
-{
-	virtaddr_t va = {KERNEL_DIRECT_MAP_BASE + addr.x};
-	return va;
-}
-
 // Determine whether pgde is present.
 static inline bool pgde_present(pgde_t pgde)
 {
@@ -264,39 +313,50 @@ static inline bool ptde_present(ptde_t ptde)
 	return !!(ptde.x & PAGE_FLAG_PRESENT);
 }
 
-// Get pointer for virtual address (via direct mapping) from physical
-// address.
-static inline void *phys_to_virt_ptr(physaddr_t addr)
+// Retrieve pointer to PGD entry at specific index.
+static inline pgde_t *pgd_index(pgdaddr_t pgd, uint64_t index)
 {
-	return (void *)phys_to_virt(addr).x;
+	uint64_t *ptr = pgd_to_virt_ptr(pgd);
+	return (pgde_t *)&ptr[index];
 }
 
-// Get physical address from virtual address.
-static inline physaddr_t virt_to_phys(virtaddr_t va)
+// Retrieve pointer to PUD entry at specific index.
+static inline pude_t *pud_index(pudaddr_t pud, uint64_t index)
 {
-	// Determine whether the VA is a direct mapping or part of the kernel
-	// ELF.
-	uint64_t offset;
-	if (va.x > KERNEL_ELF_ADDRESS)
-		offset = KERNEL_ELF_ADDRESS;
-	else
-		offset = KERNEL_DIRECT_MAP_BASE;
-
-	physaddr_t pa = {va.x - offset};
-	return pa;
+	uint64_t *ptr = pud_to_virt_ptr(pud);
+	return (pude_t *)&ptr[index];
 }
 
-// Get physical address from (kernel!) pointer.
-static inline physaddr_t virt_ptr_to_phys(void *ptr)
+// Retrieve pointer to PMD entry at specific index.
+static inline pmde_t *pmd_index(pmdaddr_t pmd, uint64_t index)
 {
-	virtaddr_t va = {(uint64_t)ptr};
-	return virt_to_phys(va);
+	uint64_t *ptr = pmd_to_virt_ptr(pmd);
+	return (pmde_t *)&ptr[index];
 }
 
-// Zero a page of memory at the specified physical address.
-static inline void zero_page(physaddr_t pa)
+// Retrieve pointer to PTD entry at specific index.
+static inline ptde_t *ptd_index(ptdaddr_t ptd, uint64_t index)
 {
-	memset(phys_to_virt_ptr(pa), 0, PAGE_SIZE);
+	uint64_t *ptr = ptd_to_virt_ptr(ptd);
+	return (ptde_t *)&ptr[index];
+}
+
+// Assign a PUD to a PGDE, set read/write and present.
+static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pudaddr)
+{
+	pgd_index(pgd, index)->x = (pudaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+}
+
+// Assign a PMD to a PUDE, set read/write and present.
+static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmdaddr)
+{
+	pud_index(pud, index)->x = (pmdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+}
+
+// Assign a PTD to a PMDE, set read/write and present.
+static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptdaddr)
+{
+	pmd_index(pmd, index)->x = (ptdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Map a range of virtual addresses from [start_va, start_va + num_pages) to
