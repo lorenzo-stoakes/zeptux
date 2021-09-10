@@ -24,3 +24,6 @@ const char *test_misc(void);
 
 // test_mem.c
 const char *test_mem(void);
+
+// test_page.c
+const char *test_page(void);

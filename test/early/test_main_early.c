@@ -20,6 +20,10 @@ void main(void)
 	if (res != NULL)
 		early_puts(res);
 
+	res = test_page();
+	if (res != NULL)
+		early_puts(res);
+
 	early_puts("// zeptux EARLY test run complete");
 	exit_qemu();
 }

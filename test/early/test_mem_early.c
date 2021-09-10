@@ -251,36 +251,6 @@ static const char *assert_correct_total_ram(struct early_boot_info *info)
 	return NULL;
 }
 
-const char *assert_correct_virtaddr(void)
-{
-	uint64_t offset = 0;
-
-	// PGD index.
-	offset |= 0xde;
-	offset <<= 9;
-	// PUD index.
-	offset |= 0xad;
-	offset <<= 9;
-	// PMD index.
-	offset |= 0xbe;
-	offset <<= 9;
-	// PTD index.
-	offset |= 0xef;
-	offset <<= 12;
-	// Data page offset.
-	offset |= 1234;
-
-	virtaddr_t va = {offset};
-
-	assert(virt_data_offset(va) == 1234, "data offset != 1234");
-	assert(virt_ptde_index(va) == 0xef, "ptde index != 0xef");
-	assert(virt_pmde_index(va) == 0xbe, "pmde index != 0xbe");
-	assert(virt_pude_index(va) == 0xad, "pude index != 0xad");
-	assert(virt_pgde_index(va) == 0xde, "pgde index != 0xde");
-
-	return NULL;
-}
-
 const char *assert_correct_scratch_alloc(void)
 {
 	struct scratch_alloc_state *state = early_scratch_alloc_state();
@@ -431,10 +401,6 @@ const char *test_mem(void)
 
 	memset(buf, 0, BUF_SIZE);
 	ret = assert_correct_total_ram(info);
-	if (ret != NULL)
-		return ret;
-
-	ret = assert_correct_virtaddr();
 	if (ret != NULL)
 		return ret;
 
