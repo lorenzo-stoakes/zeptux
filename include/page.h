@@ -99,6 +99,8 @@
 #define PAGE_SHIFT (X86_PAGE_SHIFT)
 // The default memory page size.
 #define PAGE_SIZE (1UL << PAGE_SHIFT)
+// Mask for bits in page size.
+#define PAGE_MASK (PAGE_SIZE - 1)
 
 // Page shifts for each page level.
 #define PMD_SHIFT (X86_PMD_SHIFT)
@@ -133,6 +135,8 @@
 #define PAGE_FLAG_PSE X86_PAGE_FLAG_PSE
 #define PAGE_FLAG_GLOBAL X86_PAGE_FLAG_GLOBAL
 #define PAGE_FLAG_NX X86_PAGE_FLAG_NX
+#define PAGE_FLAG_DEFAULT X86_PAGE_FLAG_DEFAULT
+#define PAGE_FLAG_KERNEL X86_PAGE_FLAG_KERNEL
 
 // Physical/virtual address types.
 TYPE_WRAP(physaddr_t, uint64_t);
