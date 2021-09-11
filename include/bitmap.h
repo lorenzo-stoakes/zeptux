@@ -42,7 +42,7 @@ static inline void bitmap_set_all(struct bitmap *bitmap)
 	}
 
 	// Clear out-of-range bits.
-	uint64_t final_word_mask = (1UL << (bitmap->num_bits % 64)) - 1;
+	uint64_t final_word_mask = BIT_MASK_BELOW(bitmap->num_bits % 64);
 	if (final_word_mask != 0)
 		bitmap->data[num_words - 1] &= final_word_mask;
 }
@@ -64,7 +64,7 @@ static inline void bitmap_set(struct bitmap *bitmap, uint64_t bit)
 {
 	uint64_t word = bit / 64;
 	uint64_t offset = bit % 64;
-	uint64_t mask = (1UL << offset);
+	uint64_t mask = BIT_MASK(offset);
 
 	bitmap->data[word] |= mask;
 }
@@ -74,7 +74,7 @@ static inline void bitmap_clear(struct bitmap *bitmap, uint64_t bit)
 {
 	uint64_t word = bit / 64;
 	uint64_t offset = bit % 64;
-	uint64_t mask = (1UL << offset);
+	uint64_t mask = BIT_MASK(offset);
 
 	bitmap->data[word] ^= mask;
 }
@@ -84,9 +84,8 @@ static inline bool bitmap_is_set(struct bitmap *bitmap, uint64_t bit)
 {
 	uint64_t word = bit / 64;
 	uint64_t offset = bit % 64;
-	uint64_t mask = (1UL << offset);
 
-	return !!(bitmap->data[word] & mask);
+	return IS_SET(bitmap->data[word], offset);
 }
 
 // Determine the index of the first set bit, or -1 if no bit set.

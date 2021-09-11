@@ -98,9 +98,9 @@
 // Number of bits contained within default memory page size.
 #define PAGE_SHIFT (X86_PAGE_SHIFT)
 // The default memory page size.
-#define PAGE_SIZE (1UL << PAGE_SHIFT)
+#define PAGE_SIZE BIT_MASK(PAGE_SHIFT)
 // Mask for bits in page size.
-#define PAGE_MASK (PAGE_SIZE - 1)
+#define PAGE_MASK BIT_MASK_BELOW(PAGE_SHIFT)
 
 // Page shifts for each page level.
 #define PMD_SHIFT (X86_PMD_SHIFT)
@@ -108,10 +108,10 @@
 #define PGD_SHIFT (X86_PGD_SHIFT)
 
 // Mask for each page directory index portion of a virtual address.
-#define PAGE_DIR_INDEX_MASK ((1UL << 9) - 1)
+#define PAGE_DIR_INDEX_MASK BIT_MASK_BELOW(9)
 
 // Mask for data offset portion of a virtual address.
-#define PAGE_DATA_OFFSET_MASK ((1UL << PAGE_SHIFT) - 1)
+#define PAGE_DATA_OFFSET_MASK PAGE_MASK
 
 // Import X86 page flag bits:
 #define PAGE_FLAG_PRESENT_BIT X86_PAGE_FLAG_PRESENT_BIT

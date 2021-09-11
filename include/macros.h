@@ -20,9 +20,15 @@
 #define STRINGIFY(_x) STRINGIFY2(_x)
 #define STRINGIFY2(_x) #_x
 
-// Helpful bitmask macros.
+// Define the mask representing the specified bit.
 #define BIT_MASK(_bit) (1UL << _bit)
+// Determine if the specified bit is set in a value.
 #define IS_SET(_val, _bit) !!((_val & BIT_MASK(_bit)) == BIT_MASK(_bit))
+// Obtain a mask for the bits below that specified, e.g. BIT_MASK_BELOW(3) = 0b111.
+#define BIT_MASK_BELOW(_bit) (BIT_MASK(_bit) - 1)
+// Obtain a mask for the bits above and including that specified,
+// e.g. BIT_MASK_ABOVE(3) = 0b1*000.
+#define BIT_MASK_ABOVE(_bit) (~BIT_MASK_BELOW(_bit))
 
 // Wrap a type in a struct to establish some kind of rudimentary C type safety.
 #define TYPE_WRAP(_name, _type) \
