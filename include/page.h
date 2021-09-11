@@ -304,7 +304,8 @@ static inline uint64_t virt_pgde_index(virtaddr_t addr)
 }
 
 // Encodes a virtual address from page table indexes and data page offset. This
-// assumes a 4 KiB page mapping.
+// assumes a 4 KiB page mapping. We don't check any of the parameters are within
+// range so this assumes the caller is sane.
 static inline virtaddr_t encode_virt(uint64_t pgde_ind, uint64_t pude_ind,
 				     uint64_t pmde_ind, uint64_t ptde_ind,
 				     uint64_t offset)
