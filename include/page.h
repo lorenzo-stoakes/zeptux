@@ -157,11 +157,10 @@
 // The number of page table entries for each page table.
 #define NUM_PAGE_TABLE_ENTRIES (512)
 
-// The number of pages mapped by each page table level entry.
-#define NUM_PAGES_PTDE (1UL)		      //   4 KiB
-#define NUM_PAGES_PMDE (512 * NUM_PAGES_PTDE) //   2 MiB
-#define NUM_PAGES_PUDE (512 * NUM_PAGES_PMDE) //   1 GiB
-#define NUM_PAGES_PGDE (512 * NUM_PAGES_PUDE) // 512 GiB
+// The number of pages mapped by each page table level.
+#define NUM_PAGES_PTD (512)		    //   2 MiB
+#define NUM_PAGES_PMD (512 * NUM_PAGES_PTD) //   1 GiB
+#define NUM_PAGES_PUD (512 * NUM_PAGES_PMD) // 512 GiB
 
 // Physical/virtual address types.
 TYPE_WRAP(physaddr_t, uint64_t);
