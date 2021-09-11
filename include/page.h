@@ -186,6 +186,18 @@ struct page_allocators {
 	physaddr_t (*data)(void);
 };
 
+// Represents flagging modes. The lower bits contain a discrete mapping mode,
+// and the upper flags act as modifiers.
+typedef enum {
+	// Lower bits specify mode:
+	MAP_KERNEL = 1,
+	MAP_KERNEL_NOGLOBAL = 2,
+	MAP_DEVICE = 3,
+	// Upper bits specify modifiers:
+	MAP_CODE = BIT_MASK(10), // We default to setting NX.
+	MAP_READONLY = BIT_MASK(11),
+} map_flags_t;
+
 // Convert bytes to the number of pages required to hold them.
 static inline uint64_t bytes_to_pages(uint64_t bytes)
 {
@@ -509,4 +521,4 @@ static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptd)
 // required using alloc functions. Returns the number of pages allocated.
 uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 			 physaddr_t start_pa, int64_t num_pages,
-			 struct page_allocators *alloc);
+			 map_flags_t flags, struct page_allocators *alloc);

@@ -502,7 +502,8 @@ void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd)
 		virtaddr_t va = phys_to_virt(pa);
 		uint64_t num_pages = bytes_to_pages(entry->size);
 
-		_map_page_range(pgd, va, pa, num_pages, &early_allocators);
+		_map_page_range(pgd, va, pa, num_pages, MAP_KERNEL,
+				&early_allocators);
 	}
 }
 
