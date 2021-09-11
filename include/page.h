@@ -303,6 +303,18 @@ static inline uint64_t virt_pgde_index(virtaddr_t addr)
 	return (addr.x >> PGD_SHIFT) & PAGE_DIR_INDEX_MASK;
 }
 
+// Encodes a virtual address from page table indexes and data page offset. This
+// assumes a 4 KiB page mapping.
+static inline virtaddr_t encode_virt(uint64_t pgde_ind, uint64_t pude_ind,
+				     uint64_t pmde_ind, uint64_t ptde_ind,
+				     uint64_t offset)
+{
+	virtaddr_t va = {(pgde_ind << PGD_SHIFT) | (pude_ind << PUD_SHIFT) |
+			 (pmde_ind << PMD_SHIFT) | (ptde_ind << PAGE_SHIFT) |
+			 offset};
+	return va;
+}
+
 // Determine whether PGDE is present.
 static inline bool pgde_present(pgde_t pgde)
 {

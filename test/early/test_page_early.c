@@ -27,6 +27,9 @@ static const char *assert_correct_virtaddr(void)
 	assert(virt_pude_index(va) == 0xad, "pude index != 0xad");
 	assert(virt_pgde_index(va) == 0xde, "pgde index != 0xde");
 
+	assert(encode_virt(0xde, 0xad, 0xbe, 0xef, 0x4d2).x == va.x,
+	       "encode_virt() not correctly encoding");
+
 	physaddr_t pa = {0xdeadbeef};
 	va = phys_to_virt(pa);
 	assert(va.x == KERNEL_DIRECT_MAP_BASE + 0xdeadbeef,
