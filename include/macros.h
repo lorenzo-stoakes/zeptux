@@ -21,9 +21,11 @@
 #define STRINGIFY2(_x) #_x
 
 // Define the mask representing the specified bit.
-#define BIT_MASK(_bit) (1UL << _bit)
+#define BIT_MASK(_bit) (1UL << (_bit))
+// Determine if the specified bit mask is set in a value.
+#define IS_MASK_SET(_val, _mask) !!(((_val) & (_mask)) == _mask)
 // Determine if the specified bit is set in a value.
-#define IS_SET(_val, _bit) !!((_val & BIT_MASK(_bit)) == BIT_MASK(_bit))
+#define IS_SET(_val, _bit) (IS_MASK_SET(_val, BIT_MASK(_bit)))
 // Obtain a mask for the bits below that specified, e.g. BIT_MASK_BELOW(3) = 0b111.
 #define BIT_MASK_BELOW(_bit) (BIT_MASK(_bit) - 1)
 // Obtain a mask for the bits above and including that specified,
