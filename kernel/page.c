@@ -1,50 +1,59 @@
 #include "zeptux.h"
 
-static uint64_t _map_page_range_pud(pudaddr_t pud, virtaddr_t start_va,
-				    physaddr_t start_pa, int64_t num_pages,
-				    map_flags_t flags,
-				    struct page_allocators *alloc)
+// Represents page mapping state, updated as we proceed through the mapping
+// process.
+struct page_map_state {
+	virtaddr_t va;
+	physaddr_t pa;
+	// Signed so we can advance > num pages + exit early.
+	int64_t num_remaining_pages;
+	uint64_t num_pagetables_allocated;
+
+	// Immutable:
+	map_flags_t flags;
+	struct page_allocators *alloc;
+};
+
+static void _map_page_range_pud(pudaddr_t pud, struct page_map_state *state)
 {
 	IGNORE_PARAM(pud);
-	IGNORE_PARAM(start_va);
-	IGNORE_PARAM(start_pa);
-	IGNORE_PARAM(num_pages);
-	IGNORE_PARAM(flags);
-	IGNORE_PARAM(alloc);
-
-	return 0;
+	IGNORE_PARAM(state);
 }
 
 uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 			 physaddr_t start_pa, int64_t num_pages,
 			 map_flags_t flags, struct page_allocators *alloc)
 {
-	virtaddr_t va = start_va;
-	physaddr_t pa = start_pa;
+	struct page_map_state state = {
+		.va = start_va,
+		.pa = start_pa,
+		.num_remaining_pages = num_pages,
+		.num_pagetables_allocated = 0,
 
-	uint64_t num_pages_allocated = 0;
+		.flags = flags,
+		.alloc = alloc,
+	};
 
-	while (num_pages > 0) {
-		uint64_t index = virt_pgde_index(va);
+	while (state.num_remaining_pages > 0) {
+		uint64_t index = virt_pgde_index(state.va);
 
 		pudaddr_t pud;
 		pgde_t pgde = *pgde_at(pgd, index);
 		if (!pgde_present(pgde)) {
-			pud = alloc->pud();
-			num_pages_allocated++;
+			pud = state.alloc->pud();
+			state.num_pagetables_allocated++;
 			assign_pud(pgd, index, pud);
 		} else {
 			pud = pgde_pud(pgde);
 		}
-		num_pages_allocated += _map_page_range_pud(
-			pud, va, pa, num_pages, flags, alloc);
+		_map_page_range_pud(pud, &state);
 
-		int64_t pages = (int64_t)virt_pgde_remaining_pages(va);
+		int64_t pages = (int64_t)virt_pgde_remaining_pages(state.va);
 
-		pa = phys_offset_pages(pa, pages);
-		va = virt_offset_pages(va, pages);
-		num_pages -= pages;
+		state.pa = phys_offset_pages(state.pa, pages);
+		state.va = virt_offset_pages(state.va, pages);
+		state.num_remaining_pages -= pages;
 	}
 
-	return num_pages_allocated;
+	return state.num_pagetables_allocated;
 }
