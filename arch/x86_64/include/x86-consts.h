@@ -145,3 +145,7 @@
 #define X86_PMD_SHIFT (21)
 #define X86_PUD_SHIFT (30)
 #define X86_PGD_SHIFT (39)
+
+// The number of meaningful bits in a physical address. In 4-level x86-64 this
+// is 4 levels = 12 + 4*9.
+#define X86_PHYS_ADDR_BITS (48)

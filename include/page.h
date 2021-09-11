@@ -102,10 +102,22 @@
 // Mask for bits in page size.
 #define PAGE_MASK BIT_MASK_BELOW(PAGE_SHIFT)
 
+// The numbers of meaningful bits in a physical address.
+#define PHYS_ADDR_BITS X86_PHYS_ADDR_BITS
+// A mask including the meaningful bits contained within a physical address.
+#define PHYS_ADDR_MASK (BIT_MASK_BELOW(PHYS_ADDR_BITS))
+
 // Page shifts for each page level.
 #define PMD_SHIFT (X86_PMD_SHIFT)
 #define PUD_SHIFT (X86_PUD_SHIFT)
 #define PGD_SHIFT (X86_PGD_SHIFT)
+
+// Masks for obtaining physical addresses from page table entries.
+#define PAGE_TABLE_PHYS_ADDR_MASK (PHYS_ADDR_MASK & BIT_MASK_ABOVE(PAGE_SHIFT))
+#define PAGE_TABLE_PHYS_ADDR_MASK_2MIB \
+	(PHYS_ADDR_MASK & BIT_MASK_ABOVE(PMD_SHIFT))
+#define PAGE_TABLE_PHYS_ADDR_MASK_1GIB \
+	(PHYS_ADDR_MASK & BIT_MASK_ABOVE(PUD_SHIFT))
 
 // Mask for each page directory index portion of a virtual address.
 #define PAGE_DIR_INDEX_MASK BIT_MASK_BELOW(9)
