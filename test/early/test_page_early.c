@@ -231,6 +231,12 @@ static const char *assert_page_misc(void)
 	assert(pfn_to_pa(pfn).x == 0,
 	       "pfn_to_pa() not correctly converting PFN to PA");
 
+	pa.x = 117 << PAGE_SHIFT;
+	// Add some data offset noise.
+	pa.x |= 4095;
+	assert(phys_offset_pages(pa, 12).x >> PAGE_SHIFT == 129,
+	       "phys_offset_pages() not offsetting correctly");
+
 	return NULL;
 }
 

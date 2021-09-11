@@ -377,17 +377,20 @@ static inline uint64_t virt_pmde_remaining_pages(virtaddr_t addr)
 	return bytes_to_pages(next.x - addr.x);
 }
 
-// Offset a virtual address by the specified number of 4 KiB pages. This IGNORES
-// the data page offset, treating it as if it were zero.
-static inline virtaddr_t virt_offset_pages(virtaddr_t addr, uint64_t pages)
-{
-	uint64_t val = addr.x >> PAGE_SHIFT;
-	val += pages;
-	val <<= PAGE_SHIFT;
-
-	virtaddr_t ret = {val};
-	return ret;
-}
+// Offset an address by the specified number of 4 KiB pages. This IGNORES the
+// data page offset, treating it as if it were zero.
+#define GEN_OFFSET_PAGES(pagetype)                              \
+	static inline pagetype##addr_t pagetype##_offset_pages( \
+		pagetype##addr_t addr, uint64_t pages)          \
+	{                                                       \
+		uint64_t val = addr.x >> PAGE_SHIFT;            \
+		val += pages;                                   \
+		val <<= PAGE_SHIFT;                             \
+		pagetype##addr_t ret = {val};                   \
+		return ret;                                     \
+	}
+GEN_OFFSET_PAGES(virt);
+GEN_OFFSET_PAGES(phys);
 
 // Determine whether PGDE is present.
 static inline bool pgde_present(pgde_t pgde)
