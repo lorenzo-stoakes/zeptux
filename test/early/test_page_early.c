@@ -52,6 +52,19 @@ static const char *assert_correct_virtaddr(void)
 	assert(virt_ptr_to_phys(ptr).x == 0xbeef,
 	       "virt_ptr_to_phys() not decoded ELF VA");
 
+	va = encode_virt(123, 5, 6, 507, 15);
+	va = virt_offset_pages(va, 15);
+	assert(virt_pgde_index(va) == 123,
+	       "virt_offset_pages() incorrect pgde index");
+	assert(virt_pude_index(va) == 5,
+	       "virt_offset_pages() incorrect pude index");
+	assert(virt_pmde_index(va) == 7,
+	       "virt_offset_pages() incorrect pmde index");
+	assert(virt_ptde_index(va) == 10,
+	       "virt_offset_pages() incorrect ptde index");
+	assert(virt_data_offset(va) == 0,
+	       "virt_offset_pages() did not zero data offset");
+
 	// PGDE:
 
 	va = encode_virt(123, 0, 0, 0, 0);
