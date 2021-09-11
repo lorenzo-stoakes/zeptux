@@ -329,12 +329,50 @@ static inline virtaddr_t virt_next_pgde(virtaddr_t addr)
 	return ret;
 }
 
+// Obtain the virtual address occupying the next PUDE index.
+static inline virtaddr_t virt_next_pude(virtaddr_t addr)
+{
+	// The carry will increment PGD index as appropriate.
+	virtaddr_t ret = {((addr.x >> PUD_SHIFT) + 1) << PUD_SHIFT};
+	return ret;
+}
+
+// Obtain the virtual address occupying the next PMDE index.
+static inline virtaddr_t virt_next_pmde(virtaddr_t addr)
+{
+	// The carry will increment PGD, PUD indexes as appropriate.
+	virtaddr_t ret = {((addr.x >> PMD_SHIFT) + 1) << PMD_SHIFT};
+	return ret;
+}
+
 // Determine how many pages remaining before a new PGDE entry need be assigned.
 static inline uint64_t virt_pgde_remaining_pages(virtaddr_t addr)
 {
 	// Clear 4 KiB data page offset.
 	addr.x &= BIT_MASK_ABOVE(PAGE_SHIFT);
 	virtaddr_t next = virt_next_pgde(addr);
+
+	return bytes_to_pages(next.x - addr.x);
+}
+
+// Determine how many pages remaining before a new PUDE entry (+ possibly a new
+// PGDE entry) need be assigned.
+static inline uint64_t virt_pude_remaining_pages(virtaddr_t addr)
+{
+	// Clear 4 KiB data page offset.
+	addr.x &= BIT_MASK_ABOVE(PAGE_SHIFT);
+	virtaddr_t next = virt_next_pude(addr);
+
+	return bytes_to_pages(next.x - addr.x);
+}
+
+// Determine how many pages remaining before a new PMDE entry (+ possibly a new
+// PUDE, perhaps PGDE entry) need be assigned.
+static inline uint64_t virt_pmde_remaining_pages(virtaddr_t addr)
+{
+	// Clear 4 KiB data page offset.
+	addr.x &= BIT_MASK_ABOVE(PAGE_SHIFT);
+	virtaddr_t next = virt_next_pmde(addr);
 
 	return bytes_to_pages(next.x - addr.x);
 }

@@ -52,6 +52,8 @@ static const char *assert_correct_virtaddr(void)
 	assert(virt_ptr_to_phys(ptr).x == 0xbeef,
 	       "virt_ptr_to_phys() not decoded ELF VA");
 
+	// PGDE:
+
 	va = encode_virt(123, 0, 0, 0, 0);
 	assert(virt_pgde_remaining_pages(va) == NUM_PAGES_PGDE,
 	       "virt_pgde_remaining_pages() incorrect for full PGDE range");
@@ -81,6 +83,70 @@ static const char *assert_correct_virtaddr(void)
 	       "virt_pgde_remaining_pages() incorrect for 1 page remaining");
 	assert(virt_pgde_index(virt_next_pgde(va)) == 124,
 	       "virt_next_pgde() not correctly incrementing");
+
+	// PUDE:
+
+	va = encode_virt(123, 0, 0, 0, 0);
+	assert(virt_pude_remaining_pages(va) == NUM_PAGES_PUDE,
+	       "virt_pude_remaining_pages() incorrect for full PUDE range");
+	assert(virt_pude_index(virt_next_pude(va)) == 1,
+	       "virt_next_pude() not correctly incrementing");
+
+	va = encode_virt(123, 0, 0, 0, 4095);
+	assert(virt_pude_remaining_pages(va) == NUM_PAGES_PUDE,
+	       "virt_pude_remaining_pages() incorrect for offset full PUDE range");
+	assert(virt_pude_index(virt_next_pude(va)) == 1,
+	       "virt_next_pude() not correctly incrementing");
+
+	va = encode_virt(123, 1, 0, 0, 0);
+	assert(virt_pude_remaining_pages(va) == NUM_PAGES_PUDE,
+	       "virt_pude_remaining_pages() incorrect for full PUDE range");
+	assert(virt_pude_index(virt_next_pude(va)) == 2,
+	       "virt_next_pude() not correctly incrementing");
+
+	va = encode_virt(123, 511, 511, 0, 0);
+	assert(virt_pude_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pude_remaining_pages() incorrect for 1 PMD remaining");
+	assert(virt_pude_index(virt_next_pude(va)) == 0,
+	       "virt_next_pude() not correctly incrementing");
+
+	va = encode_virt(123, 511, 511, 511, 0);
+	assert(virt_pude_remaining_pages(va) == 1,
+	       "virt_pude_remaining_pages() incorrect for 1 page remaining");
+	assert(virt_pude_index(virt_next_pude(va)) == 0,
+	       "virt_next_pude() not correctly incrementing");
+
+	// PMDE:
+
+	va = encode_virt(123, 0, 0, 0, 0);
+	assert(virt_pmde_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pmde_remaining_pages() incorrect for full PMDE range");
+	assert(virt_pmde_index(virt_next_pmde(va)) == 1,
+	       "virt_next_pmde() not correctly incrementing");
+
+	va = encode_virt(123, 0, 0, 0, 4095);
+	assert(virt_pmde_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pmde_remaining_pages() incorrect for offset full PMDE range");
+	assert(virt_pmde_index(virt_next_pmde(va)) == 1,
+	       "virt_next_pmde() not correctly incrementing");
+
+	va = encode_virt(123, 0, 1, 0, 0);
+	assert(virt_pmde_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pmde_remaining_pages() incorrect for full PMDE range");
+	assert(virt_pmde_index(virt_next_pmde(va)) == 2,
+	       "virt_next_pmde() not correctly incrementing");
+
+	va = encode_virt(123, 511, 511, 0, 0);
+	assert(virt_pmde_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pmde_remaining_pages() incorrect for 1 PMD remaining");
+	assert(virt_pmde_index(virt_next_pmde(va)) == 0,
+	       "virt_next_pmde() not correctly incrementing");
+
+	va = encode_virt(123, 511, 511, 511, 0);
+	assert(virt_pmde_remaining_pages(va) == 1,
+	       "virt_pmde_remaining_pages() incorrect for 1 page remaining");
+	assert(virt_pmde_index(virt_next_pmde(va)) == 0,
+	       "virt_next_pmde() not correctly incrementing");
 
 	return NULL;
 }
