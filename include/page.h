@@ -316,28 +316,28 @@ static inline bool ptde_present(ptde_t ptde)
 }
 
 // Retrieve pointer to PGD entry at specific index.
-static inline pgde_t *pgd_index(pgdaddr_t pgd, uint64_t index)
+static inline pgde_t *pgde_at(pgdaddr_t pgd, uint64_t index)
 {
 	uint64_t *ptr = pgd_to_virt_ptr(pgd);
 	return (pgde_t *)&ptr[index];
 }
 
 // Retrieve pointer to PUD entry at specific index.
-static inline pude_t *pud_index(pudaddr_t pud, uint64_t index)
+static inline pude_t *pude_at(pudaddr_t pud, uint64_t index)
 {
 	uint64_t *ptr = pud_to_virt_ptr(pud);
 	return (pude_t *)&ptr[index];
 }
 
 // Retrieve pointer to PMD entry at specific index.
-static inline pmde_t *pmd_index(pmdaddr_t pmd, uint64_t index)
+static inline pmde_t *pmde_at(pmdaddr_t pmd, uint64_t index)
 {
 	uint64_t *ptr = pmd_to_virt_ptr(pmd);
 	return (pmde_t *)&ptr[index];
 }
 
 // Retrieve pointer to PTD entry at specific index.
-static inline ptde_t *ptd_index(ptdaddr_t ptd, uint64_t index)
+static inline ptde_t *ptde_at(ptdaddr_t ptd, uint64_t index)
 {
 	uint64_t *ptr = ptd_to_virt_ptr(ptd);
 	return (ptde_t *)&ptr[index];
@@ -346,19 +346,19 @@ static inline ptde_t *ptd_index(ptdaddr_t ptd, uint64_t index)
 // Assign a PUD to a PGDE, set read/write and present.
 static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pudaddr)
 {
-	pgd_index(pgd, index)->x = (pudaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pgde_at(pgd, index)->x = (pudaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Assign a PMD to a PUDE, set read/write and present.
 static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmdaddr)
 {
-	pud_index(pud, index)->x = (pmdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pude_at(pud, index)->x = (pmdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Assign a PTD to a PMDE, set read/write and present.
 static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptdaddr)
 {
-	pmd_index(pmd, index)->x = (ptdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pmde_at(pmd, index)->x = (ptdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Map a range of virtual addresses from [start_va, start_va + num_pages) to
