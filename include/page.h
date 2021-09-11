@@ -112,6 +112,10 @@
 #define PUD_SHIFT (X86_PUD_SHIFT)
 #define PGD_SHIFT (X86_PGD_SHIFT)
 
+// Assign page masks for larger page sizes specified at PUD/PMD level.
+#define PAGE_MASK_1GIB BIT_MASK_BELOW(PUD_SHIFT)
+#define PAGE_MASK_2MIB BIT_MASK_BELOW(PMD_SHIFT)
+
 // Masks for obtaining physical addresses from page table entries.
 #define PAGE_TABLE_PHYS_ADDR_MASK (PHYS_ADDR_MASK & BIT_MASK_ABOVE(PAGE_SHIFT))
 #define PAGE_TABLE_PHYS_ADDR_MASK_2MIB \
@@ -537,16 +541,40 @@ static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pud)
 	pgde_at(pgd, index)->x = (pud.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
+// Assign a 1 GiB data page to a PUDE.
+static inline void assign_data_1gib(pudaddr_t pud, uint64_t index,
+				    physaddr_t pa, map_flags_t flags)
+{
+	pude_at(pud, index)->x = (pa.x & ~PAGE_MASK_1GIB) | PAGE_FLAG_PSE |
+				 map_flags_to_page_flags(flags);
+}
+
 // Assign a PMD to a PUDE, set read/write and present.
 static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmd)
 {
 	pude_at(pud, index)->x = (pmd.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
+// Assign a 2 MiB data page to a PMDE.
+static inline void assign_data_2mib(pmdaddr_t pmd, uint64_t index,
+				    physaddr_t pa, map_flags_t flags)
+{
+	pmde_at(pmd, index)->x = (pa.x & ~PAGE_MASK_2MIB) | PAGE_FLAG_PSE |
+				 map_flags_to_page_flags(flags);
+}
+
 // Assign a PTD to a PMDE, set read/write and present.
 static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptd)
 {
 	pmde_at(pmd, index)->x = (ptd.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+}
+
+// Assign a 4 KiB data page to a PTDE.
+static inline void assign_data(ptdaddr_t ptd, uint64_t index, physaddr_t pa,
+			       map_flags_t flags)
+{
+	ptde_at(ptd, index)->x = (pa.x & ~PAGE_MASK) |
+				 map_flags_to_page_flags(flags);
 }
 
 // Map a range of virtual addresses from [start_va, start_va + num_pages) to

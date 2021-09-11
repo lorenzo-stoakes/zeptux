@@ -298,6 +298,9 @@ static const char *assert_pagetable_helpers(void)
 	assert((uint64_t)ptr == KERNEL_DIRECT_MAP_BASE + ptd.x,
 	       "ptd_to_virt_ptr() not correctly obtaining ptr");
 
+	// Allocate data page for later tests.
+	physaddr_t data = early_page_alloc();
+
 	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
 		pgde_t *pgde_ptr = pgde_at(pgd, i);
 		assert(pgde_ptr->x == (uint64_t)(i + 1),
@@ -353,6 +356,31 @@ static const char *assert_pagetable_helpers(void)
 		       "Cannot assign PTD to PMD");
 		assert(pmde_ptd(pmde).x == ptd.x,
 		       "pmde_ptd() not retrieving PTD address");
+
+		assign_data(ptd, i, data, MAP_KERNEL_NOGLOBAL);
+		ptde_t ptde = *ptde_at(ptd, i);
+		assert(ptde.x == (data.x | PAGE_FLAG_DEFAULT | PAGE_FLAG_NX),
+		       "Cannot assign data page to PTD");
+		assert(ptde_data(ptde).x == data.x,
+		       "ptde_data() not retrieving data page address");
+
+		assign_data_1gib(pud, i, data, MAP_KERNEL_NOGLOBAL);
+		pude = *pude_at(pud, i);
+		assert(pude.x ==
+			       ((data.x & ~PAGE_MASK_1GIB) | PAGE_FLAG_DEFAULT |
+				PAGE_FLAG_NX | PAGE_FLAG_PSE),
+		       "Cannot assign 1 GiB data page to PUD");
+		assert(pude_data_1gib(pude).x == (data.x & ~PAGE_MASK_1GIB),
+		       "pude_data_1gib() not retrieving data page address");
+
+		assign_data_2mib(pmd, i, data, MAP_KERNEL_NOGLOBAL);
+		pmde = *pmde_at(pmd, i);
+		assert(pmde.x ==
+			       ((data.x & ~PAGE_MASK_2MIB) | PAGE_FLAG_DEFAULT |
+				PAGE_FLAG_NX | PAGE_FLAG_PSE),
+		       "Cannot assign 2 MiB data page to PMD");
+		assert(pmde_data_2mib(pmde).x == (data.x & ~PAGE_MASK_2MIB),
+		       "pmde_data_2mib() not retrieving data page address");
 	}
 
 	// Create a noisy entry and assert we can still get correct data address
@@ -387,6 +415,7 @@ static const char *assert_pagetable_helpers(void)
 	early_free_pud(pud);
 	early_free_pmd(pmd);
 	early_free_ptd(ptd);
+	early_page_free(data);
 
 	return NULL;
 }
