@@ -43,9 +43,6 @@ static void _map_page_range_ptd(ptdaddr_t ptd, struct page_map_state *state)
 // possible for the specified map range.
 static void _map_page_range_pmd(pmdaddr_t pmd, struct page_map_state *state)
 {
-	// Declare here as we should avoid jumping over a declaration.
-	uint64_t pages;
-
 	while (state->num_remaining_pages > 0) {
 		uint64_t index = virt_pmde_index(state->va);
 		pmde_t pmde = *pmde_at(pmd, index);
@@ -76,7 +73,7 @@ static void _map_page_range_pmd(pmdaddr_t pmd, struct page_map_state *state)
 			state->num_pagetables_allocated++;
 			assign_ptd(pmd, index, ptd);
 		} else {
-			// PMD mapped.
+			// PTD mapped.
 			ptd = pmde_ptd(pmde);
 		}
 
@@ -84,18 +81,14 @@ static void _map_page_range_pmd(pmdaddr_t pmd, struct page_map_state *state)
 		if (state->num_remaining_pages <= 0)
 			break;
 
-		// TODO: Full page table assignments not implemented yet, REMOVE.
-		break;
-
-		pages = virt_pmde_remaining_pages(state->va);
-		if (pages > 0)
+		if (!IS_ALIGNED(state->va.x, PAGE_SIZE_2MIB))
 			state->alloc->panic(
 				"%lu pages unassigned under PMD for VA 0x%lx",
 				state->num_remaining_pages, state->va.x);
 
+	next:
 		// If we just assigned the last entry in the page table, we need
 		// a new PUDE.
-	next:
 		if (index == NUM_PAGE_TABLE_ENTRIES - 1)
 			break;
 	}
@@ -105,9 +98,6 @@ static void _map_page_range_pmd(pmdaddr_t pmd, struct page_map_state *state)
 // possible for the specified map range.
 static void _map_page_range_pud(pudaddr_t pud, struct page_map_state *state)
 {
-	// Declare here as we should avoid jumping over a declaration.
-	uint64_t pages;
-
 	while (state->num_remaining_pages > 0) {
 		uint64_t index = virt_pude_index(state->va);
 		pude_t pude = *pude_at(pud, index);
@@ -146,18 +136,14 @@ static void _map_page_range_pud(pudaddr_t pud, struct page_map_state *state)
 		if (state->num_remaining_pages <= 0)
 			break;
 
-		// TODO: Full page table assignments not implemented yet, REMOVE.
-		break;
-
-		pages = virt_pude_remaining_pages(state->va);
-		if (pages > 0)
+		if (!IS_ALIGNED(state->va.x, PAGE_SIZE_1GIB))
 			state->alloc->panic(
 				"%lu pages unassigned under PUD for VA 0x%lx",
 				state->num_remaining_pages, state->va.x);
 
+	next:
 		// If we just assigned the last entry in the page table, we need
 		// a new PGDE.
-	next:
 		if (index == NUM_PAGE_TABLE_ENTRIES - 1)
 			break;
 	}
@@ -193,14 +179,9 @@ uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 		if (state.num_remaining_pages <= 0)
 			break;
 
-		// TODO: Full page table assignments not implemented yet, REMOVE.
-		break;
-
-		// If we have pages still to be mapped AND there are pages
-		// remaining before the next PGDE then something has gone
-		// horribly wrong.
-		uint64_t pages = virt_pgde_remaining_pages(state.va);
-		if (pages > 0)
+		// If we have pages still to be mapped AND we are not aligned to
+		// the PGD then something has gone horribly wrong.
+		if (!IS_ALIGNED(state.va.x, PGD_SIZE))
 			state.alloc->panic(
 				"%lu pages unassigned under PGD for VA 0x%lx",
 				state.num_remaining_pages, state.va.x);
