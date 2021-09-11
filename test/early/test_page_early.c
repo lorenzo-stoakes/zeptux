@@ -122,13 +122,119 @@ static const char *assert_page_misc(void)
 	return NULL;
 }
 
-/*
- * TODO:
- * p*d_to_virt_ptr()
- * p*de_present()
- * p*d_index()
- * assign_p*d()
- */
+static const char *assert_pagetable_helpers(void)
+{
+	pgde_t pgde = {0xbeef0};
+	assert(!pgde_present(pgde), "PGDE present should not be set");
+	pgde.x |= PAGE_FLAG_PRESENT;
+	assert(pgde_present(pgde), "PGDE present should be set");
+
+	pude_t pude = {0xbeef0};
+	assert(!pude_present(pude), "PUDE present should not be set");
+	pude.x |= PAGE_FLAG_PRESENT;
+	assert(pude_present(pude), "PUDE present should be set");
+
+	pmde_t pmde = {0xbeef0};
+	assert(!pmde_present(pmde), "PMDE present should not be set");
+	pmde.x |= PAGE_FLAG_PRESENT;
+	assert(pmde_present(pmde), "PMDE present should be set");
+
+	ptde_t ptde = {0xbeef0};
+	assert(!ptde_present(ptde), "PTDE present should not be set");
+	ptde.x |= PAGE_FLAG_PRESENT;
+	assert(ptde_present(ptde), "PTDE present should be set");
+
+	pgdaddr_t pgd = early_alloc_pgd();
+	uint64_t *ptr = pgd_to_virt_ptr(pgd);
+	// Fill for later tests.
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptr[i] = i + 1;
+	}
+	assert((uint64_t)ptr == KERNEL_DIRECT_MAP_BASE + pgd.x,
+	       "pgd_to_virt_ptr() not correctly obtaining ptr");
+
+	pudaddr_t pud = early_alloc_pud();
+	ptr = pud_to_virt_ptr(pud);
+	// Fill for later tests.
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptr[i] = i + 1;
+	}
+	assert((uint64_t)ptr == KERNEL_DIRECT_MAP_BASE + pud.x,
+	       "pud_to_virt_ptr() not correctly obtaining ptr");
+
+	pmdaddr_t pmd = early_alloc_pmd();
+	ptr = pmd_to_virt_ptr(pmd);
+	// Fill for later tests.
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptr[i] = i + 1;
+	}
+	assert((uint64_t)ptr == KERNEL_DIRECT_MAP_BASE + pmd.x,
+	       "pmd_to_virt_ptr() not correctly obtaining ptr");
+
+	ptdaddr_t ptd = early_alloc_ptd();
+	ptr = ptd_to_virt_ptr(ptd);
+	// Fill for later tests.
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptr[i] = i + 1;
+	}
+	assert((uint64_t)ptr == KERNEL_DIRECT_MAP_BASE + ptd.x,
+	       "ptd_to_virt_ptr() not correctly obtaining ptr");
+
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		pgde_t *pgde_ptr = pgde_at(pgd, i);
+		assert(pgde_ptr->x == (uint64_t)(i + 1),
+		       "pgde_at() not retrieving correct PGDE");
+		uint64_t *ptr = pgd_to_virt_ptr(pgd);
+		pgde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
+		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
+		       "Unable to assign from pgd_at()");
+
+		pude_t *pude_ptr = pude_at(pud, i);
+		assert(pude_ptr->x == (uint64_t)(i + 1),
+		       "pude_at() not retrieving correct PUDE");
+		ptr = pud_to_virt_ptr(pud);
+		pude_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
+		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
+		       "Unable to assign from pud_at()");
+
+		pmde_t *pmde_ptr = pmde_at(pmd, i);
+		assert(pmde_ptr->x == (uint64_t)(i + 1),
+		       "pmde_at() not retrieving correct PMDE");
+		ptr = pmd_to_virt_ptr(pmd);
+		pmde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
+		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
+		       "Unable to assign from pmd_at()");
+
+		ptde_t *ptde_ptr = ptde_at(ptd, i);
+		assert(ptde_ptr->x == (uint64_t)(i + 1),
+		       "ptde_at() not retrieving correct PTDE");
+		ptr = ptd_to_virt_ptr(ptd);
+		ptde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
+		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
+		       "Unable to assign from ptd_at()");
+	}
+
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		assign_pud(pgd, i, pud);
+		assert(pgde_at(pgd, i)->x == (pud.x | PAGE_FLAG_DEFAULT),
+		       "Cannot assign PUD to PGD");
+
+		assign_pmd(pud, i, pmd);
+		assert(pude_at(pud, i)->x == (pmd.x | PAGE_FLAG_DEFAULT),
+		       "Cannot assign PMD to PUD");
+
+		assign_ptd(pmd, i, ptd);
+		assert(pmde_at(pmd, i)->x == (ptd.x | PAGE_FLAG_DEFAULT),
+		       "Cannot assign PTD to PMD");
+	}
+
+	early_free_pgd(pgd);
+	early_free_pud(pud);
+	early_free_pmd(pmd);
+	early_free_ptd(ptd);
+
+	return NULL;
+}
 
 const char *test_page(void)
 {
@@ -137,6 +243,10 @@ const char *test_page(void)
 		return ret;
 
 	ret = assert_page_misc();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_pagetable_helpers();
 	if (ret != NULL)
 		return ret;
 
