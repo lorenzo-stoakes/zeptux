@@ -297,25 +297,25 @@ static inline uint64_t virt_pgde_index(virtaddr_t addr)
 // Determine whether PGDE is present.
 static inline bool pgde_present(pgde_t pgde)
 {
-	return !!(pgde.x & PAGE_FLAG_PRESENT);
+	return IS_SET(pgde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PUDE is present.
 static inline bool pude_present(pude_t pude)
 {
-	return !!(pude.x & PAGE_FLAG_PRESENT);
+	return IS_SET(pude.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PMDE is present.
 static inline bool pmde_present(pmde_t pmde)
 {
-	return !!(pmde.x & PAGE_FLAG_PRESENT);
+	return IS_SET(pmde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PTDE is present.
 static inline bool ptde_present(ptde_t ptde)
 {
-	return !!(ptde.x & PAGE_FLAG_PRESENT);
+	return IS_SET(ptde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Retrieve pointer to PGD entry at specific index.
