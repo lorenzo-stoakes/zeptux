@@ -110,9 +110,6 @@
 // Mask for each page directory index portion of a virtual address.
 #define PAGE_DIR_INDEX_MASK BIT_MASK_BELOW(9)
 
-// Mask for data offset portion of a virtual address.
-#define PAGE_DATA_OFFSET_MASK PAGE_MASK
-
 // Import X86 page flag bits:
 #define PAGE_FLAG_PRESENT_BIT X86_PAGE_FLAG_PRESENT_BIT
 #define PAGE_FLAG_RW_BIT X86_PAGE_FLAG_RW_BIT
@@ -267,7 +264,7 @@ static inline physaddr_t pa_prev_page(physaddr_t pa)
 // Get data offset from virtual address.
 static inline uint64_t virt_data_offset(virtaddr_t addr)
 {
-	return addr.x & PAGE_DATA_OFFSET_MASK;
+	return addr.x & PAGE_MASK;
 }
 
 // Get PTDE offset from virtual address.
