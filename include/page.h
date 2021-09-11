@@ -327,6 +327,48 @@ static inline bool ptde_present(ptde_t ptde)
 	return IS_SET(ptde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
+// Retrieve the PUD address referenced by a PGDE.
+static inline pudaddr_t pgde_pud(pgde_t pgde)
+{
+	pudaddr_t pud = {pgde.x & PAGE_TABLE_PHYS_ADDR_MASK};
+	return pud;
+}
+
+// Retrieve the PMD address reference by a PUDE.
+static inline pmdaddr_t pude_pmd(pude_t pude)
+{
+	pmdaddr_t pmd = {pude.x & PAGE_TABLE_PHYS_ADDR_MASK};
+	return pmd;
+}
+
+// Retrieve the 1GiB data page address referenced by a PUDE.
+static inline physaddr_t pude_data_1gib(pude_t pude)
+{
+	physaddr_t pa = {pude.x & PAGE_TABLE_PHYS_ADDR_MASK_1GIB};
+	return pa;
+}
+
+// Retrieve the PTD address reference by a PMDE.
+static inline ptdaddr_t pmde_ptd(pmde_t pmde)
+{
+	ptdaddr_t ptd = {pmde.x & PAGE_TABLE_PHYS_ADDR_MASK};
+	return ptd;
+}
+
+// Retrieve the 2MiB data page address referenced by a PMDE.
+static inline physaddr_t pmde_data_2mib(pmde_t pmde)
+{
+	physaddr_t pa = {pmde.x & PAGE_TABLE_PHYS_ADDR_MASK_2MIB};
+	return pa;
+}
+
+// Retrieve the 4KiB data page address referenced by a PTDE.
+static inline physaddr_t ptde_data(ptde_t ptde)
+{
+	physaddr_t pa = {ptde.x & PAGE_TABLE_PHYS_ADDR_MASK};
+	return pa;
+}
+
 // Retrieve pointer to PGD entry at specific index.
 static inline pgde_t *pgde_at(pgdaddr_t pgd, uint64_t index)
 {

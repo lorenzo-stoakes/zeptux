@@ -216,17 +216,54 @@ static const char *assert_pagetable_helpers(void)
 
 	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
 		assign_pud(pgd, i, pud);
-		assert(pgde_at(pgd, i)->x == (pud.x | PAGE_FLAG_DEFAULT),
+		pgde_t pgde = *pgde_at(pgd, i);
+		assert(pgde.x == (pud.x | PAGE_FLAG_DEFAULT),
 		       "Cannot assign PUD to PGD");
+		assert(pgde_pud(pgde).x == pud.x,
+		       "pgde_pud() not retrieving PUD address");
 
 		assign_pmd(pud, i, pmd);
-		assert(pude_at(pud, i)->x == (pmd.x | PAGE_FLAG_DEFAULT),
+		pude_t pude = *pude_at(pud, i);
+		assert(pude.x == (pmd.x | PAGE_FLAG_DEFAULT),
 		       "Cannot assign PMD to PUD");
+		assert(pude_pmd(pude).x == pmd.x,
+		       "pude_pmd() not retrieving PMD address");
 
 		assign_ptd(pmd, i, ptd);
-		assert(pmde_at(pmd, i)->x == (ptd.x | PAGE_FLAG_DEFAULT),
+		pmde_t pmde = *pmde_at(pmd, i);
+		assert(pmde.x == (ptd.x | PAGE_FLAG_DEFAULT),
 		       "Cannot assign PTD to PMD");
+		assert(pmde_ptd(pmde).x == ptd.x,
+		       "pmde_ptd() not retrieving PTD address");
 	}
+
+	// Create a noisy entry and assert we can still get correct data address
+	// from it.
+	pgde.x = 0xdeadb000 | BIT_MASK_BELOW(PAGE_SHIFT);
+	pgde.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(pgde_pud(pgde).x == 0xdeadb000, "Noisy pgde_pud() failed");
+
+	pude.x = 0xdeadb000 | BIT_MASK_BELOW(PAGE_SHIFT);
+	pude.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(pude_pmd(pude).x == 0xdeadb000, "Noisy pude_pmd() failed");
+
+	pmde.x = 0xdeadb000 | BIT_MASK_BELOW(PAGE_SHIFT);
+	pmde.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(pmde_ptd(pmde).x == 0xdeadb000, "Noisy pmde_ptd() failed");
+
+	ptde.x = 0xdeadb000 | BIT_MASK_BELOW(PAGE_SHIFT);
+	ptde.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(ptde_data(ptde).x == 0xdeadb000, "Noisy ptde_data() failed");
+
+	// Now try some larger page size entries.
+	pude.x = 0x124fffffff;
+	pude.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(pude_data_1gib(pude).x == 0x1240000000,
+	       "Noisy pude_data_1gib() failed");
+	pmde.x = 0x4fffff;
+	pmde.x |= BIT_MASK(63) | BIT_MASK(50);
+	assert(pmde_data_2mib(pmde).x == 0x400000,
+	       "Noisy pmde_data_2mib() failed");
 
 	early_free_pgd(pgd);
 	early_free_pud(pud);
