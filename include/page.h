@@ -152,6 +152,12 @@
 // The number of page table entries for each page table.
 #define NUM_PAGE_TABLE_ENTRIES (512)
 
+// The number of pages mapped by each page table level entry.
+#define NUM_PAGES_PTDE (1UL)		      //   4 KiB
+#define NUM_PAGES_PMDE (512 * NUM_PAGES_PTDE) //   2 MiB
+#define NUM_PAGES_PUDE (512 * NUM_PAGES_PMDE) //   1 GiB
+#define NUM_PAGES_PGDE (512 * NUM_PAGES_PUDE) // 512 GiB
+
 // Physical/virtual address types.
 TYPE_WRAP(physaddr_t, uint64_t);
 TYPE_WRAP(virtaddr_t, uint64_t);
@@ -314,6 +320,18 @@ static inline virtaddr_t encode_virt(uint64_t pgde_ind, uint64_t pude_ind,
 			 (pmde_ind << PMD_SHIFT) | (ptde_ind << PAGE_SHIFT) |
 			 offset};
 	return va;
+}
+
+// Determine how many pages remaining before a new PGDE entry need be assigned.
+static inline uint64_t virt_pgde_remaining_pages(virtaddr_t addr)
+{
+	// Clear 4 KiB data page offset.
+	addr.x &= BIT_MASK_ABOVE(PAGE_SHIFT);
+
+	uint64_t pgde_index = virt_pgde_index(addr);
+	virtaddr_t next = encode_virt(pgde_index + 1, 0, 0, 0, 0);
+
+	return bytes_to_pages(next.x - addr.x);
 }
 
 // Determine whether PGDE is present.

@@ -46,11 +46,31 @@ static const char *assert_correct_virtaddr(void)
 	// kernel ELF to a physical address correctly.
 	va.x = KERNEL_ELF_ADDRESS + 0xbeef;
 	assert(virt_to_phys(va).x == 0xbeef,
-	       "virt_to_phys() not decoded ELF VA well");
+	       "virt_to_phys() not decoded ELF VA");
 
 	ptr = (void *)va.x;
 	assert(virt_ptr_to_phys(ptr).x == 0xbeef,
-	       "virt_ptr_to_phys() not decoded ELF VA well");
+	       "virt_ptr_to_phys() not decoded ELF VA");
+
+	va = encode_virt(123, 0, 0, 0, 0);
+	assert(virt_pgde_remaining_pages(va) == NUM_PAGES_PGDE,
+	       "virt_pgde_remaining_pages() incorrect for full PGDE range");
+
+	va = encode_virt(123, 0, 0, 0, 4095);
+	assert(virt_pgde_remaining_pages(va) == NUM_PAGES_PGDE,
+	       "virt_pgde_remaining_pages() incorrect for offset full PGDE range");
+
+	va = encode_virt(123, 511, 0, 0, 0);
+	assert(virt_pgde_remaining_pages(va) == NUM_PAGES_PUDE,
+	       "virt_pgde_remaining_pages() incorrect for 1 PUD remaining");
+
+	va = encode_virt(123, 511, 511, 0, 0);
+	assert(virt_pgde_remaining_pages(va) == NUM_PAGES_PMDE,
+	       "virt_pgde_remaining_pages() incorrect for 1 PMD remaining");
+
+	va = encode_virt(123, 511, 511, 511, 0);
+	assert(virt_pgde_remaining_pages(va) == 1,
+	       "virt_pgde_remaining_pages() incorrect for 1 page remaining");
 
 	return NULL;
 }
