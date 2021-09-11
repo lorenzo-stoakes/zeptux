@@ -347,21 +347,21 @@ static inline ptde_t *ptde_at(ptdaddr_t ptd, uint64_t index)
 }
 
 // Assign a PUD to a PGDE, set read/write and present.
-static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pudaddr)
+static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pud)
 {
-	pgde_at(pgd, index)->x = (pudaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pgde_at(pgd, index)->x = (pud.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Assign a PMD to a PUDE, set read/write and present.
-static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmdaddr)
+static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmd)
 {
-	pude_at(pud, index)->x = (pmdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pude_at(pud, index)->x = (pmd.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Assign a PTD to a PMDE, set read/write and present.
-static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptdaddr)
+static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptd)
 {
-	pmde_at(pmd, index)->x = (ptdaddr.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
+	pmde_at(pmd, index)->x = (ptd.x & ~PAGE_MASK) | PAGE_FLAG_DEFAULT;
 }
 
 // Map a range of virtual addresses from [start_va, start_va + num_pages) to
