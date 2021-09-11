@@ -322,14 +322,19 @@ static inline virtaddr_t encode_virt(uint64_t pgde_ind, uint64_t pude_ind,
 	return va;
 }
 
+// Obtain the virtual address occupying the next PGDE index.
+static inline virtaddr_t virt_next_pgde(virtaddr_t addr)
+{
+	virtaddr_t ret = {((addr.x >> PGD_SHIFT) + 1) << PGD_SHIFT};
+	return ret;
+}
+
 // Determine how many pages remaining before a new PGDE entry need be assigned.
 static inline uint64_t virt_pgde_remaining_pages(virtaddr_t addr)
 {
 	// Clear 4 KiB data page offset.
 	addr.x &= BIT_MASK_ABOVE(PAGE_SHIFT);
-
-	uint64_t pgde_index = virt_pgde_index(addr);
-	virtaddr_t next = encode_virt(pgde_index + 1, 0, 0, 0, 0);
+	virtaddr_t next = virt_next_pgde(addr);
 
 	return bytes_to_pages(next.x - addr.x);
 }
