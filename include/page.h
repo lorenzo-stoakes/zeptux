@@ -112,7 +112,9 @@
 #define PUD_SHIFT (X86_PUD_SHIFT)
 #define PGD_SHIFT (X86_PGD_SHIFT)
 
-// Assign page masks for larger page sizes specified at PUD/PMD level.
+// Assign page masks/sizes for larger page sizes specified at PUD/PMD level.
+#define PAGE_SIZE_1GIB BIT_MASK(PUD_SHIFT)
+#define PAGE_SIZE_2MIB BIT_MASK(PMD_SHIFT)
 #define PAGE_MASK_1GIB BIT_MASK_BELOW(PUD_SHIFT)
 #define PAGE_MASK_2MIB BIT_MASK_BELOW(PMD_SHIFT)
 
