@@ -377,6 +377,20 @@ const char *assert_early_page_alloc_correct(void)
 	ptdaddr_t ptd = early_alloc_ptd();
 	CHECK_ZEROED(ptd);
 
+	uint64_t num_alloc = state->allocated_pages;
+
+	early_free_pgd(pgd);
+	assert(state->allocated_pages == num_alloc - 1, "PGD not freed");
+
+	early_free_pud(pud);
+	assert(state->allocated_pages == num_alloc - 2, "PUD not freed");
+
+	early_free_pmd(pmd);
+	assert(state->allocated_pages == num_alloc - 3, "PMD not freed");
+
+	early_free_ptd(ptd);
+	assert(state->allocated_pages == num_alloc - 4, "PTD not freed");
+
 	return NULL;
 }
 

@@ -197,3 +197,16 @@ GEN_PAGE_ALLOC(pud);
 GEN_PAGE_ALLOC(pmd);
 GEN_PAGE_ALLOC(ptd);
 #undef GEN_PAGE_ALLOC
+
+// Generate early page free functions for each page level.
+#define GEN_PAGE_FREE(pagelevel)                                          \
+	static inline void early_free_##pagelevel(pagelevel##addr_t addr) \
+	{                                                                 \
+		physaddr_t pa = {addr.x};                                 \
+		early_page_free(pa);                                      \
+	}
+GEN_PAGE_FREE(pgd);
+GEN_PAGE_FREE(pud);
+GEN_PAGE_FREE(pmd);
+GEN_PAGE_FREE(ptd);
+#undef GEN_PAGE_FREE
