@@ -188,15 +188,49 @@ struct page_allocators {
 
 // Represents flagging modes. The lower bits contain a discrete mapping mode,
 // and the upper flags act as modifiers.
+#define MAP_FLAG_MODE_BITS (10)
 typedef enum {
 	// Lower bits specify mode:
 	MAP_KERNEL = 1,
 	MAP_KERNEL_NOGLOBAL = 2,
 	MAP_DEVICE = 3,
 	// Upper bits specify modifiers:
-	MAP_CODE = BIT_MASK(10), // We default to setting NX.
-	MAP_READONLY = BIT_MASK(11),
+	MAP_CODE =
+		BIT_MASK(MAP_FLAG_MODE_BITS + 0), // We default to setting NX.
+	MAP_READONLY = BIT_MASK(MAP_FLAG_MODE_BITS + 1),
 } map_flags_t;
+#define MAP_FLAG_MODE_MASK (BIT_MASK_BELOW(MAP_FLAG_MODE_BITS))
+
+// Convert map flags to DATA page flags.
+static inline uint64_t map_flags_to_page_flags(map_flags_t map_flags)
+{
+	uint64_t flags = 0;
+	switch (map_flags & MAP_FLAG_MODE_MASK) {
+	case MAP_KERNEL:
+		flags = PAGE_FLAG_KERNEL;
+		break;
+	case MAP_KERNEL_NOGLOBAL:
+		flags = PAGE_FLAG_DEFAULT;
+		break;
+	case MAP_DEVICE:
+		flags = PAGE_FLAG_DEFAULT | PAGE_FLAG_UNCACHED |
+			PAGE_FLAG_WRITE_THROUGH;
+		break;
+	default:
+		// TODO: Panic?
+		return 0;
+	}
+
+	// We always set NX unless we are explicitly mapping code.
+	if (!IS_MASK_SET(map_flags, MAP_CODE))
+		flags |= PAGE_FLAG_NX;
+
+	// Clear RW flag only if explicitly readonly.
+	if (IS_MASK_SET(map_flags, MAP_READONLY))
+		flags ^= PAGE_FLAG_RW;
+
+	return flags;
+}
 
 // Convert bytes to the number of pages required to hold them.
 static inline uint64_t bytes_to_pages(uint64_t bytes)
