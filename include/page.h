@@ -508,5 +508,5 @@ static inline void assign_ptd(pmdaddr_t pmd, uint64_t index, ptdaddr_t ptd)
 // [start_pa, start_pa + num_pages) under PGD and allocating new pages as
 // required using alloc functions. Returns the number of pages allocated.
 uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
-			 physaddr_t start_pa, uint64_t num_pages,
+			 physaddr_t start_pa, int64_t num_pages,
 			 struct page_allocators *alloc);
