@@ -17,8 +17,26 @@ struct page_map_state {
 // Map page tables entries at the PTD level for the specified map range.
 static void _map_page_range_ptd(ptdaddr_t ptd, struct page_map_state *state)
 {
-	IGNORE_PARAM(ptd);
-	IGNORE_PARAM(state);
+	while (state->num_remaining_pages > 0) {
+		uint64_t index = virt_ptde_index(state->va);
+		ptde_t ptde = *ptde_at(ptd, index);
+
+		if (ptde_present(ptde))
+			state->alloc->panic(
+				"Trying to map VA 0x%lx to PA 0x%lx but already mapped to 0x%lx",
+				state->va.x, state->pa.x, ptde_data(ptde).x);
+
+		assign_data(ptd, index, state->pa, state->flags);
+
+		state->pa = phys_offset_pages(state->pa, 1);
+		state->va = virt_offset_pages(state->va, 1);
+		state->num_remaining_pages--;
+
+		// If we just assigned the last entry in the page table, we need
+		// a new PMDE.
+		if (index == NUM_PAGE_TABLE_ENTRIES - 1)
+			break;
+	}
 }
 
 // Map page tables entries at the PMD level, trying to use 2 MiB pages if
