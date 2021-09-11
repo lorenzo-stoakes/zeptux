@@ -147,7 +147,6 @@
 // Aggregated page flags:
 #define PAGE_FLAG_DEFAULT (PAGE_FLAG_PRESENT | PAGE_FLAG_RW)
 #define PAGE_FLAG_KERNEL (PAGE_FLAG_DEFAULT | PAGE_FLAG_GLOBAL)
-#define PAGE_FLAG_DEFAULT_DATA (PAGE_FLAG_DEFAULT | PAGE_FLAG_NX)
 
 // The number of page table entries for each page table.
 #define NUM_PAGE_TABLE_ENTRIES (512)
