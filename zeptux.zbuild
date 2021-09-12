@@ -64,6 +64,7 @@ build zeptux.img from [boot.bin, kernel.elf] {
 	shell cp boot.bin zeptux.img
 	shell truncate -s 2560 zeptux.img # We reserve boot sector + 5 sectors for stage 2.
 	shell cat kernel.elf >> zeptux.img
+	shell truncate -s +512 zeptux.img # To avoid overrun on BIOS load
 
 	# Patch in the ELF image size for the bootloader.
 	shell scripts/patch_bin_int.py zeptux.img $ELF_SIZE_OFFSET $$shell{stat -c%s kernel.elf}
@@ -83,6 +84,7 @@ build test-early.img from [boot.bin, test-early.elf] {
 	shell cp boot.bin test-early.img
 	shell truncate -s 2560 test-early.img # We reserve boot sector + 5 sectors for stage 2.
 	shell cat test-early.elf >> test-early.img
+	shell truncate -s +512 test-early.img # To avoid overrun on BIOS load
 
 	shell scripts/patch_bin_int.py test-early.img $ELF_SIZE_OFFSET $$shell{stat -c%s test-early.elf}
 }
