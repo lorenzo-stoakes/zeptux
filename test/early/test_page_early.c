@@ -420,6 +420,120 @@ static const char *assert_pagetable_helpers(void)
 	return NULL;
 }
 
+const char *assert_memory_map(void)
+{
+	pgdaddr_t pgd = early_alloc_pgd();
+
+	struct page_allocators alloc = {
+		.pud = early_alloc_pud,
+		.pmd = early_alloc_pmd,
+		.ptd = early_alloc_ptd,
+
+		.panic = _early_panic,
+	};
+
+	// Map a single 4 KiB page.
+
+	virtaddr_t va = {0};
+	physaddr_t pa = {0x3000};
+
+	uint64_t num_alloc =
+		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+
+	assert(num_alloc == 3,
+	       "Didn't allocate 3 page level tables for 1 page alloc");
+
+	pgde_t pgde = *pgde_at(pgd, 0);
+	assert(pgde_present(pgde), "PGDE not present?");
+
+	pudaddr_t pud = pgde_pud(pgde);
+	pude_t pude = *pude_at(pud, 0);
+	assert(pude_present(pude), "PUDE not present?");
+
+	pmdaddr_t pmd = pude_pmd(pude);
+	pmde_t pmde = *pmde_at(pmd, 0);
+	assert(pmde_present(pmde), "PMDE not present?");
+
+	ptdaddr_t ptd = pmde_ptd(pmde);
+	ptde_t ptde = *ptde_at(ptd, 0);
+	assert(ptde_present(ptde), "PTDE not present?");
+
+	assert(IS_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
+	assert(IS_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
+
+	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	// Map pages for the remainder of the PTD. We shouldn't be allocating
+	// any new pages.
+
+	va = encode_virt(0, 0, 0, 1, 0);
+	pa.x = 0x4000;
+
+	num_alloc += _map_page_range(pgd, va, pa, NUM_PAGES_PTD - 1,
+				     MAP_KERNEL_NOGLOBAL, &alloc);
+
+	pudaddr_t next_pud = pgde_pud(*pgde_at(pgd, 0));
+	pmdaddr_t next_pmd = pude_pmd(*pude_at(pud, 0));
+	ptdaddr_t next_ptd = pmde_ptd(*pmde_at(pmd, 0));
+	assert(next_pud.x == pud.x, "PUD changed?");
+	assert(next_pmd.x == pmd.x, "PMD changed?");
+	assert(next_ptd.x == ptd.x, "PTD changed?");
+
+	assert(num_alloc == 3,
+	       "Allocated new page tables for entries in existing PTD?");
+
+	for (int i = 1; i < NUM_PAGES_PTD; i++) {
+		ptde = *ptde_at(ptd, i);
+		assert(ptde_present(ptde), "PTDE not present?");
+		assert(IS_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
+		assert(IS_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
+		assert(ptde_data(ptde).x == pa.x, "PA not mapped to PTDE");
+		pa = phys_offset_pages(pa, 1);
+		va = virt_offset_pages(va, 1);
+	}
+
+	// Map a new PTD.
+
+	va = encode_virt(0, 0, 1, 0, 0);
+
+	num_alloc +=
+		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+
+	assert(num_alloc == 4, "New PTD not allocated?");
+
+	pgde = *pgde_at(pgd, 0);
+	next_pud = pgde_pud(pgde);
+	assert(next_pud.x == pud.x, "PUD changed?");
+
+	pude = *pude_at(pud, 0);
+	next_pmd = pude_pmd(pude);
+	assert(next_pmd.x == pmd.x, "PMD changed?");
+
+	pmde = *pmde_at(pmd, 1);
+	next_ptd = pmde_ptd(pmde);
+	assert(next_ptd.x != ptd.x, "PTD the same?");
+
+	ptde = *ptde_at(next_ptd, 0);
+	assert(ptde_present(ptde), "PTDE not present?");
+	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	// Map a new PMD.
+
+	va = encode_virt(0, 1, 0, 0, 0);
+	pa.x = 0xdeadbe000;
+
+	num_alloc +=
+		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+
+	assert(num_alloc == 6, "New PMD, PTD not allocated?");
+
+	pgde = *pgde_at(pgd, 0);
+	next_pud = pgde_pud(pgde);
+	assert(next_pud.x == pud.x, "PUD changed?");
+
+	return NULL;
+}
+
 const char *test_page(void)
 {
 	const char *ret = assert_correct_virtaddr();
@@ -431,6 +545,10 @@ const char *test_page(void)
 		return ret;
 
 	ret = assert_pagetable_helpers();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_memory_map();
 	if (ret != NULL)
 		return ret;
 
