@@ -587,8 +587,30 @@ static const char *assert_memory_map_basic(void)
 
 static const char *assert_memory_map_ranges(void)
 {
+	/*
+	 * TODO:
+	 *
+	 * - Test 1 GiB, 2 MiB mapping not applied with misaligned VA/PA.
+	 * - Offset VA, PA from one another by 2 MiB, 1 GiB for 2 MiB, 1 GiB
+	 *   pages.
+	 */
+
+	/*
+	 * We want to map:
+	 * 10 x 4 KiB pages
+	 * 10 x 2 MiB pages
+	 * 10 x 1 GiB pages
+	 * 10 x 2 MiB pages
+	 * 10 x 4 KiB pages
+	 * So range = 1<<30 - 10*1<<21 - 10*1<<12 -> 11*1<<30 + 10*1<<21 + 10*1<<12
+	 *          = 0x03ebf6000 ->
+	 *            0x2c140a000
+	 *          = 2,631,700 4 KiB pages
+	 */
+
 	return NULL;
 }
+
 
 const char *test_page(void)
 {
