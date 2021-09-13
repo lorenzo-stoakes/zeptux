@@ -420,7 +420,7 @@ static const char *assert_pagetable_helpers(void)
 	return NULL;
 }
 
-const char *assert_memory_map(void)
+const char *assert_memory_map_basic(void)
 {
 	pgdaddr_t pgd = early_alloc_pgd();
 
@@ -510,8 +510,10 @@ const char *assert_memory_map(void)
 	assert(next_pmd.x == pmd.x, "PMD changed?");
 
 	pmde = *pmde_at(pmd, 1);
+	assert(pmde_present(pmde), "PMDE not present?");
 	next_ptd = pmde_ptd(pmde);
 	assert(next_ptd.x != ptd.x, "PTD the same?");
+	ptd = next_ptd;
 
 	ptde = *ptde_at(next_ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
@@ -531,6 +533,52 @@ const char *assert_memory_map(void)
 	next_pud = pgde_pud(pgde);
 	assert(next_pud.x == pud.x, "PUD changed?");
 
+	pude = *pude_at(pud, 1);
+	next_pmd = pude_pmd(pude);
+	assert(next_pmd.x != pmd.x, "PMD the same?");
+	pmd = next_pmd;
+
+	pmde = *pmde_at(next_pmd, 0);
+	assert(pmde_present(pmde), "PMDE not present?");
+	next_ptd = pmde_ptd(pmde);
+	assert(next_ptd.x != ptd.x, "PTD the same?");
+	ptd = next_ptd;
+
+	ptde = *ptde_at(next_ptd, 0);
+	assert(ptde_present(ptde), "PTDE not present?");
+	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	// Map a new PUD.
+
+	va = encode_virt(1, 0, 0, 0, 0);
+	pa.x = 0xf00b000;
+
+	num_alloc +=
+		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+
+	assert(num_alloc == 9, "New PUD, PMD, PTD not allocated?");
+
+	pgde = *pgde_at(pgd, 1);
+	next_pud = pgde_pud(pgde);
+	assert(next_pud.x != pud.x, "PUD the same?");
+	pud = next_pud;
+
+	pude = *pude_at(pud, 0);
+	assert(pude_present(pude), "PUDE not present?");
+	next_pmd = pude_pmd(pude);
+	assert(next_pmd.x != pmd.x, "PMD the same?");
+	pmd = next_pmd;
+
+	pmde = *pmde_at(next_pmd, 0);
+	assert(pmde_present(pmde), "PMDE not present?");
+	next_ptd = pmde_ptd(pmde);
+	assert(next_ptd.x != ptd.x, "PTD the same?");
+	ptd = next_ptd;
+
+	ptde = *ptde_at(next_ptd, 0);
+	assert(ptde_present(ptde), "PTDE not present?");
+	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
 	return NULL;
 }
 
@@ -548,7 +596,7 @@ const char *test_page(void)
 	if (ret != NULL)
 		return ret;
 
-	ret = assert_memory_map();
+	ret = assert_memory_map_basic();
 	if (ret != NULL)
 		return ret;
 
