@@ -420,7 +420,7 @@ static const char *assert_pagetable_helpers(void)
 	return NULL;
 }
 
-const char *assert_memory_map_basic(void)
+static const char *assert_memory_map_basic(void)
 {
 	pgdaddr_t pgd = early_alloc_pgd();
 
@@ -579,6 +579,14 @@ const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
+	// We have only allocated a trivial amount of memory so we'll leak the
+	// pages.
+
+	return NULL;
+}
+
+static const char *assert_memory_map_ranges(void)
+{
 	return NULL;
 }
 
@@ -597,6 +605,10 @@ const char *test_page(void)
 		return ret;
 
 	ret = assert_memory_map_basic();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_memory_map_ranges();
 	if (ret != NULL)
 		return ret;
 
