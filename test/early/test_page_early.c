@@ -1,5 +1,13 @@
 #include "test_early.h"
 
+static struct page_allocators alloc = {
+	.pud = early_alloc_pud,
+	.pmd = early_alloc_pmd,
+	.ptd = early_alloc_ptd,
+
+	.panic = _early_panic,
+};
+
 static const char *assert_correct_virtaddr(void)
 {
 	uint64_t offset = 0;
@@ -424,14 +432,6 @@ static const char *assert_memory_map_basic(void)
 {
 	pgdaddr_t pgd = early_alloc_pgd();
 
-	struct page_allocators alloc = {
-		.pud = early_alloc_pud,
-		.pmd = early_alloc_pmd,
-		.ptd = early_alloc_ptd,
-
-		.panic = _early_panic,
-	};
-
 	// Map a single 4 KiB page.
 
 	virtaddr_t va = {0};
@@ -597,20 +597,60 @@ static const char *assert_memory_map_ranges(void)
 
 	/*
 	 * We want to map:
+	 *
 	 * 10 x 4 KiB pages
 	 * 10 x 2 MiB pages
 	 * 10 x 1 GiB pages
 	 * 10 x 2 MiB pages
 	 * 10 x 4 KiB pages
+	 *
 	 * So range = 1<<30 - 10*1<<21 - 10*1<<12 -> 11*1<<30 + 10*1<<21 + 10*1<<12
 	 *          = 0x03ebf6000 ->
 	 *            0x2c140a000
 	 *          = 2,631,700 4 KiB pages
+	 *
+	 * PGD, PUD, PMD, PTD index from: 0,  0, 501, 502
+	 *                            to: 0, 11,  10,  10
+	 *
+	 * We end up with a PGD and 5 allocated page tables:
+	 *
+	 *   PGD
+	 *   ---
+	 * 0--------> PUD
+	 *            ---
+	 *          0----------> PMD
+	 *          1\           ---
+	 *        ...-> 1GB  501------------> PTD
+	 *         10/       502\             ---
+	 *         11-|      ...-> 2 MB   502\
+	 *            |      511/         ...-> 4 KB
+	 *            |                   511/
+	 *            |------->  PMD
+	 *                       ---
+	 *                     0\
+	 *                   ...-> 2 MB
+	 *                     9/
+	 *                    10------------> PTD
+	 *                                    ---
+	 *                                  0\
+	 *                                ...-> 4 KB
+	 *                                  9/
 	 */
+
+	pgdaddr_t pgd = early_alloc_pgd();
+	virtaddr_t va = {0x03ebf6000UL};
+	uint64_t pa_offset = 7 * (1UL << 30);
+	// We can be offset from VA + still get 2 MiB, 1 GiB mappings as long as
+	// the lower 30 bits are equal.
+	physaddr_t pa = {va.x + pa_offset};
+	uint64_t num_pages = 2631700;
+	uint64_t num_alloc = _map_page_range(pgd, va, pa, num_pages,
+					     MAP_KERNEL_NOGLOBAL, &alloc);
+
+	assert(num_alloc == 5, "Allocated page tables != 5?");
 
 	return NULL;
 }
-
 
 const char *test_page(void)
 {
