@@ -316,7 +316,7 @@ static const char *assert_pagetable_helpers(void)
 		uint64_t *ptr = pgd_to_virt_ptr(pgd);
 		pgde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
 		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
-		       "Unable to assign from pgd_at()");
+		       "Unable to assign from pgde_at()");
 
 		pude_t *pude_ptr = pude_at(pud, i);
 		assert(pude_ptr->x == (uint64_t)(i + 1),
@@ -324,7 +324,7 @@ static const char *assert_pagetable_helpers(void)
 		ptr = pud_to_virt_ptr(pud);
 		pude_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
 		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
-		       "Unable to assign from pud_at()");
+		       "Unable to assign from pude_at()");
 
 		pmde_t *pmde_ptr = pmde_at(pmd, i);
 		assert(pmde_ptr->x == (uint64_t)(i + 1),
@@ -332,7 +332,7 @@ static const char *assert_pagetable_helpers(void)
 		ptr = pmd_to_virt_ptr(pmd);
 		pmde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
 		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
-		       "Unable to assign from pmd_at()");
+		       "Unable to assign from pmde_at()");
 
 		ptde_t *ptde_ptr = ptde_at(ptd, i);
 		assert(ptde_ptr->x == (uint64_t)(i + 1),
@@ -340,7 +340,7 @@ static const char *assert_pagetable_helpers(void)
 		ptr = ptd_to_virt_ptr(ptd);
 		ptde_ptr->x = NUM_PAGE_TABLE_ENTRIES - i;
 		assert((int)ptr[i] == NUM_PAGE_TABLE_ENTRIES - i,
-		       "Unable to assign from ptd_at()");
+		       "Unable to assign from ptde_at()");
 	}
 
 	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
