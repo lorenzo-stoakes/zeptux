@@ -394,6 +394,73 @@ const char *assert_early_page_alloc_correct(void)
 	return NULL;
 }
 
+static const char *assert_early_map_direct_correct(struct early_boot_info *info)
+{
+	// Assert that E820 entries get direct mapped, we keep this simple as
+	// the more involved testing of mapping logic gets exercised in the page
+	// tests.
+
+	info->num_e820_entries = 4;
+	info->num_ram_spans = 2;
+
+	info->e820_entries[0].base = 0x1000;
+	info->e820_entries[0].size = 0x1000;
+	info->e820_entries[0].type = E820_TYPE_RAM;
+
+	info->e820_entries[1].base = 0x3000;
+	info->e820_entries[1].size = 0x1000;
+	info->e820_entries[1].type = E820_TYPE_RESERVED;
+
+	info->e820_entries[2].base = 0x5000;
+	info->e820_entries[2].size = 0x1000;
+	info->e820_entries[2].type = E820_TYPE_RAM;
+
+	info->e820_entries[3].base = 0x6000;
+	info->e820_entries[3].size = 0x1000;
+	info->e820_entries[3].type = E820_TYPE_NVS;
+
+	pgdaddr_t pgd = early_alloc_pgd();
+	early_map_direct(info, pgd);
+
+	// We expect mappings as follows in our PGD:
+	// - KERNEL_DIRECT_MAP_BASE + 0x1000 -> 0x1000, 1 page
+	// - KERNEL_DIRECT_MAP_BASE + 0x5000 -> 0x5000, 1 page
+	// which resolves to:
+	// - PGD index = 256, PUD index = 0, PMD index = 0, PTD index = 1
+	// - PGD index = 256, PUD index = 0, PMD index = 0, PTD index = 5
+	// Respectively.
+
+	pgde_t pgde = *pgde_at(pgd, 256);
+	assert(pgde_present(pgde), "PGDE not present?");
+	pudaddr_t pud = pgde_pud(pgde);
+	pude_t pude = *pude_at(pud, 0);
+	assert(pude_present(pude), "PUDE not present?");
+	pmdaddr_t pmd = pude_pmd(pude);
+	pmde_t pmde = *pmde_at(pmd, 0);
+	assert(pmde_present(pmde), "PMDE not present?");
+	ptdaddr_t ptd = pmde_ptd(pmde);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptde_t ptde = *ptde_at(ptd, i);
+
+		if (i != 1 && i != 5) {
+			assert(!ptde_present(ptde), "Errant PTDE present?");
+			continue;
+		}
+
+		assert(ptde_present(ptde), "PTDE not present?");
+
+		if (i == 1) {
+			assert(ptde_data(ptde).x == 0x1000,
+			       "E820 entry 0 not mapped correctly?");
+		} else if (i == 5) {
+			assert(ptde_data(ptde).x == 0x5000,
+			       "E820 entry 2 not mapped correctly?");
+		}
+	}
+
+	return NULL;
+}
+
 const char *test_mem(void)
 {
 	uint8_t buf[BUF_SIZE] = {0};
@@ -423,6 +490,10 @@ const char *test_mem(void)
 		return ret;
 
 	ret = assert_early_page_alloc_correct();
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_early_map_direct_correct(info);
 	if (ret != NULL)
 		return ret;
 
