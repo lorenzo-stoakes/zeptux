@@ -618,20 +618,20 @@ static const char *assert_memory_map_ranges(void)
 	 *   ---
 	 * 0--------> PUD
 	 *            ---
-	 *          0-----------> PMD
-	 *          1\            ---
-	 *        ... -> 1GB  501------------> PTD
-	 *         10/        502\             ---
+	 *          0-----------> PMD 1
+	 *          1\            -----
+	 *        ... -> 1GB  501------------> PTD 1
+	 *         10/        502\             -----
 	 *         11--\      ... -> 2 MB  502\
 	 *             |      511/         ... -> 4 KB
 	 *             |                   511/
-	 *             \--------> PMD
-	 *                        ---
+	 *             \--------> PMD 2
+	 *                        -----
 	 *                      0\
 	 *                    ... -> 2 MB
 	 *                      9/
-	 *                     10------------> PTD
-	 *                                     ---
+	 *                     10------------> PTD 2
+	 *                                     -----
 	 *                                   0\
 	 *                                 ... -> 4 KB
 	 *                                   9/
@@ -648,6 +648,128 @@ static const char *assert_memory_map_ranges(void)
 					     MAP_KERNEL_NOGLOBAL, &alloc);
 
 	assert(num_alloc == 5, "Allocated page tables != 5?");
+
+	// Assert that all PUDEs are as expected.
+	pgde_t pgde = *pgde_at(pgd, 0);
+	assert(pgde_present(pgde), "PGDE not present?");
+
+	pudaddr_t pud = pgde_pud(pgde);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		pude_t pude = *pude_at(pud, i);
+
+		if (i > 11) {
+			assert(!pude_present(pude), "Errant PUDE present?");
+			continue;
+		}
+
+		assert(pude_present(pude), "PUDE not present?");
+
+		if (i == 0 || i == 11) {
+			assert(!pude_1gib(pude), "Unexpected 1 GiB PUDE?");
+			continue;
+		}
+
+		// Now we are in the range [1, 10] inclusive, all of which
+		// should be 1 GiB entries.
+		assert(pude_1gib(pude), "Unexpected non-1 GiB PUDE?");
+
+		virtaddr_t va = encode_virt(0, i, 0, 0, 0);
+		physaddr_t pa = {va.x + pa_offset};
+		assert(pude_data_1gib(pude).x == pa.x,
+		       "Incorrect 1 GiB mapping?");
+	}
+
+	// Assert that all PMDEs are as expected.
+
+	pude_t pude1 = *pude_at(pud, 0);
+	pmdaddr_t pmd1 = pude_pmd(pude1);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		pmde_t pmde = *pmde_at(pmd1, i);
+
+		if (i < 501) {
+			assert(!pmde_present(pmde), "Errant PMDE present?");
+			continue;
+		}
+
+		assert(pmde_present(pmde), "PMDE not present?");
+
+		if (i == 501) {
+			assert(!pmde_2mib(pmde), "Unexpected 2 MiB PMDE?");
+			continue;
+		}
+
+		// Now we are in range [502, 511] inclusive, all of which should
+		// be 2 MiB entries.
+		assert(pmde_2mib(pmde), "Unexpected non-2MiB PMDE?");
+
+		virtaddr_t va = encode_virt(0, 0, i, 0, 0);
+		physaddr_t pa = {va.x + pa_offset};
+		assert(pmde_data_2mib(pmde).x == pa.x,
+		       "Incorrect 2 MiB mapping?");
+	}
+
+	pude_t pude2 = *pude_at(pud, 11);
+	pmdaddr_t pmd2 = pude_pmd(pude2);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		pmde_t pmde = *pmde_at(pmd2, i);
+
+		if (i > 10) {
+			assert(!pmde_present(pmde), "Errant PMDE present?");
+			continue;
+		}
+
+		assert(pmde_present(pmde), "PMDE not present?");
+
+		if (i < 10) {
+			assert(pmde_2mib(pmde), "Unexpected non-2MiB PMDE?");
+
+			virtaddr_t va = encode_virt(0, 11, i, 0, 0);
+			physaddr_t pa = {va.x + pa_offset};
+			assert(pmde_data_2mib(pmde).x == pa.x,
+			       "Incorrect 2 MiB mapping?");
+
+			continue;
+		}
+
+		// i == 10
+		assert(!pmde_2mib(pmde), "Unexpected 2 MiB PMDE?");
+	}
+
+	// Assert that all PTDEs are as expected.
+
+	pmde_t pmde1 = *pmde_at(pmd1, 501);
+	ptdaddr_t ptd1 = pmde_ptd(pmde1);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptde_t ptde = *ptde_at(ptd1, i);
+
+		if (i < 502) {
+			assert(!ptde_present(ptde), "Errant PTDE present?");
+			continue;
+		}
+
+		assert(ptde_present(ptde), "PTDE not present?");
+
+		virtaddr_t va = encode_virt(0, 0, 501, i, 0);
+		physaddr_t pa = {va.x + pa_offset};
+		assert(ptde_data(ptde).x == pa.x, "Incorrect 4 KiB mapping?");
+	}
+
+	pmde_t pmde2 = *pmde_at(pmd2, 10);
+	ptdaddr_t ptd2 = pmde_ptd(pmde2);
+	for (uint64_t i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptde_t ptde = *ptde_at(ptd2, i);
+
+		if (i > 9) {
+			assert(!ptde_present(ptde), "Errant PTDE present?");
+			continue;
+		}
+
+		assert(ptde_present(ptde), "PTDE not present?");
+
+		virtaddr_t va = encode_virt(0, 11, 10, i, 0);
+		physaddr_t pa = {va.x + pa_offset};
+		assert(ptde_data(ptde).x == pa.x, "Incorrect 4 KiB mapping?");
+	}
 
 	return NULL;
 }
