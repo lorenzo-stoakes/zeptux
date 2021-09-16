@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bitmap.h"
+#include "elf.h"
 #include "page.h"
 #include "types.h"
 
@@ -183,6 +184,13 @@ struct early_page_alloc_state *early_get_page_alloc_state(void);
 // Move from the early page table structure (1 GiB direct, ELF image mpaping) to
 // an actually correct mapping.
 void early_remap_page_tables(void);
+
+// Map kernel ELF into memory using the specific ELF header (it is assumed the
+// pointer points to beginning of the ELF) mapping num_pages into memory and
+// being careful to map readonly sections as readonly, data sections as NX and
+// executable sections as non-NX.
+void early_map_kernel_elf(struct elf_header *header, uint64_t num_pages,
+			  pgdaddr_t pgd);
 
 // Generate early page allocation functions for each page level.
 #define GEN_PAGE_ALLOC(pagelevel)                                     \

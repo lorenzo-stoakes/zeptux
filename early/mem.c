@@ -510,6 +510,16 @@ void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd)
 	}
 }
 
+void early_map_kernel_elf(struct elf_header *header, uint64_t num_pages,
+			  pgdaddr_t pgd)
+{
+	IGNORE_PARAM(header);
+	IGNORE_PARAM(num_pages);
+	IGNORE_PARAM(pgd);
+
+	// TODO: Implementation
+}
+
 void early_remap_page_tables(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
