@@ -22,6 +22,8 @@
 
 // Define the mask representing the specified bit.
 #define BIT_MASK(_bit) (1UL << (_bit))
+// Define the mask representing everything BUT the specified bit.
+#define BIT_MASK_EXCLUDING(_bit) (~BIT_MASK(_bit))
 // Determine if the specified bit mask is set in a value.
 #define IS_MASK_SET(_val, _mask) !!(((_val) & (_mask)) == _mask)
 // Determine if the specified bit is set in a value.
