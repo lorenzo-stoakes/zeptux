@@ -510,19 +510,64 @@ void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd)
 	}
 }
 
-void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
-			  uint64_t num_pages, pgdaddr_t pgd)
+void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
+			  pgdaddr_t pgd)
 {
-	// Map kernel ELF marking readonly as readonly, assumes *header points
-	// at start of ELF image which consists of `num_pages` pages. We place
-	// the mappings into PGD.
+	// Map kernel ELF, marking sections accordingly depending on whether
+	// they contain code or not, are readonly or not, etc.
 
-	IGNORE_PARAM(header);
-	IGNORE_PARAM(pa);
-	IGNORE_PARAM(num_pages);
-	IGNORE_PARAM(pgd);
+	virtaddr_t va = {(uint64_t)header};
+	if (!IS_ALIGNED(va.x, PAGE_SIZE))
+		early_panic("Misaligned kernel ELF header by %lu",
+			    va.x % PAGE_SIZE);
 
-	// TODO: Implementation
+	// Map the header. It will never be larger than 1 page in size.
+	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL, &early_allocators);
+
+	// Now work through each section, mapping accordingly.
+	struct elf_section_header *headers = (void *)header + header->shoff;
+	for (int i = 0; i < (int)header->shnum; i++) {
+		struct elf_section_header *header = &headers[i];
+
+		// If not intended to be mapped into memory, ignore.
+		if (header->addr == 0)
+			continue;
+
+		va.x = header->addr;
+
+		// If the section does not actually occupy memory itself
+		// (e.g. .bss), we have to allocate memory for it.
+		physaddr_t pa;
+		if (header->type == ELF_SHT_NOBITS) {
+			if (header->size > PAGE_SIZE)
+				early_panic(
+					"Kernel ELF NOBITS header exceeds page size");
+
+			pa = early_page_alloc();
+			// We need to copy the current state of the header into the page.
+			memcpy(phys_to_virt_ptr(pa), (void *)header->addr,
+			       header->size);
+		} else {
+			pa.x = elf_pa.x + header->offset;
+		}
+
+		// We insist on page-aligned ELF sections.
+		if (!IS_ALIGNED(va.x, PAGE_SIZE) ||
+		    !IS_ALIGNED(pa.x, PAGE_SIZE))
+			early_panic("Misaligned kernel ELF section by %lu",
+				    va.x % PAGE_SIZE);
+
+		// Determine mapping flags.
+		map_flags_t flags = MAP_KERNEL;
+		if (!IS_SET(header->flags, ELF_SHF_WRITE))
+			flags |= MAP_READONLY;
+		if (IS_SET(header->flags, ELF_SHF_EXECINSTR))
+			flags |= MAP_CODE;
+
+		// Do actual mapping.
+		_map_page_range(pgd, va, pa, bytes_to_pages(header->size),
+				flags, &early_allocators);
+	}
 }
 
 void early_remap_page_tables(void)
@@ -535,7 +580,7 @@ void early_remap_page_tables(void)
 
 	early_map_direct(info, pgd);
 	early_map_kernel_elf((struct elf_header *)KERNEL_ELF_ADDRESS, elf_pa,
-			     bytes_to_pages(info->kernel_elf_size_bytes), pgd);
+			     pgd);
 
 	// TODO: Map the early video range uncached!
 	// TODO: Rest of implementation.

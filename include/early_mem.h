@@ -190,7 +190,7 @@ void early_remap_page_tables(void);
 // being careful to map readonly sections as readonly, data sections as NX and
 // executable sections as non-NX.
 void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
-			  uint64_t num_pages, pgdaddr_t pgd);
+			  pgdaddr_t pgd);
 
 // Generate early page allocation functions for each page level.
 #define GEN_PAGE_ALLOC(pagelevel)                                     \
