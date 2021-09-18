@@ -39,7 +39,12 @@
 
 #define X86_MFR_EFER (0xc0000080UL)
 
-#define X86_MFR_EFER_LME (1UL << 8) // Enable long mode.
+#define X86_MFR_EFER_SCE (1UL << 0)  // Enable syscall/sysret.
+#define X86_MFR_EFER_LME (1UL << 8)  // Enable long mode.
+#define X86_MFR_EFER_NXE (1UL << 11) // Enable NX bit.
+
+#define X86_MFR_EFER_INIT_FLAGS \
+	(X86_MFR_EFER_SCE | X86_MFR_EFER_LME | X86_MFR_EFER_NXE)
 
 // Page table constants:
 

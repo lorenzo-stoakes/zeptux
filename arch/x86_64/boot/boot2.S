@@ -260,7 +260,7 @@ start32:
 	// Enable long mode.
 	movl $X86_MFR_EFER, %ecx
 	rdmsr
-	orl $X86_MFR_EFER_LME, %eax
+	orl $X86_MFR_EFER_INIT_FLAGS, %eax
 	wrmsr
 
 	// Enable paging.
