@@ -108,3 +108,8 @@ void early_video_puts(const char *str)
 		}
 	}
 }
+
+uint64_t early_video_size(void)
+{
+	return MEMORY_SIZE;
+}
