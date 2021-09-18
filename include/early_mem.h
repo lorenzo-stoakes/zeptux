@@ -9,8 +9,9 @@
 #define EARLY_BOOT_INFO_ADDRESS (X86_EARLY_BOOT_INFO_ADDRESS)
 // Location in memory where text output can be written to which gets displayed
 // on the monitor.
+#define EARLY_VIDEO_MEMORY_ADDRESS_PHYS X86_VIDEO_MEMORY_ADDRESS_PHYS
 #define EARLY_VIDEO_MEMORY_ADDRESS \
-	(KERNEL_DIRECT_MAP_BASE + X86_VIDEO_MEMORY_ADDRESS_PHYS)
+	(KERNEL_DIRECT_MAP_BASE + EARLY_VIDEO_MEMORY_ADDRESS_PHYS)
 // Location in memory which acts as a double buffer to the actual video memory.
 #define EARLY_VIDEO_BUFFER_ADDRESS \
 	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS)
