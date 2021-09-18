@@ -629,7 +629,12 @@ uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 			 physaddr_t start_pa, int64_t num_pages,
 			 map_flags_t flags, struct page_allocators *alloc);
 
-// Retrieve the raw arch page flags for the specified VA in the specified
-// PGD. Use `alloc` to panic.
+// Walk page tables to retrieve the raw arch page flags for the specified VA in
+// the specified PGD. Use `alloc` to panic.
 uint64_t _walk_virt_to_raw_flags(pgdaddr_t pgd, virtaddr_t va,
 				 struct page_allocators *alloc);
+
+// Walk page tables to retrieve PA for specified VA from specific PGD. use
+// `alloc` to panic.
+physaddr_t _walk_virt_to_phys(pgdaddr_t pgd, virtaddr_t va,
+			      struct page_allocators *alloc);

@@ -255,3 +255,30 @@ uint64_t _walk_virt_to_raw_flags(pgdaddr_t pgd, virtaddr_t va,
 		alloc->panic("Bug in walk_to_data()");
 	}
 }
+
+physaddr_t _walk_virt_to_phys(pgdaddr_t pgd, virtaddr_t va,
+			      struct page_allocators *alloc)
+{
+	page_level_t level;
+	uint64_t raw = walk_to_data(pgd, va, alloc, &level);
+
+	switch (level) {
+	case PUD:
+	{
+		pude_t pude = {raw};
+		return pude_data_1gib(pude);
+	}
+	case PMD:
+	{
+		pmde_t pmde = {raw};
+		return pmde_data_2mib(pmde);
+	}
+	case PTD:
+	{
+		ptde_t ptde = {raw};
+		return ptde_data(ptde);
+	}
+	default:
+		alloc->panic("Bug in walk_to_data()");
+	}
+}

@@ -463,6 +463,9 @@ static const char *assert_memory_map_basic(void)
 
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
+	assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+	       "_walk_virt_to_phys() mismatch?");
+
 	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
 	       "_walk_virt_to_raw_flags() mismatch?");
 
@@ -522,6 +525,9 @@ static const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
+	assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+	       "_walk_virt_to_phys() mismatch?");
+
 	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
 	       "_walk_virt_to_raw_flags() mismatch?");
 
@@ -553,6 +559,9 @@ static const char *assert_memory_map_basic(void)
 	ptde = *ptde_at(next_ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+	       "_walk_virt_to_phys() mismatch?");
 
 	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
 	       "_walk_virt_to_raw_flags() mismatch?");
@@ -587,6 +596,9 @@ static const char *assert_memory_map_basic(void)
 	ptde = *ptde_at(next_ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+	       "_walk_virt_to_phys() mismatch?");
 
 	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
 	       "_walk_virt_to_raw_flags() mismatch?");
@@ -690,6 +702,9 @@ static const char *assert_memory_map_ranges(void)
 		assert(pude_data_1gib(pude).x == pa.x,
 		       "Incorrect 1 GiB mapping?");
 
+		assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+		       "_walk_virt_to_phys() mismatch?");
+
 		assert(_walk_virt_to_raw_flags(pgd, va, &alloc) ==
 			       pude_raw_flags_1gib(pude),
 		       "_walk_virt_to_raw_flags() mismatch?");
@@ -722,6 +737,9 @@ static const char *assert_memory_map_ranges(void)
 		physaddr_t pa = {va.x + pa_offset};
 		assert(pmde_data_2mib(pmde).x == pa.x,
 		       "Incorrect 2 MiB mapping?");
+
+		assert(_walk_virt_to_phys(pgd, va, &alloc).x == pa.x,
+		       "_walk_virt_to_phys() mismatch?");
 
 		assert(_walk_virt_to_raw_flags(pgd, va, &alloc) ==
 			       pmde_raw_flags_2mib(pmde),
