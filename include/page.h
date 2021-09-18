@@ -155,6 +155,9 @@
 #define PAGE_FLAG_DEFAULT (PAGE_FLAG_PRESENT | PAGE_FLAG_RW)
 #define PAGE_FLAG_KERNEL (PAGE_FLAG_DEFAULT | PAGE_FLAG_GLOBAL)
 
+// Mask for available page flags in a page table entry.
+#define PAGE_TABLE_FLAG_MASK (BIT_MASK_BELOW(PAGE_SHIFT) | PAGE_FLAG_NX)
+
 // The number of page table entries for each page table.
 #define NUM_PAGE_TABLE_ENTRIES (512)
 
