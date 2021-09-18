@@ -211,6 +211,14 @@ typedef enum {
 } map_flags_t;
 #define MAP_FLAG_MODE_MASK (BIT_MASK_BELOW(MAP_FLAG_MODE_BITS))
 
+// Represents page table levels.
+typedef enum {
+	PGD,
+	PUD,
+	PMD,
+	PTD,
+} page_level_t;
+
 // Convert map flags to DATA page flags.
 static inline uint64_t map_flags_to_page_flags(map_flags_t map_flags)
 {
