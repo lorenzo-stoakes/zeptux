@@ -446,7 +446,11 @@ static void alloc_init_pages(physaddr_t first_scratch_page,
 
 	// Allocate (should be ephemeral) early video buffer address.
 	// TODO: Make ephemeral when we have a proper video driver.
-	pa.x = ALIGN(X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS, PAGE_SIZE);
+	pa.x = X86_EARLY_VIDEO_BUFFER_ADDRESS_PHYS;
+	early_page_alloc_at(pa);
+	// The early video buffer address is very slightly bigger than 1 page so
+	// we must allocate the next page also!
+	pa.x += 0x1000;
 	early_page_alloc_at(pa);
 }
 
