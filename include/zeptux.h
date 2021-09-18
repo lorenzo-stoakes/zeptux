@@ -5,6 +5,7 @@
 #include "asm.h"
 #include "bitmap.h"
 #include "elf.h"
+#include "format.h"
 #include "macros.h"
 #include "mem.h"
 #include "page.h"
