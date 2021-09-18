@@ -555,28 +555,28 @@ static inline uint64_t ptde_raw_flags(ptde_t ptde)
 // Retrieve pointer to PGD entry at specific index.
 static inline pgde_t *pgde_at(pgdaddr_t pgd, uint64_t index)
 {
-	uint64_t *ptr = pgd_to_virt_ptr(pgd);
+	uint64_t *ptr = (uint64_t *)pgd_to_virt_ptr(pgd);
 	return (pgde_t *)&ptr[index];
 }
 
 // Retrieve pointer to PUD entry at specific index.
 static inline pude_t *pude_at(pudaddr_t pud, uint64_t index)
 {
-	uint64_t *ptr = pud_to_virt_ptr(pud);
+	uint64_t *ptr = (uint64_t *)pud_to_virt_ptr(pud);
 	return (pude_t *)&ptr[index];
 }
 
 // Retrieve pointer to PMD entry at specific index.
 static inline pmde_t *pmde_at(pmdaddr_t pmd, uint64_t index)
 {
-	uint64_t *ptr = pmd_to_virt_ptr(pmd);
+	uint64_t *ptr = (uint64_t *)pmd_to_virt_ptr(pmd);
 	return (pmde_t *)&ptr[index];
 }
 
 // Retrieve pointer to PTD entry at specific index.
 static inline ptde_t *ptde_at(ptdaddr_t ptd, uint64_t index)
 {
-	uint64_t *ptr = ptd_to_virt_ptr(ptd);
+	uint64_t *ptr = (uint64_t *)ptd_to_virt_ptr(ptd);
 	return (ptde_t *)&ptr[index];
 }
 

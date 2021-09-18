@@ -27,7 +27,7 @@ static inline void *memset(void *dest, int chr, uint64_t count)
 {
 	// A naive implementation, something to get us started.
 
-	char *target = dest;
+	char *target = (char *)dest;
 
 	for (uint64_t i = 0; i < count; i++) {
 		*target++ = chr;
@@ -41,11 +41,11 @@ static inline void *memset(void *dest, int chr, uint64_t count)
 static inline void *memcpy(void *dest, void *src, size_t n)
 {
 	// A naive implementation, something to get us started.
-
-	uint8_t *ptr = dest;
+	uint8_t *ptr_dest = (uint8_t *)dest;
+	uint8_t *ptr_src = (uint8_t *)src;
 
 	for (size_t i = 0; i < n; i++) {
-		*ptr++ = *(uint8_t *)src++;
+		*ptr_dest++ = *ptr_src++;
 	}
 
 	return dest;
