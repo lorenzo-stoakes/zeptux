@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compiler.h"
+#include "macros.h"
 #include "types.h"
 
 // See https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
@@ -40,6 +41,23 @@ enum elf_sh_type {
 	ELF_SHT_GROUP = 17,
 	ELF_SHT_SYMTAB_SHNDX = 18,
 	ELF_SHT_NUM = 19,
+};
+
+// Represents a section header's flags.
+enum elf_sh_flags {
+	ELF_SHF_WRITE = BIT_MASK(0),
+	ELF_SHF_ALLOC = BIT_MASK(1),
+	ELF_SHF_EXECINSTR = BIT_MASK(2),
+	ELF_SHF_MERGE = BIT_MASK(4),
+	ELF_SHF_STRINGS = BIT_MASK(5),
+	ELF_SHF_INFO_LINK = BIT_MASK(6),
+	ELF_SHF_LINK_ORDER = BIT_MASK(7),
+	ELF_SHF_OS_NONCONFORMING = BIT_MASK(8),
+	ELF_SHF_GROUP = BIT_MASK(9),
+	ELF_SHF_TLS = BIT_MASK(10),
+	ELF_SHF_MASKOS = 0xff00000UL,
+	ELF_SHF_MASKPROC = 0xf0000000UL,
+
 };
 
 // Directly maps to initial ELF header.
