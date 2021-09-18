@@ -575,13 +575,11 @@ void early_remap_page_tables(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
 	physaddr_t elf_pa = {KERNEL_ELF_ADDRESS_PHYS};
-	// Allocate a PGD which is where we will build our new page table
-	// mappings.
+	struct elf_header *header = (struct elf_header *)KERNEL_ELF_ADDRESS;
 	pgdaddr_t pgd = early_alloc_pgd();
 
 	early_map_direct(info, pgd);
-	early_map_kernel_elf((struct elf_header *)KERNEL_ELF_ADDRESS, elf_pa,
-			     pgd);
+	early_map_kernel_elf(header, elf_pa, pgd);
 
 	// TODO: Map the early video range uncached!
 	// TODO: Swap to new PGD.
