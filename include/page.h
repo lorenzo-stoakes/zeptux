@@ -193,7 +193,7 @@ struct page_allocators {
 	ptdaddr_t (*ptd)(void);
 	physaddr_t (*data)(void);
 
-	void (*panic)(const char *fmt, ...);
+	void NORETURN (*panic)(const char *fmt, ...);
 };
 
 // Represents flagging modes. The lower bits contain a discrete mapping mode,
