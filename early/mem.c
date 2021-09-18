@@ -510,10 +510,15 @@ void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd)
 	}
 }
 
-void early_map_kernel_elf(struct elf_header *header, uint64_t num_pages,
-			  pgdaddr_t pgd)
+void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
+			  uint64_t num_pages, pgdaddr_t pgd)
 {
+	// Map kernel ELF marking readonly as readonly, assumes *header points
+	// at start of ELF image which consists of `num_pages` pages. We place
+	// the mappings into PGD.
+
 	IGNORE_PARAM(header);
+	IGNORE_PARAM(pa);
 	IGNORE_PARAM(num_pages);
 	IGNORE_PARAM(pgd);
 
@@ -523,12 +528,14 @@ void early_map_kernel_elf(struct elf_header *header, uint64_t num_pages,
 void early_remap_page_tables(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
-
+	physaddr_t elf_pa = {KERNEL_ELF_ADDRESS_PHYS};
 	// Allocate a PGD which is where we will build our new page table
 	// mappings.
 	pgdaddr_t pgd = early_alloc_pgd();
 
 	early_map_direct(info, pgd);
+	early_map_kernel_elf((struct elf_header *)KERNEL_ELF_ADDRESS, elf_pa,
+			     bytes_to_pages(info->kernel_elf_size_bytes), pgd);
 
 	// TODO: Map the early video range uncached!
 	// TODO: Rest of implementation.
