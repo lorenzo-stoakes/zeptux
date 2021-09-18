@@ -463,6 +463,9 @@ static const char *assert_memory_map_basic(void)
 
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
+	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_raw_get_flags() mismatch?");
+
 	// Map pages for the remainder of the PTD. We shouldn't be allocating
 	// any new pages.
 
@@ -519,6 +522,9 @@ static const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
+	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_raw_get_flags() mismatch?");
+
 	// Map a new PMD.
 
 	va = encode_virt(0, 1, 0, 0, 0);
@@ -547,6 +553,9 @@ static const char *assert_memory_map_basic(void)
 	ptde = *ptde_at(next_ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_raw_get_flags() mismatch?");
 
 	// Map a new PUD.
 
@@ -578,6 +587,9 @@ static const char *assert_memory_map_basic(void)
 	ptde = *ptde_at(next_ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
+
+	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_raw_get_flags() mismatch?");
 
 	// We have only allocated a trivial amount of memory so we'll leak the
 	// pages.
@@ -677,6 +689,10 @@ static const char *assert_memory_map_ranges(void)
 		physaddr_t pa = {va.x + pa_offset};
 		assert(pude_data_1gib(pude).x == pa.x,
 		       "Incorrect 1 GiB mapping?");
+
+		assert(_raw_get_flags(pgd, va, &alloc) ==
+			       pude_raw_flags_1gib(pude),
+		       "_raw_get_flags() mismatch?");
 	}
 
 	// Assert that all PMDEs are as expected.
@@ -706,6 +722,10 @@ static const char *assert_memory_map_ranges(void)
 		physaddr_t pa = {va.x + pa_offset};
 		assert(pmde_data_2mib(pmde).x == pa.x,
 		       "Incorrect 2 MiB mapping?");
+
+		assert(_raw_get_flags(pgd, va, &alloc) ==
+			       pmde_raw_flags_2mib(pmde),
+		       "_raw_get_flags() mismatch?");
 	}
 
 	pude_t pude2 = *pude_at(pud, 11);

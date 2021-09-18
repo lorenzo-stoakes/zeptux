@@ -189,3 +189,34 @@ uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 
 	return state.num_pagetables_allocated;
 }
+
+uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
+			struct page_allocators *alloc)
+{
+	pgde_t pgde = *pgde_at(pgd, virt_pgde_index(va));
+	if (!pgde_present(pgde))
+		alloc->panic("0x%lx: PGDE not present", va.x);
+
+	pudaddr_t pud = pgde_pud(pgde);
+	pude_t pude = *pude_at(pud, virt_pude_index(va));
+	if (!pude_present(pude))
+		alloc->panic("0x%lx: PUDE not present", va.x);
+
+	if (pude_1gib(pude))
+		return pude_raw_flags_1gib(pude);
+
+	pmdaddr_t pmd = pude_pmd(pude);
+	pmde_t pmde = *pmde_at(pmd, virt_pmde_index(va));
+	if (!pmde_present(pmde))
+		alloc->panic("0x%lx: PMDE not present", va.x);
+
+	if (pmde_2mib(pmde))
+		return pmde_raw_flags_2mib(pmde);
+
+	ptdaddr_t ptd = pmde_ptd(pmde);
+	ptde_t ptde = *ptde_at(ptd, virt_ptde_index(va));
+	if (!ptde_present(ptde))
+		alloc->panic("0x%lx: PTDE not present", va.x);
+
+	return ptde_raw_flags(ptde);
+}

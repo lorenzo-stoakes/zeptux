@@ -505,6 +505,12 @@ static inline physaddr_t pude_data_1gib(pude_t pude)
 	return pa;
 }
 
+// Retrieve raw page table flags from specified 1 GiB PUDE.
+static inline uint64_t pude_raw_flags_1gib(pude_t pude)
+{
+	return pude.x & PAGE_TABLE_FLAG_MASK;
+}
+
 // Retrieve the PTD address reference by a PMDE.
 static inline ptdaddr_t pmde_ptd(pmde_t pmde)
 {
@@ -519,11 +525,23 @@ static inline physaddr_t pmde_data_2mib(pmde_t pmde)
 	return pa;
 }
 
+// Retrieve raw page table flags from specified 2 MiB PMDE.
+static inline uint64_t pmde_raw_flags_2mib(pmde_t pmde)
+{
+	return pmde.x & PAGE_TABLE_FLAG_MASK;
+}
+
 // Retrieve the 4KiB data page address referenced by a PTDE.
 static inline physaddr_t ptde_data(ptde_t ptde)
 {
 	physaddr_t pa = {ptde.x & PAGE_TABLE_PHYS_ADDR_MASK};
 	return pa;
+}
+
+// Retrieve raw page tables flags from specified PTDE.
+static inline uint64_t ptde_raw_flags(ptde_t ptde)
+{
+	return ptde.x & PAGE_TABLE_FLAG_MASK;
 }
 
 // Retrieve pointer to PGD entry at specific index.
@@ -602,3 +620,8 @@ static inline void assign_data(ptdaddr_t ptd, uint64_t index, physaddr_t pa,
 uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 			 physaddr_t start_pa, int64_t num_pages,
 			 map_flags_t flags, struct page_allocators *alloc);
+
+// Retrieve the raw arch page flags for the specified VA in the specified
+// PGD. Use `alloc` to
+uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
+			struct page_allocators *alloc);
