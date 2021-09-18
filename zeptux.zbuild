@@ -92,7 +92,7 @@ build test-early.img from [boot.bin, test-early.elf] {
 # Generate test-user-runner for running tests in userland.
 build [*.o] in test/user from [*.cpp] as test_user_obj {
 	foreach source to output {
-		c++ -Wall -Werror --std=c++2a -g -lpthread -Itest/include/ -c $source -o $output
+		c++ -Wall -Werror --std=gnu++2a -g -lpthread -Itest/include/ -c $source -o $output
 	}
 }
 build test-user-runner from test_user_obj {
