@@ -584,5 +584,5 @@ void early_remap_page_tables(void)
 			     pgd);
 
 	// TODO: Map the early video range uncached!
-	// TODO: Rest of implementation.
+	// TODO: Swap to new PGD.
 }
