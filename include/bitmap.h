@@ -85,7 +85,7 @@ static inline bool bitmap_is_set(struct bitmap *bitmap, uint64_t bit)
 	uint64_t word = bit / 64;
 	uint64_t offset = bit % 64;
 
-	return IS_SET(bitmap->data[word], offset);
+	return IS_BIT_SET(bitmap->data[word], offset);
 }
 
 // Determine the index of the first set bit, or -1 if no bit set.

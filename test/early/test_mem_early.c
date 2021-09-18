@@ -498,11 +498,11 @@ static const char *assert_early_map_kernel_elf_correct(void)
 		virtaddr_t va = {sect_header->addr};
 		uint64_t flags = _walk_virt_to_raw_flags(pgd, va, &alloc);
 		if (!IS_MASK_SET(sect_header->flags, ELF_SHF_WRITE))
-			assert(!IS_SET(flags, PAGE_FLAG_RW_BIT),
+			assert(!IS_BIT_SET(flags, PAGE_FLAG_RW_BIT),
 			       "Readonly section is RW?");
 
 		if (IS_MASK_SET(sect_header->flags, ELF_SHF_EXECINSTR))
-			assert(!IS_SET(flags, PAGE_FLAG_NX_BIT),
+			assert(!IS_BIT_SET(flags, PAGE_FLAG_NX_BIT),
 			       "Executable section has NX?");
 
 		if (sect_header->type == ELF_SHT_NOBITS)

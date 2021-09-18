@@ -458,8 +458,8 @@ static const char *assert_memory_map_basic(void)
 	ptde_t ptde = *ptde_at(ptd, 0);
 	assert(ptde_present(ptde), "PTDE not present?");
 
-	assert(IS_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
-	assert(IS_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
+	assert(IS_BIT_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
+	assert(IS_BIT_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
 
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
@@ -491,8 +491,8 @@ static const char *assert_memory_map_basic(void)
 	for (int i = 1; i < NUM_PAGES_PTD; i++) {
 		ptde = *ptde_at(ptd, i);
 		assert(ptde_present(ptde), "PTDE not present?");
-		assert(IS_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
-		assert(IS_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
+		assert(IS_BIT_SET(ptde.x, PAGE_FLAG_NX_BIT), "NX bit not set?");
+		assert(IS_BIT_SET(ptde.x, PAGE_FLAG_RW_BIT), "RW bit not set?");
 		assert(ptde_data(ptde).x == pa.x, "PA not mapped to PTDE");
 		pa = phys_offset_pages(pa, 1);
 		va = virt_offset_pages(va, 1);

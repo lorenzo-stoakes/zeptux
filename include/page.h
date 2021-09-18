@@ -459,37 +459,37 @@ GEN_OFFSET_PAGES(phys);
 // Determine whether PGDE is present.
 static inline bool pgde_present(pgde_t pgde)
 {
-	return IS_SET(pgde.x, PAGE_FLAG_PRESENT_BIT);
+	return IS_BIT_SET(pgde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PUDE is present.
 static inline bool pude_present(pude_t pude)
 {
-	return IS_SET(pude.x, PAGE_FLAG_PRESENT_BIT);
+	return IS_BIT_SET(pude.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PMDE is present.
 static inline bool pmde_present(pmde_t pmde)
 {
-	return IS_SET(pmde.x, PAGE_FLAG_PRESENT_BIT);
+	return IS_BIT_SET(pmde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PTDE is present.
 static inline bool ptde_present(ptde_t ptde)
 {
-	return IS_SET(ptde.x, PAGE_FLAG_PRESENT_BIT);
+	return IS_BIT_SET(ptde.x, PAGE_FLAG_PRESENT_BIT);
 }
 
 // Determine whether PUDE is referencing a 1 GiB data page.
 static inline bool pude_1gib(pude_t pude)
 {
-	return IS_SET(pude.x, PAGE_FLAG_PSE_BIT);
+	return IS_BIT_SET(pude.x, PAGE_FLAG_PSE_BIT);
 }
 
 // Determine whether PMDE is referencing a 2 MiB data page.
 static inline bool pmde_2mib(pmde_t pmde)
 {
-	return IS_SET(pmde.x, PAGE_FLAG_PSE_BIT);
+	return IS_BIT_SET(pmde.x, PAGE_FLAG_PSE_BIT);
 }
 
 // Retrieve the PUD address referenced by a PGDE.
