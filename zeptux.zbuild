@@ -117,7 +117,7 @@ command test-early needs test-early.img {
 	shell qemu-system-x86_64 -nographic $QEMU_OPT -drive file=test-early.img,format=raw
 }
 command test-user needs test-user-runner {
-	shell ./test-user-runner
+	@shell ./test-user-runner
 }
 command test needs [test-early.img, test-user-runner] {
 	call test-early
