@@ -190,8 +190,11 @@ uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 	return state.num_pagetables_allocated;
 }
 
-uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
-			struct page_allocators *alloc)
+// Walks page table entries from specified PGD and obtains entry pointing at
+// data page. Outputs level obtained from in `level_out`.
+static uint64_t walk_to_data(pgdaddr_t pgd, virtaddr_t va,
+			     struct page_allocators *alloc,
+			     page_level_t *level_out)
 {
 	pgde_t pgde = *pgde_at(pgd, virt_pgde_index(va));
 	if (!pgde_present(pgde))
@@ -202,21 +205,53 @@ uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
 	if (!pude_present(pude))
 		alloc->panic("0x%lx: PUDE not present", va.x);
 
-	if (pude_1gib(pude))
-		return pude_raw_flags_1gib(pude);
+	if (pude_1gib(pude)) {
+		*level_out = PUD;
+		return pude.x;
+	}
 
 	pmdaddr_t pmd = pude_pmd(pude);
 	pmde_t pmde = *pmde_at(pmd, virt_pmde_index(va));
 	if (!pmde_present(pmde))
 		alloc->panic("0x%lx: PMDE not present", va.x);
 
-	if (pmde_2mib(pmde))
-		return pmde_raw_flags_2mib(pmde);
+	if (pmde_2mib(pmde)) {
+		*level_out = PMD;
+		return pmde.x;
+	}
 
 	ptdaddr_t ptd = pmde_ptd(pmde);
 	ptde_t ptde = *ptde_at(ptd, virt_ptde_index(va));
 	if (!ptde_present(ptde))
 		alloc->panic("0x%lx: PTDE not present", va.x);
 
-	return ptde_raw_flags(ptde);
+	*level_out = PTD;
+	return ptde.x;
+}
+
+uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
+			struct page_allocators *alloc)
+{
+	page_level_t level;
+	uint64_t raw = walk_to_data(pgd, va, alloc, &level);
+
+	switch (level) {
+	case PUD:
+	{
+		pude_t pude = {raw};
+		return pude_raw_flags_1gib(pude);
+	}
+	case PMD:
+	{
+		pmde_t pmde = {raw};
+		return pmde_raw_flags_2mib(pmde);
+	}
+	case PTD:
+	{
+		ptde_t ptde = {raw};
+		return ptde_raw_flags(ptde);
+	}
+	default:
+		alloc->panic("Bug in walk_to_data()");
+	}
 }
