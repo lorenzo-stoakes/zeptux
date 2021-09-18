@@ -187,6 +187,7 @@ func (s parameterised_string) String() string {
 // Represents a (nested) SHELL statement.
 type shell_statement struct {
 	expression parameterised_string
+	noecho bool
 }
 
 // Represents a (nested) CALL statement.
@@ -425,13 +426,13 @@ func (s *parse_state) parse_prehook_first_line() {
 }
 
 // Parse (nested) SHELL statement.
-func (s *parse_state) parse_shell_line() {
+func (s *parse_state) parse_shell_line(noecho bool) {
 	line := strings.TrimSpace(s.line[len("shell "):])
 
 	if ptr := parse_parameterised_string(line); ptr == nil {
 		s.syntax_error()
 	} else {
-		s.append_statement(&shell_statement{*ptr})
+		s.append_statement(&shell_statement{*ptr, noecho})
 	}
 }
 
@@ -528,8 +529,10 @@ func (s *parse_state) parse_foreach_line() {
 	}
 
 	switch opstr {
+	case "@shell":
+		s.parse_shell_line(true)
 	case "shell":
-		s.parse_shell_line()
+		s.parse_shell_line(false)
 	case "call":
 		s.parse_call_line()
 	case "cc":
@@ -553,8 +556,10 @@ func (s *parse_state) parse_prehook_line() {
 	}
 
 	switch opstr {
+	case "@shell":
+		s.parse_shell_line(true)
 	case "shell":
-		s.parse_shell_line()
+		s.parse_shell_line(false)
 	case "call":
 		s.parse_call_line()
 	case "}":
@@ -638,8 +643,10 @@ func (s *parse_state) parse_build_line() {
 	}
 
 	switch opstr {
+	case "@shell":
+		s.parse_shell_line(true)
 	case "shell":
-		s.parse_shell_line()
+		s.parse_shell_line(false)
 	case "call":
 		s.parse_call_line()
 	case "cc":
@@ -705,8 +712,10 @@ func (s *parse_state) parse_command_line() {
 	}
 
 	switch opstr {
+	case "@shell":
+		s.parse_shell_line(true)
 	case "shell":
-		s.parse_shell_line()
+		s.parse_shell_line(false)
 	case "call":
 		// Ass we are parsing a command we know this exists.
 		cmd := s.statements[len(s.statements)-1].(*command_statement)
@@ -1059,7 +1068,11 @@ func dump_statement(indent int, statement interface{}) {
 		print_indent()
 		fmt.Printf("}\n")
 	case *shell_statement:
-		fmt.Printf("shell %s\n", val.expression)
+		fmt.Printf("shell %s", val.expression)
+		if val.noecho {
+			fmt.Printf(" (noecho)")
+		}
+		fmt.Printf("\n")
 	case *foreach_statement:
 		fmt.Printf("foreach %s to %s", val.from, val.to)
 		if !val.excluding.empty() {

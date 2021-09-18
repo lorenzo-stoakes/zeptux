@@ -122,7 +122,13 @@ func touch(filename string) {
 
 // Execute a command via the shell.
 func shell_exec(shell string) bool {
-	if UNQUIET || DEBUG {
+	doecho := UNQUIET || DEBUG
+	if shell[0] == '@' {
+		doecho = false
+		shell = shell[1:]
+	}
+
+	if doecho {
 		fmt.Printf("%s\n", shell)
 	}
 

@@ -284,8 +284,12 @@ func (b *build_graph) extract_shell_commands(rule *rule,
 	for _, statement := range statements {
 		switch s := statement.(type) {
 		case *shell_statement:
-			ret = append(ret,
-				b.substitute_vars(name, additional_vars, &s.expression))
+			str := b.substitute_vars(name, additional_vars, &s.expression)
+			// We use a @ prefix to indicate to shell_exec() not to output.
+			if s.noecho {
+				str = "@" + str
+			}
+			ret = append(ret, str)
 		case *cc_statement:
 			suffix := b.substitute_vars(name, additional_vars, (*parameterised_string)(s))
 			str := CC_BINARY + b.gen_special_cc_params() + " " + suffix
@@ -495,7 +499,7 @@ func (b *build_graph) fixup_nested_command_calls(cmd *command_statement) {
 					// parameterised strings to replace the
 					// calls. TODO: Hacky.
 					paramstr := parameterised_string{param_string_element{STRING_ELEM, shell}}
-					fake_statement := shell_statement{paramstr}
+					fake_statement := shell_statement{paramstr, false}
 					new_statements = append(new_statements, &fake_statement)
 				}
 			}
