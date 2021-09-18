@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compiler.h"
+#include "page.h"
 #include "types.h"
 
 // Input a single byte from the specified port.
@@ -41,4 +42,11 @@ static inline void global_flush_tlb(void)
 		     :
 		     :
 		     : "memory", "rax");
+}
+
+// Set PGD for current core to specified physical address.
+static inline void set_pgd(pgdaddr_t pgd)
+{
+	memory_fence();
+	asm volatile("movq %0, %%cr3" : : "a"(pgd.x) : "memory");
 }
