@@ -571,6 +571,15 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 	}
 }
 
+void map_early_video(pgdaddr_t pgd)
+{
+	uint64_t num_pages = bytes_to_pages(early_video_size());
+	virtaddr_t va = {EARLY_VIDEO_MEMORY_ADDRESS};
+	physaddr_t pa = {EARLY_VIDEO_MEMORY_ADDRESS_PHYS};
+
+	_map_page_range(pgd, va, pa, num_pages, MAP_DEVICE, &early_allocators);
+}
+
 void early_remap_page_tables(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
@@ -580,6 +589,7 @@ void early_remap_page_tables(void)
 
 	early_map_direct(info, pgd);
 	early_map_kernel_elf(header, elf_pa, pgd);
+	map_early_video(pgd);
 
 	// TODO: Map the early video range uncached!
 	// TODO: Swap to new PGD.
