@@ -383,6 +383,13 @@ static inline virtaddr_t encode_virt(uint64_t pgde_ind, uint64_t pude_ind,
 	virtaddr_t va = {(pgde_ind << PGD_SHIFT) | (pude_ind << PUD_SHIFT) |
 			 (pmde_ind << PMD_SHIFT) | (ptde_ind << PAGE_SHIFT) |
 			 offset};
+
+	// Sign-extend if necessary.
+	if (IS_BIT_SET(va.x, PHYS_ADDR_BITS - 1)) {
+		uint64_t mask = BIT_MASK_ABOVE(PHYS_ADDR_BITS);
+		va.x |= mask;
+	}
+
 	return va;
 }
 
