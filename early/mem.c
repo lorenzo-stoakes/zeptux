@@ -591,6 +591,5 @@ void early_remap_page_tables(void)
 	early_map_kernel_elf(header, elf_pa, pgd);
 	map_early_video(pgd);
 
-	// TODO: Map the early video range uncached!
-	// TODO: Swap to new PGD.
+	set_pgd(pgd);
 }
