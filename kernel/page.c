@@ -229,8 +229,8 @@ static uint64_t walk_to_data(pgdaddr_t pgd, virtaddr_t va,
 	return ptde.x;
 }
 
-uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
-			struct page_allocators *alloc)
+uint64_t _walk_virt_to_raw_flags(pgdaddr_t pgd, virtaddr_t va,
+				 struct page_allocators *alloc)
 {
 	page_level_t level;
 	uint64_t raw = walk_to_data(pgd, va, alloc, &level);

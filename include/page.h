@@ -631,5 +631,5 @@ uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
 
 // Retrieve the raw arch page flags for the specified VA in the specified
 // PGD. Use `alloc` to panic.
-uint64_t _raw_get_flags(pgdaddr_t pgd, virtaddr_t va,
-			struct page_allocators *alloc);
+uint64_t _walk_virt_to_raw_flags(pgdaddr_t pgd, virtaddr_t va,
+				 struct page_allocators *alloc);

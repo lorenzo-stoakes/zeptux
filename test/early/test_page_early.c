@@ -463,8 +463,8 @@ static const char *assert_memory_map_basic(void)
 
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
-	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
-	       "_raw_get_flags() mismatch?");
+	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_walk_virt_to_raw_flags() mismatch?");
 
 	// Map pages for the remainder of the PTD. We shouldn't be allocating
 	// any new pages.
@@ -522,8 +522,8 @@ static const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
-	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
-	       "_raw_get_flags() mismatch?");
+	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_walk_virt_to_raw_flags() mismatch?");
 
 	// Map a new PMD.
 
@@ -554,8 +554,8 @@ static const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
-	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
-	       "_raw_get_flags() mismatch?");
+	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_walk_virt_to_raw_flags() mismatch?");
 
 	// Map a new PUD.
 
@@ -588,8 +588,8 @@ static const char *assert_memory_map_basic(void)
 	assert(ptde_present(ptde), "PTDE not present?");
 	assert(ptde_data(ptde).x == pa.x, "PA not assigned to PTDE?");
 
-	assert(_raw_get_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
-	       "_raw_get_flags() mismatch?");
+	assert(_walk_virt_to_raw_flags(pgd, va, &alloc) == ptde_raw_flags(ptde),
+	       "_walk_virt_to_raw_flags() mismatch?");
 
 	// We have only allocated a trivial amount of memory so we'll leak the
 	// pages.
@@ -690,9 +690,9 @@ static const char *assert_memory_map_ranges(void)
 		assert(pude_data_1gib(pude).x == pa.x,
 		       "Incorrect 1 GiB mapping?");
 
-		assert(_raw_get_flags(pgd, va, &alloc) ==
+		assert(_walk_virt_to_raw_flags(pgd, va, &alloc) ==
 			       pude_raw_flags_1gib(pude),
-		       "_raw_get_flags() mismatch?");
+		       "_walk_virt_to_raw_flags() mismatch?");
 	}
 
 	// Assert that all PMDEs are as expected.
@@ -723,9 +723,9 @@ static const char *assert_memory_map_ranges(void)
 		assert(pmde_data_2mib(pmde).x == pa.x,
 		       "Incorrect 2 MiB mapping?");
 
-		assert(_raw_get_flags(pgd, va, &alloc) ==
+		assert(_walk_virt_to_raw_flags(pgd, va, &alloc) ==
 			       pmde_raw_flags_2mib(pmde),
-		       "_raw_get_flags() mismatch?");
+		       "_walk_virt_to_raw_flags() mismatch?");
 	}
 
 	pude_t pude2 = *pude_at(pud, 11);
