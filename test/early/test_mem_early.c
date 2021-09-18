@@ -3,6 +3,14 @@
 #define MAX_NUM_E820_ENTRIES (100)
 #define BUF_SIZE (10 + 20 * MAX_NUM_E820_ENTRIES)
 
+static struct page_allocators alloc = {
+	.pud = early_alloc_pud,
+	.pmd = early_alloc_pmd,
+	.ptd = early_alloc_ptd,
+
+	.panic = _early_panic,
+};
+
 static const char *assert_e820_sorted(struct early_boot_info *info)
 {
 	// Assert that we are sorting on size too.
@@ -461,6 +469,54 @@ static const char *assert_early_map_direct_correct(struct early_boot_info *info)
 	return NULL;
 }
 
+static const char *assert_early_map_kernel_elf_correct(void)
+{
+	// We will use the actual kernel ELF image to ensure that we map as
+	// expected.
+
+	struct elf_header *header = (struct elf_header *)KERNEL_ELF_ADDRESS;
+
+	pgdaddr_t pgd = early_alloc_pgd();
+	physaddr_t elf_pa = {KERNEL_ELF_ADDRESS_PHYS};
+	early_map_kernel_elf(header, elf_pa, pgd);
+
+	virtaddr_t header_va = {KERNEL_ELF_ADDRESS};
+	assert(_walk_virt_to_phys(pgd, header_va, &alloc).x ==
+		       KERNEL_ELF_ADDRESS_PHYS,
+	       "Header not mapped?");
+
+	struct elf_section_header *sect_headers =
+		(void *)header + header->shoff;
+	for (int i = 0; i < (int)header->shnum; i++) {
+		struct elf_section_header *sect_header = &sect_headers[i];
+
+		if (sect_header->addr == 0)
+			continue;
+
+		// If not present there will be a panic so presence is also
+		// asserted :)
+		virtaddr_t va = {sect_header->addr};
+		uint64_t flags = _walk_virt_to_raw_flags(pgd, va, &alloc);
+		if (!IS_MASK_SET(sect_header->flags, ELF_SHF_WRITE))
+			assert(!IS_SET(flags, PAGE_FLAG_RW_BIT),
+			       "Readonly section is RW?");
+
+		if (IS_MASK_SET(sect_header->flags, ELF_SHF_EXECINSTR))
+			assert(!IS_SET(flags, PAGE_FLAG_NX_BIT),
+			       "Executable section has NX?");
+
+		if (sect_header->type == ELF_SHT_NOBITS)
+			continue;
+
+		assert(_walk_virt_to_phys(pgd, va, &alloc).x ==
+			       KERNEL_ELF_ADDRESS_PHYS + sect_header->offset,
+		       "Misassigned ELF section PA");
+	}
+
+	// We permit some leaking again!
+	return NULL;
+}
+
 const char *test_mem(void)
 {
 	uint8_t buf[BUF_SIZE] = {0};
@@ -494,6 +550,10 @@ const char *test_mem(void)
 		return ret;
 
 	ret = assert_early_map_direct_correct(info);
+	if (ret != NULL)
+		return ret;
+
+	ret = assert_early_map_kernel_elf_correct();
 	if (ret != NULL)
 		return ret;
 
