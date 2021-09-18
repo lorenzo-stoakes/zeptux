@@ -525,30 +525,31 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL, &early_allocators);
 
 	// Now work through each section, mapping accordingly.
-	struct elf_section_header *headers = (void *)header + header->shoff;
+	struct elf_section_header *sect_headers =
+		(void *)header + header->shoff;
 	for (int i = 0; i < (int)header->shnum; i++) {
-		struct elf_section_header *header = &headers[i];
+		struct elf_section_header *sect_header = &sect_headers[i];
 
 		// If not intended to be mapped into memory, ignore.
-		if (header->addr == 0)
+		if (sect_header->addr == 0)
 			continue;
 
-		va.x = header->addr;
+		va.x = sect_header->addr;
 
 		// If the section does not actually occupy memory itself
 		// (e.g. .bss), we have to allocate memory for it.
 		physaddr_t pa;
-		if (header->type == ELF_SHT_NOBITS) {
-			if (header->size > PAGE_SIZE)
+		if (sect_header->type == ELF_SHT_NOBITS) {
+			if (sect_header->size > PAGE_SIZE)
 				early_panic(
 					"Kernel ELF NOBITS header exceeds page size");
 
 			pa = early_page_alloc();
 			// We need to copy the current state of the header into the page.
-			memcpy(phys_to_virt_ptr(pa), (void *)header->addr,
-			       header->size);
+			memcpy(phys_to_virt_ptr(pa), (void *)sect_header->addr,
+			       sect_header->size);
 		} else {
-			pa.x = elf_pa.x + header->offset;
+			pa.x = elf_pa.x + sect_header->offset;
 		}
 
 		// We insist on page-aligned ELF sections.
@@ -559,13 +560,13 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 
 		// Determine mapping flags.
 		map_flags_t flags = MAP_KERNEL;
-		if (!IS_SET(header->flags, ELF_SHF_WRITE))
+		if (!IS_MASK_SET(sect_header->flags, ELF_SHF_WRITE))
 			flags |= MAP_READONLY;
-		if (IS_SET(header->flags, ELF_SHF_EXECINSTR))
+		if (IS_MASK_SET(sect_header->flags, ELF_SHF_EXECINSTR))
 			flags |= MAP_CODE;
 
 		// Do actual mapping.
-		_map_page_range(pgd, va, pa, bytes_to_pages(header->size),
+		_map_page_range(pgd, va, pa, bytes_to_pages(sect_header->size),
 				flags, &early_allocators);
 	}
 }
