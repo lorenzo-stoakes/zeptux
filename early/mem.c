@@ -521,12 +521,21 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 		early_panic("Misaligned kernel ELF header by %lu",
 			    va.x % PAGE_SIZE);
 
-	// Map the header. It will never be larger than 1 page in size.
-	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL, &early_allocators);
+	// Map the header. It will never be larger than 1 page in size as we
+	// have established it is page aligned.
+	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL | MAP_READONLY,
+			&early_allocators);
+
+	// Map the section headers. It will never span more than 2 pages.
+	va.x += header->shoff;
+	physaddr_t pa = {elf_pa.x + header->shoff};
+	_map_page_range(pgd, va, pa, 2, MAP_KERNEL | MAP_READONLY,
+			&early_allocators);
 
 	// Now work through each section, mapping accordingly.
 	struct elf_section_header *sect_headers =
 		(void *)header + header->shoff;
+
 	for (int i = 0; i < (int)header->shnum; i++) {
 		struct elf_section_header *sect_header = &sect_headers[i];
 
@@ -538,7 +547,6 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 
 		// If the section does not actually occupy memory itself
 		// (e.g. .bss), we have to allocate memory for it.
-		physaddr_t pa;
 		if (sect_header->type == ELF_SHT_NOBITS) {
 			if (sect_header->size > PAGE_SIZE)
 				early_panic(
