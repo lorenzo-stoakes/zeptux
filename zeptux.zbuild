@@ -26,7 +26,10 @@ set var ELF_SIZE_OFFSET = 2556
 # and 512 bytes for sector rounding up on boot.
 set var MAX_KERNEL_ELF_SIZE = 473088
 # Shared qemu options.
-set var QEMU_OPT = -serial mon:stdio -smp 1 -d int,cpu_reset -no-reboot
+set var QEMU_OPT = -serial mon:stdio -smp 1
+# Options specific to release. We invoke intentional reset on early test exit so
+# cannot have these debug options set.
+set var QEMU_OPT_RELEASE = $QEMU_OPT -d int,cpu_reset -no-reboot
 
 # Format source files when they change.
 prehook [**.h,**.c,**.cpp] on change {
@@ -106,10 +109,10 @@ command clean {
 
 # QEMU execution commands.
 command qemu needs zeptux.img {
-	shell qemu-system-x86_64 -nographic $QEMU_OPT -drive file=zeptux.img,format=raw
+	shell qemu-system-x86_64 -nographic $QEMU_OPT_RELEASE -drive file=zeptux.img,format=raw
 }
 command qemu-vga needs zeptux.img {
-	shell qemu-system-x86_64 $QEMU_OPT -drive file=zeptux.img,format=raw
+	shell qemu-system-x86_64 $QEMU_OPT_RELEASE -drive file=zeptux.img,format=raw
 }
 
 # Test commands.
