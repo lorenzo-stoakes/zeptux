@@ -645,3 +645,9 @@ uint64_t _walk_virt_to_raw_flags(pgdaddr_t pgd, virtaddr_t va,
 // `alloc` to panic.
 physaddr_t _walk_virt_to_phys(pgdaddr_t pgd, virtaddr_t va,
 			      struct page_allocators *alloc);
+
+// Dump a list of mapped pages using the printf function specified. If
+// `mask_huge_flag` is set, mapped ranges with the huge/gigantic page flag (PSE)
+// is set are merged with 4 KiB pages for the purposes of dumping ranges.
+void dump_mapped_pages(pgdaddr_t pgd, bool mask_huge_flag,
+		       int (*printf)(const char *fmt, ...));

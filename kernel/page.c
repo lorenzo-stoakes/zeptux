@@ -282,3 +282,228 @@ physaddr_t _walk_virt_to_phys(pgdaddr_t pgd, virtaddr_t va,
 		alloc->panic("Bug in walk_to_data()");
 	}
 }
+
+// Part of the page dump implementation - Stores state during page table dump.
+struct page_dump_state {
+	bool in_range, mask_huge_flag;
+	virtaddr_t start, end;
+	uint64_t raw_flags;
+	int pgd_index, pud_index, pmd_index;
+	uint64_t num_pages_4kib, num_pages_2mib, num_pages_1gib;
+
+	PRINTF(1, 2) int (*printf)(const char *fmt, ...);
+};
+
+// Part of the page dump implementation - output page table entry flags.
+static void dump_flags(struct page_dump_state *state)
+{
+	uint64_t flags = state->raw_flags;
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_RW))
+		state->printf("RW ");
+	else
+		state->printf("RO ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_USER))
+		state->printf("Us ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_WRITE_THROUGH))
+		state->printf("Wt ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_UNCACHED))
+		state->printf("Uc ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_ACCESSED))
+		state->printf("Ax ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_DIRTY))
+		state->printf("Dt ");
+
+	// Gigantic/huge page.
+	if (IS_MASK_SET(flags, PAGE_FLAG_PSE))
+		state->printf("Hg ");
+
+	if (IS_MASK_SET(flags, PAGE_FLAG_GLOBAL))
+		state->printf("Gl ");
+
+	if (!IS_MASK_SET(flags, PAGE_FLAG_NX))
+		state->printf("EX ");
+}
+
+// Part of the page dump implementation - dump a memory range using the provided
+// printf() function as we are at a discontinuity in the mapping unless we are not
+// currently recording a range.
+static void maybe_dump_range(struct page_dump_state *state)
+{
+	if (!state->in_range)
+		return;
+
+	state->in_range = false;
+
+	// Sign-extend VAs.
+	if (IS_BIT_SET(state->start.x, PHYS_ADDR_BITS - 1)) {
+		uint64_t mask = BIT_MASK_ABOVE(PHYS_ADDR_BITS);
+		state->start.x |= mask;
+		state->end.x |= mask;
+	}
+
+	char buf[1024];
+	state->printf("0x%016lx - 0x%016lx: %s / ", state->start.x,
+		      state->end.x,
+		      bytes_to_human(state->end.x - state->start.x, buf,
+				     sizeof(buf)));
+	dump_flags(state);
+	state->printf("\n");
+
+	state->start.x = 0;
+	state->end.x = 0;
+	state->raw_flags = 0;
+}
+
+// Part of the page dump implementation - extend the page table range we are
+// storing for the purposes of merging memory ranges for more digestible
+// output. We separate the range if the flags differ (possibly not if the only
+// differing flag is the huge/gigantic page flag PSE depending on whether the
+// 'mask huge flag' option is set).
+static void extend_dump_range(struct page_dump_state *state, virtaddr_t start,
+			      virtaddr_t end, uint64_t raw_flags)
+{
+	uint64_t prev_flags = state->raw_flags;
+
+	if (state->mask_huge_flag) {
+		uint64_t mask = BIT_MASK_EXCLUDING(PAGE_FLAG_PSE_BIT);
+
+		prev_flags &= mask;
+		raw_flags &= mask;
+	}
+
+	// If flags mismatch, this is a break in range.
+	if (state->in_range && raw_flags != prev_flags) {
+		// Force dump of previous range.
+		maybe_dump_range(state);
+		state->in_range = false;
+
+		// We will invoke the new range logic below to start this new
+		// range.
+	}
+
+	// Starting new range.
+	if (!state->in_range) {
+		state->start = start;
+		state->end = end;
+		state->raw_flags = raw_flags;
+
+		state->in_range = true;
+		return;
+	}
+
+	// Otherwise we are extending the range.
+	state->end = end;
+}
+
+// Dump page table entries from PTD level.
+static void dump_mapped_pages_ptd(ptdaddr_t ptd, struct page_dump_state *state)
+{
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		ptde_t ptde = *ptde_at(ptd, i);
+
+		if (!ptde_present(ptde)) {
+			maybe_dump_range(state);
+			continue;
+		}
+
+		virtaddr_t start = encode_virt(state->pgd_index,
+					       state->pud_index,
+					       state->pmd_index, i, 0);
+		virtaddr_t end = {start.x + PAGE_SIZE};
+		extend_dump_range(state, start, end, ptde_raw_flags(ptde));
+		state->num_pages_4kib++;
+	}
+}
+
+// Dump page table entries from PMD level.
+static void dump_mapped_pages_pmd(pmdaddr_t pmd, struct page_dump_state *state)
+{
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		state->pmd_index = i;
+
+		pmde_t pmde = *pmde_at(pmd, i);
+
+		if (!pmde_present(pmde)) {
+			maybe_dump_range(state);
+			continue;
+		}
+
+		if (pmde_2mib(pmde)) {
+			virtaddr_t start = encode_virt(state->pgd_index,
+						       state->pud_index,
+						       state->pmd_index, 0, 0);
+			virtaddr_t end = {start.x + PAGE_SIZE_2MIB};
+			extend_dump_range(state, start, end,
+					  pmde_raw_flags_2mib(pmde));
+			state->num_pages_2mib++;
+		} else {
+			ptdaddr_t ptd = pmde_ptd(pmde);
+			dump_mapped_pages_ptd(ptd, state);
+		}
+	}
+}
+
+// Dump page table entries from PUD level.
+static void dump_mapped_pages_pud(pudaddr_t pud, struct page_dump_state *state)
+{
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		state->pud_index = i;
+
+		pude_t pude = *pude_at(pud, i);
+
+		if (!pude_present(pude)) {
+			maybe_dump_range(state);
+			continue;
+		}
+
+		if (pude_1gib(pude)) {
+			virtaddr_t start = encode_virt(
+				state->pgd_index, state->pud_index, 0, 0, 0);
+			virtaddr_t end = {start.x + PAGE_SIZE_1GIB};
+			extend_dump_range(state, start, end,
+					  pude_raw_flags_1gib(pude));
+			state->num_pages_1gib++;
+		} else {
+			pmdaddr_t pmd = pude_pmd(pude);
+			dump_mapped_pages_pmd(pmd, state);
+		}
+	}
+}
+
+void dump_mapped_pages(pgdaddr_t pgd, bool mask_huge_flag,
+		       int (*printf)(const char *fmt, ...))
+{
+	struct page_dump_state state = {.printf = printf,
+					.mask_huge_flag = mask_huge_flag};
+
+	for (int i = 0; i < NUM_PAGE_TABLE_ENTRIES; i++) {
+		state.pgd_index = i;
+
+		pgde_t pgde = *pgde_at(pgd, i);
+
+		if (!pgde_present(pgde)) {
+			maybe_dump_range(&state);
+			continue;
+		}
+
+		pudaddr_t pud = pgde_pud(pgde);
+		dump_mapped_pages_pud(pud, &state);
+	}
+	maybe_dump_range(&state);
+
+	uint64_t total_bytes = 0;
+	total_bytes += state.num_pages_4kib * PAGE_SIZE;
+	total_bytes += state.num_pages_2mib * PAGE_SIZE_2MIB;
+	total_bytes += state.num_pages_1gib * PAGE_SIZE_1GIB;
+
+	char buf[1024];
+	printf("\n4k[% 5lu] 2m[% 5lu] 1g[% 5lu] % 20s\n", state.num_pages_4kib,
+	       state.num_pages_2mib, state.num_pages_1gib,
+	       bytes_to_human(total_bytes, buf, sizeof(buf)));
+}
