@@ -1,5 +1,11 @@
 #include "zeptux_early.h"
 
+enum early_alloc_type {
+	EARLY_ALLOC_NORMAL,
+	EARLY_ALLOC_EPHEMERAL,
+	EARLY_ALLOC_PAGETABLE,
+};
+
 // Stores scratch allocator state. We will only access this single-threaded so
 // it's ok to keep this static.
 static struct scratch_alloc_state scratch_state;
@@ -258,10 +264,16 @@ static uint64_t alloc_span_bitmaps(struct early_page_alloc_span *span)
 		early_scratch_page_alloc();
 	}
 
+	span->pagetable_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
+	for (int i = 1; i < (int)bitmap_pages; i++) {
+		early_scratch_page_alloc();
+	}
+
 	bitmap_init(span->alloc_bitmap, num_pages);
 	bitmap_init(span->ephemeral_bitmap, num_pages);
+	bitmap_init(span->pagetable_bitmap, num_pages);
 
-	return bitmap_pages * 2;
+	return bitmap_pages * 3;
 }
 
 // Find the early page allocator span that contains a specified physical
@@ -306,22 +318,30 @@ static inline physaddr_t span_offset_to_pa(struct early_page_alloc_span *span,
 // Mark a page allocated and update stats accordingly in the early page
 // allocator.
 static void mark_page_allocated(struct early_page_alloc_span *span,
-				uint64_t offset, bool ephemeral)
+				uint64_t offset, enum early_alloc_type type)
 {
 	bitmap_set(span->alloc_bitmap, offset);
 	alloc_state->allocated_pages++;
 	span->allocated_pages++;
 
-	if (ephemeral) {
+	switch (type) {
+	case EARLY_ALLOC_NORMAL:
+		break;
+	case EARLY_ALLOC_EPHEMERAL:
 		bitmap_set(span->ephemeral_bitmap, offset);
 		alloc_state->ephemeral_pages++;
+		break;
+	case EARLY_ALLOC_PAGETABLE:
+		bitmap_set(span->pagetable_bitmap, offset);
+		alloc_state->pagetable_pages++;
+		break;
 	}
 }
 
 // Allocate at the specific physical address in the early page allocator or
 // panic if already allocated. This will only ever be called single threaded so
 // we don't have to worry about sychronisation.
-static void alloc_at(physaddr_t pa, bool ephemeral)
+static void alloc_at(physaddr_t pa, enum early_alloc_type type)
 {
 	struct early_page_alloc_span *span = find_span(pa);
 
@@ -334,11 +354,11 @@ static void alloc_at(physaddr_t pa, bool ephemeral)
 		early_panic("Page containing %lx is already allocated?", pa.x);
 	}
 
-	mark_page_allocated(span, offset, ephemeral);
+	mark_page_allocated(span, offset, type);
 }
 
 // Allocate a page from the early page allocator.
-static physaddr_t alloc(bool ephemeral)
+static physaddr_t alloc(enum early_alloc_type type)
 {
 	// TODO: Perhaps we should use some heuristic to avoid giving away too
 	// much physically contiguous memory to allocations who might very well
@@ -351,7 +371,7 @@ static physaddr_t alloc(bool ephemeral)
 		if (offset == -1)
 			continue;
 
-		mark_page_allocated(span, offset, ephemeral);
+		mark_page_allocated(span, offset, type);
 		return span_offset_to_pa(span, offset);
 	}
 
@@ -360,22 +380,29 @@ static physaddr_t alloc(bool ephemeral)
 
 void early_page_alloc_ephemeral_at(physaddr_t pa)
 {
-	alloc_at(pa, true);
+	alloc_at(pa, EARLY_ALLOC_EPHEMERAL);
 }
 
 void early_page_alloc_at(physaddr_t pa)
 {
-	alloc_at(pa, false);
+	alloc_at(pa, EARLY_ALLOC_NORMAL);
 }
 
 physaddr_t early_page_alloc(void)
 {
-	return alloc(false);
+	return alloc(EARLY_ALLOC_NORMAL);
 }
 
 physaddr_t early_page_alloc_ephemeral(void)
 {
-	return alloc(true);
+	return alloc(EARLY_ALLOC_EPHEMERAL);
+}
+
+physaddr_t early_pagetable_alloc(void)
+{
+	physaddr_t pa = alloc(EARLY_ALLOC_PAGETABLE);
+	zero_page(pa);
+	return pa;
 }
 
 void early_page_free(physaddr_t pa)
@@ -397,6 +424,11 @@ void early_page_free(physaddr_t pa)
 	if (bitmap_is_set(span->ephemeral_bitmap, offset)) {
 		bitmap_clear(span->ephemeral_bitmap, offset);
 		alloc_state->ephemeral_pages--;
+	}
+
+	if (bitmap_is_set(span->pagetable_bitmap, offset)) {
+		bitmap_clear(span->pagetable_bitmap, offset);
+		alloc_state->pagetable_pages--;
 	}
 }
 
