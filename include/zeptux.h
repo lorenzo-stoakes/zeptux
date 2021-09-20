@@ -7,7 +7,7 @@
 #include "elf.h"
 #include "format.h"
 #include "macros.h"
-#include "mem.h"
+#include "mm.h"
 #include "page.h"
 #include "range.h"
 #include "spinlock.h"

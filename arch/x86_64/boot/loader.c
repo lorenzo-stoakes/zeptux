@@ -4,7 +4,7 @@
 #include "early_mem.h"
 #include "elf.h"
 #include "macros.h"
-#include "mem.h"
+#include "mm.h"
 #include "string.h"
 
 // Helpers for iterating through ELF program and section headers.
