@@ -6,7 +6,8 @@ architecture.
 
 ## PHYSICAL memory map
 
-Physical memory is divided into ranges of usable and unusable memory as follows:
+Physical memory is divided into ranges of usable and unusable memory _roughly_
+as follows (though E820 is the final adjudicator):
 
 ```
                                                                        Usable?
@@ -66,6 +67,42 @@ Physical memory is divided into ranges of usable and unusable memory as follows:
 ```
 
 ref: https://wiki.osdev.org/Memory_Map
+
+## VIRTUAL memory map
+
+```
+Userland (128 TiB)
+                         0000000000000000 -> |---------------| ^
+                                             |    Process    | |
+                                             |    address    | | 128 TiB
+                                             |     space     | |
+                         0000800000000000 -> |---------------| v
+                     .        ` .     -                 `-       ./   _
+                              _    .`   -   The netherworld of  `/   `
+                    -     `  _        |  /      unavailable sign-extended -/ .
+                     ` -        .   `  48-bit address space  -     \  /    -
+                   \-                - . . . .             \      /       -
+Kernel (128 TiB)
+KERNEL_DIRECT_MAP_BASE = ffff800000000000 -> |----------------| ^
+                                             | Direct mapping | |
+                                             |  of all phys.  | | 64 TiB
+                                             |     memory     | |
+    KERNEL_ELF_ADDRESS = ffffc00000000000 -> |----------------| v
+                                             |     Kernel     | |
+                                             |      text      | | 1 GiB
+                                             |     mapping    | |
+KERNEL_MEM_MAP_ADDRESS = ffffc00040000000 -> |----------------| x
+                                             |    Array of    | |
+                                             |    physblock   | | 1 TiB
+                                             |     entries    | |
+                         ffffc10040000000 -> |----------------| v
+                                             /                /
+                                             \     unused     \
+                                             /      hole      /
+                                             \                \
+                                             ------------------
+```
+
 
 ### Early boot loader
 
