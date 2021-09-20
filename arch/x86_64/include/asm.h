@@ -1,7 +1,6 @@
 #pragma once
 
 #include "compiler.h"
-#include "page.h"
 #include "types.h"
 
 // Input a single byte from the specified port.

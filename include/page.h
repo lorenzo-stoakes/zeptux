@@ -176,7 +176,7 @@ TYPE_WRAP(virtaddr_t, uint64_t);
 TYPE_WRAP(pfn_t, uint64_t);
 
 // Physical addresses for page tables.
-TYPE_WRAP(pgdaddr_t, uint64_t);
+//        pgdaddr_t is declared in types.h
 TYPE_WRAP(pudaddr_t, uint64_t);
 TYPE_WRAP(pmdaddr_t, uint64_t);
 TYPE_WRAP(ptdaddr_t, uint64_t);

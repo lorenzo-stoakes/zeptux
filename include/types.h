@@ -1,4 +1,6 @@
 #pragma once
+// We wrap these in __ZEPTUX_KERNEL as userland (tests) will have declared them
+// already.
 #ifdef __ZEPTUX_KERNEL
 
 // Fundamental types. We want to be explicit on signedness and size so use the
@@ -18,5 +20,10 @@ typedef int64_t ssize_t;
 
 // TODO: Perhaps should be in compiler-specific header?
 typedef __builtin_va_list va_list;
-
 #endif
+
+// Represents the physical address of a PGD. See page.h.
+// NOTE: We declare this here without TYPE_WRAP() to avoid circular references.
+typedef struct {
+	uint64_t x;
+} pgdaddr_t;
