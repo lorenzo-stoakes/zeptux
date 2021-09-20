@@ -108,6 +108,9 @@
 // so if booting from boot sector we can quickly load the ELF image direct and
 // jump to it as headers will never exceed 1 page in size.
 #define X86_KERNEL_TEXT (X86_KERNEL_ELF_ADDRESS + 0x1000UL)
+// Where we store a (discontiguous series of mappings to) physblock entries
+// describing physical memory.
+#define X86_KERNEL_MEM_MAP_ADDRESS (0xffffc00040000000UL)
 
 #define X86_EARLY_PGD (0x1000)
 #define X86_EARLY_PUD_DIRECT0 (0x2000)
