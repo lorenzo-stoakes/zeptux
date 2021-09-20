@@ -21,32 +21,3 @@
 #define KERNEL_STACK_ADDRESS_PHYS (X86_KERNEL_STACK_ADDRESS_PHYS)
 // The maximum number of pages available in the kernel stack.
 #define KERNEL_STACK_PAGES (4)
-
-// Set the `dest` buffer to contain `count` bytes of `chr`.
-static inline void *memset(void *dest, int chr, uint64_t count)
-{
-	// A naive implementation, something to get us started.
-
-	char *target = (char *)dest;
-
-	for (uint64_t i = 0; i < count; i++) {
-		*target++ = chr;
-	}
-
-	return dest;
-}
-
-// Copy memory from `src` to `dest` of size `n` bytes. Returns `dest` for
-// convenience.
-static inline void *memcpy(void *dest, void *src, size_t n)
-{
-	// A naive implementation, something to get us started.
-	uint8_t *ptr_dest = (uint8_t *)dest;
-	uint8_t *ptr_src = (uint8_t *)src;
-
-	for (size_t i = 0; i < n; i++) {
-		*ptr_dest++ = *ptr_src++;
-	}
-
-	return dest;
-}

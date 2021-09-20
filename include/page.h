@@ -2,6 +2,7 @@
 
 #include "macros.h"
 #include "mem.h"
+#include "string.h"
 #include "types.h"
 #include "x86-consts.h"
 
