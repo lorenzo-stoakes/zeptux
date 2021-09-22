@@ -132,9 +132,9 @@ void early_merge_e820(struct early_boot_info *info);
 // Normalise e820 RAM entries to page boundaries.
 // IMPORTANT: Assumes e820 entries have been merged.
 void early_normalise_e820(struct early_boot_info *info);
-// Extract the total available memory in bytes.
+// Extract the total available memory in bytes and set in info object.
 // IMPORTANT: Assumes e820 entries have been merged.
-uint64_t early_get_total_ram(struct early_boot_info *info);
+void early_set_total_ram(struct early_boot_info *info);
 
 // Retrieve scratch allocator state.
 struct scratch_alloc_state *early_scratch_alloc_state(void);

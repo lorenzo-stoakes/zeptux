@@ -179,13 +179,13 @@ void early_normalise_e820(struct early_boot_info *info)
 	}
 }
 
-uint64_t early_get_total_ram(struct early_boot_info *info)
+void early_set_total_ram(struct early_boot_info *info)
 {
 	// Note that we assume we have sorted, merged and normalised e820
 	// entries at this stage, meaning the total ram figure will be for
 	// page-aligned physical memory and be a multiple of the page size.
 
-	uint64_t ret = 0;
+	uint64_t bytes = 0;
 
 	uint64_t num_ram_entries = 0;
 	for (int i = 0; i < (int)info->num_e820_entries; i++) {
@@ -194,7 +194,7 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 		if (entry->type != E820_TYPE_RAM)
 			continue;
 
-		ret += entry->size;
+		bytes += entry->size;
 		num_ram_entries++;
 	}
 
@@ -203,11 +203,10 @@ uint64_t early_get_total_ram(struct early_boot_info *info)
 			"There are %lu E820 RAM entries present, maximum permitted is %lu",
 			num_ram_entries, MAX_E820_RAM_ENTRIES);
 
+	info->total_avail_ram_bytes = bytes;
 	// There is a one-to-one mapping between e820 RAM entries and spans of
 	// physical RAM.
 	info->num_ram_spans = num_ram_entries;
-
-	return ret;
 }
 
 struct scratch_alloc_state *early_scratch_alloc_state(void)
@@ -629,7 +628,7 @@ void early_mem_init(void)
 	early_sort_e820(info);
 	early_merge_e820(info);
 	early_normalise_e820(info);
-	info->total_avail_ram_bytes = early_get_total_ram(info);
+	early_set_total_ram(info);
 	early_scratch_alloc_init(info);
 	early_page_alloc_init(info);
 	early_remap_page_tables(info);
