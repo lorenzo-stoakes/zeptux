@@ -618,6 +618,7 @@ void early_remap_page_tables(struct early_boot_info *info)
 	map_early_video(pgd);
 
 	set_pgd(pgd);
+	kernel_root_pgd = pgd;
 }
 
 void early_mem_init(void)

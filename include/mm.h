@@ -50,3 +50,6 @@ struct physblock {
 // We assign max 1 TiB of physblock descriptors in the memory map, plus it's
 // useful to keep it a cacheline size.
 static_assert(sizeof(struct physblock) <= 64);
+
+// The root kernel PGD.
+extern pgdaddr_t kernel_root_pgd;
