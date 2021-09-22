@@ -621,16 +621,42 @@ void early_remap_page_tables(struct early_boot_info *info)
 	kernel_root_pgd = pgd;
 }
 
+// Allocate and map struct physblock objects representing `num_pages` pages from
+// `start`.
+static void alloc_map_physblock(physaddr_t start, uint64_t num_pages)
+{
+	uint64_t num_physblock_pages =
+		bytes_to_pages(num_pages * sizeof(struct physblock));
+
+	pfn_t pfn = pa_to_pfn(start);
+	virtaddr_t va = {KERNEL_MEM_MAP_ADDRESS +
+			 sizeof(struct physblock) * pfn.x};
+	for (uint64_t i = 0; i < num_physblock_pages; i++) {
+		// We initialise all physblocks to zero.
+		physaddr_t pa = early_page_alloc_zero();
+
+		_map_page_range(kernel_root_pgd, va, pa, 1, MAP_KERNEL,
+				&early_allocators);
+		va = virt_next_page(va);
+	}
+}
+
 void early_init_mem_map(void)
 {
 	// For each range of available physical memory, allocate a physblock per
 	// page and map from KERNEL_MEM_MAP_ADDRESS.
+
+	// Note we ZERO intiialise all these as doing this causes allocations
+	// (both the physblock pages and the pagetables pointing at them) so
+	// trying to mark pages as pagetables/not is pointless. We will assign
+	// what these pages are in the second pass.
 	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
 		struct early_page_alloc_span *span = &alloc_state->spans[i];
 
-		// TODO: Implement.
-		IGNORE_PARAM(span);
+		alloc_map_physblock(span->start, span->num_pages);
 	}
+
+	// TODO: Second pass, marking page tables.
 }
 
 void early_mem_init(void)
