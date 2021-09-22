@@ -472,10 +472,8 @@ static void alloc_init_pages(physaddr_t first_scratch_page,
 	early_page_alloc_at(pa);
 }
 
-void early_page_alloc_init(void)
+void early_page_alloc_init(struct early_boot_info *info)
 {
-	struct early_boot_info *info = early_get_boot_info();
-
 	// Allocate the page that contains the early page alloc metadata and all
 	// span metadata. As we know that the scratch allocator is allocating
 	// physically contiguous memory we need only track the 1st address and
@@ -610,9 +608,8 @@ void map_early_video(pgdaddr_t pgd)
 	_map_page_range(pgd, va, pa, num_pages, MAP_DEVICE, &early_allocators);
 }
 
-void early_remap_page_tables(void)
+void early_remap_page_tables(struct early_boot_info *info)
 {
-	struct early_boot_info *info = early_get_boot_info();
 	physaddr_t elf_pa = {KERNEL_ELF_ADDRESS_PHYS};
 	struct elf_header *header = (struct elf_header *)KERNEL_ELF_ADDRESS;
 	pgdaddr_t pgd = early_alloc_pgd();
@@ -634,6 +631,6 @@ void early_mem_init(void)
 	early_normalise_e820(info);
 	info->total_avail_ram_bytes = early_get_total_ram(info);
 	early_scratch_alloc_init(info);
-	early_page_alloc_init();
-	early_remap_page_tables();
+	early_page_alloc_init(info);
+	early_remap_page_tables(info);
 }

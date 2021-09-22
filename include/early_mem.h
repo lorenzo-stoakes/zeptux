@@ -145,7 +145,7 @@ physaddr_t early_scratch_page_alloc(void);
 void early_mem_init(void);
 
 // Initialise the early page allocator.
-void early_page_alloc_init(void);
+void early_page_alloc_init(struct early_boot_info *info);
 
 // Allocate ephemeral page at specific physical address. Panics if already
 // allocated. It will NOT be zeroed.
@@ -190,7 +190,7 @@ struct early_page_alloc_state *early_get_page_alloc_state(void);
 
 // Move from the early page table structure (1 GiB direct, ELF image mpaping) to
 // an actually correct mapping.
-void early_remap_page_tables(void);
+void early_remap_page_tables(struct early_boot_info *info);
 
 // Map kernel ELF into memory using the specific ELF header (it is assumed the
 // pointer points to beginning of the ELF) mapping num_pages into memory and
