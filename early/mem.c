@@ -621,6 +621,18 @@ void early_remap_page_tables(struct early_boot_info *info)
 	kernel_root_pgd = pgd;
 }
 
+void early_init_mem_map(void)
+{
+	// For each range of available physical memory, allocate a physblock per
+	// page and map from KERNEL_MEM_MAP_ADDRESS.
+	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
+		struct early_page_alloc_span *span = &alloc_state->spans[i];
+
+		// TODO: Implement.
+		IGNORE_PARAM(span);
+	}
+}
+
 void early_mem_init(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
@@ -633,4 +645,5 @@ void early_mem_init(void)
 	early_scratch_alloc_init(info);
 	early_page_alloc_init(info);
 	early_remap_page_tables(info);
+	early_init_mem_map();
 }

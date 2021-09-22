@@ -199,6 +199,11 @@ void early_remap_page_tables(struct early_boot_info *info);
 void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
 			  pgdaddr_t pgd);
 
+// Initialise an array of physblocks describing physical memory, allocating
+// pages to store this information and then mapping from
+// KERNEL_MEM_MAP_ADDRESS. We index into this array by PFN.
+void early_init_mem_map(void);
+
 // Generate early page allocation functions for each page level.
 #define GEN_PAGE_ALLOC(pagelevel)                                     \
 	static inline pagelevel##addr_t early_alloc_##pagelevel(void) \
