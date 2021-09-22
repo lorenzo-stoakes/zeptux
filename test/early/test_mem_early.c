@@ -365,6 +365,37 @@ const char *assert_early_page_alloc_correct(void)
 	pa = early_page_alloc();
 	assert(pa.x == first_pa.x, "Freeing doesn't allow us to reobtain PA?");
 
+	// Free again.
+	early_page_free(pa);
+
+	// Allocate at the same address.
+	early_page_alloc_at(pa);
+	// Free it once more.
+	early_page_free(pa);
+	// We should get the same back, if so everything is working as expected.
+	pa = early_page_alloc();
+	assert(pa.x == first_pa.x,
+	       "alloc_at() not allocating where we expect?");
+	early_page_free(pa);
+
+	// Allocate ephemeral pages and expect everything to work as expected.
+	uint64_t prev_ephemeral = state->ephemeral_pages;
+	early_page_alloc_ephemeral_at(pa);
+	assert(state->ephemeral_pages == prev_ephemeral + 1,
+	       "Ephemeral page not counted?");
+	early_page_free(pa);
+	assert(state->ephemeral_pages == prev_ephemeral,
+	       "Freed ephemeral page not accounted for?");
+
+	// Allocate pagetable pages and expect everything to work as expected.
+	uint64_t prev_pagetables = state->pagetable_pages;
+	pa = early_pagetable_alloc();
+	assert(state->pagetable_pages == prev_pagetables + 1,
+	       "Pagetable page not counted?");
+	early_page_free(pa);
+	assert(state->pagetable_pages == prev_pagetables,
+	       "Freed pagetable page not accounted for?");
+
 #define CHECK_ZEROED(addr)                                 \
 	{                                                  \
 		physaddr_t phys = {addr.x};                \
@@ -384,6 +415,8 @@ const char *assert_early_page_alloc_correct(void)
 	CHECK_ZEROED(pmd);
 	ptdaddr_t ptd = early_alloc_ptd();
 	CHECK_ZEROED(ptd);
+	assert(state->pagetable_pages == prev_pagetables + 4,
+	       "Page table allocations not counted?");
 
 	uint64_t num_alloc = state->allocated_pages;
 
