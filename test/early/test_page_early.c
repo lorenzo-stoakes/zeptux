@@ -206,6 +206,17 @@ static const char *assert_page_misc(void)
 	assert(pa_next_page(pa).x == 0xb000,
 	       "Page next not advancing to next page");
 
+	virtaddr_t va;
+	va.x = 0xabcd;
+	assert(virt_next_page(va).x == 0xb000,
+	       "Page next not advancing to next page");
+	va.x = 0xafff;
+	assert(virt_next_page(va).x == 0xb000,
+	       "Page next not advancing to next page");
+	va.x = 0xa000;
+	assert(virt_next_page(va).x == 0xb000,
+	       "Page next not advancing to next page");
+
 	pa.x = 0xabcd;
 	assert(pa_prev_page(pa).x == 0x9000,
 	       "Page prev not advancing to previous page");

@@ -344,6 +344,15 @@ static inline physaddr_t pa_prev_page(physaddr_t pa)
 	return pfn_to_pa(pfn);
 }
 
+// Return the virtual address of the page after this VA.
+static inline virtaddr_t virt_next_page(virtaddr_t va)
+{
+	uint64_t offset = va.x >> PAGE_SHIFT;
+	offset++;
+	virtaddr_t ret = {offset << PAGE_SHIFT};
+	return ret;
+}
+
 // Get data offset from virtual address.
 static inline uint64_t virt_data_offset(virtaddr_t addr)
 {
