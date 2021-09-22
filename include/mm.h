@@ -4,6 +4,7 @@
 // maps as provided by hardware and assigned by zeptux.
 
 #include "atomic.h"
+#include "compiler.h"
 #include "spinlock.h"
 #include "types.h"
 // For now we assume x86-64 architecture.
@@ -50,6 +51,11 @@ struct physblock {
 // We assign max 1 TiB of physblock descriptors in the memory map, plus it's
 // useful to keep it a cacheline size.
 static_assert(sizeof(struct physblock) <= 64);
+// A page must be evenly divisible into physblocks.
+// TODO: We have to explicitly assume PAGE_SIZE == 4096 here to avoid a
+// dependency cycle.
+static_assert(sizeof(struct physblock) * (4096 / sizeof(struct physblock)) ==
+	      4096);
 
 // The root kernel PGD.
 extern pgdaddr_t kernel_root_pgd;
