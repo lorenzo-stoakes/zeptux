@@ -25,7 +25,7 @@
 // Define the mask representing everything BUT the specified bit.
 #define BIT_MASK_EXCLUDING(_bit) (~BIT_MASK(_bit))
 // Determine if the specified bit mask is set in a value.
-#define IS_MASK_SET(_val, _mask) !!(((_val) & (_mask)) == _mask)
+#define IS_MASK_SET(_val, _mask) (((_val) & (_mask)) == (_mask))
 // Determine if the specified bit is set in a value.
 #define IS_BIT_SET(_val, _bit) (IS_MASK_SET(_val, BIT_MASK(_bit)))
 // Obtain a mask for the bits below that specified, e.g. BIT_MASK_BELOW(3) = 0b111.
