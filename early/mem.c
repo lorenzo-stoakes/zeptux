@@ -269,8 +269,7 @@ static struct early_page_alloc_span *find_span(physaddr_t pa)
 		struct early_page_alloc_span *span = &alloc_state->spans[i];
 
 		uint64_t start = span->start.x;
-		if (start <= pa.x &&
-		    pa.x < start + span->num_pages * PAGE_SIZE) {
+		if (start <= pa.x && pa.x < start + span->num_pages * PAGE_SIZE) {
 			return span;
 		}
 	}
@@ -552,8 +551,7 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 			&early_allocators);
 
 	// Now work through each section, mapping accordingly.
-	struct elf_section_header *sect_headers =
-		(void *)header + header->shoff;
+	struct elf_section_header *sect_headers = (void *)header + header->shoff;
 
 	for (int i = 0; i < (int)header->shnum; i++) {
 		struct elf_section_header *sect_header = &sect_headers[i];
@@ -580,8 +578,7 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 		}
 
 		// We insist on page-aligned ELF sections.
-		if (!IS_ALIGNED(va.x, PAGE_SIZE) ||
-		    !IS_ALIGNED(pa.x, PAGE_SIZE))
+		if (!IS_ALIGNED(va.x, PAGE_SIZE) || !IS_ALIGNED(pa.x, PAGE_SIZE))
 			early_panic("Misaligned kernel ELF section by %lu",
 				    va.x % PAGE_SIZE);
 
