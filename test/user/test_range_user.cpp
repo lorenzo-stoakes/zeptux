@@ -37,8 +37,7 @@ std::string test_range(void)
 	// Check coincide logic.
 	for (uint64_t from_a = 0; from_a <= 10; from_a++) {
 		for (uint64_t to_a = from_a; to_a <= 10; to_a++) {
-			for (uint64_t from_b = from_a; from_b <= to_a;
-			     from_b++) {
+			for (uint64_t from_b = from_a; from_b <= to_a; from_b++) {
 				for (uint64_t to_b = from_b; to_b <= to_a;
 				     to_b++) {
 					std::ostringstream oss;

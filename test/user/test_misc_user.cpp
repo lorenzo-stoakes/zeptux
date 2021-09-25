@@ -28,8 +28,7 @@ std::string assert_bit_ops_correct()
 	}
 
 	x = ~0UL;
-	assert(find_first_clear_bit(x) == -1,
-	       "find_first_clear_bit(~0) != -1?");
+	assert(find_first_clear_bit(x) == -1, "find_first_clear_bit(~0) != -1?");
 	// Test each individual bit.
 	for (int i = 0; i < 64; i++) {
 		uint64_t mask = 1UL << i;

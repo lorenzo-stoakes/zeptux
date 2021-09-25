@@ -102,8 +102,7 @@
 // in x86 physical memory map, this is where extended memory lives so is safe to
 // write to.
 #define X86_KERNEL_ELF_ADDRESS_PHYS (0x1000000UL)
-#define X86_KERNEL_ELF_ADDRESS \
-	(X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_ADDRESS_PHYS)
+#define X86_KERNEL_ELF_ADDRESS (X86_KERNEL_ELF_BASE + X86_KERNEL_ELF_ADDRESS_PHYS)
 // We specify that the kernel text section comes first and is offset by 0x1000
 // so if booting from boot sector we can quickly load the ELF image direct and
 // jump to it as headers will never exceed 1 page in size.

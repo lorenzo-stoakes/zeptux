@@ -78,8 +78,7 @@ std::string test_bitmap()
 	bitmap_set(bitmap, 3);
 	assert(bitmap_first_set(bitmap) == 0, "bitmap [0,3] first set != 0?");
 	bitmap_set(bitmap, 65);
-	assert(bitmap_first_set(bitmap) == 0,
-	       "bitmap [0,3,65] first set != 0?");
+	assert(bitmap_first_set(bitmap) == 0, "bitmap [0,3,65] first set != 0?");
 	bitmap_set(bitmap, 149);
 	assert(bitmap_first_set(bitmap) == 0,
 	       "bitmap [0,3,65,149] first set != 0?");
@@ -90,8 +89,7 @@ std::string test_bitmap()
 	assert(bitmap_first_set(bitmap) == 65,
 	       "bitmap [65,149] first set != 65?");
 	bitmap_clear(bitmap, 65);
-	assert(bitmap_first_set(bitmap) == 149,
-	       "bitmap [149] first set != 149?");
+	assert(bitmap_first_set(bitmap) == 149, "bitmap [149] first set != 149?");
 	bitmap_clear(bitmap, 149);
 	assert(bitmap_first_set(bitmap) == -1, "empty bitmap reports set bit?");
 
@@ -100,8 +98,7 @@ std::string test_bitmap()
 	bitmap_set(bitmap, 0);
 	assert(bitmap_first_clear(bitmap) == 1, "bitmap [0] first clear != 1?");
 	bitmap_set(bitmap, 1);
-	assert(bitmap_first_clear(bitmap) == 2,
-	       "bitmap [0,1] first clear != 2?");
+	assert(bitmap_first_clear(bitmap) == 2, "bitmap [0,1] first clear != 2?");
 	bitmap_set(bitmap, 3);
 	assert(bitmap_first_clear(bitmap) == 2,
 	       "bitmap [0,1,3] first clear != 2?");
