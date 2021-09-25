@@ -196,13 +196,13 @@ static const char *assert_page_misc(void)
 	early_page_free(pa);
 
 	pa.x = 0xabcd;
-	assert(pa_next_page(pa).x == 0xb000,
+	assert(phys_next_page(pa).x == 0xb000,
 	       "Page next not advancing to next page");
 	pa.x = 0xafff;
-	assert(pa_next_page(pa).x == 0xb000,
+	assert(phys_next_page(pa).x == 0xb000,
 	       "Page next not advancing to next page");
 	pa.x = 0xa000;
-	assert(pa_next_page(pa).x == 0xb000,
+	assert(phys_next_page(pa).x == 0xb000,
 	       "Page next not advancing to next page");
 
 	virtaddr_t va;
@@ -217,27 +217,27 @@ static const char *assert_page_misc(void)
 	       "Page next not advancing to next page");
 
 	pa.x = 0xabcd;
-	assert(pa_prev_page(pa).x == 0x9000,
+	assert(phys_prev_page(pa).x == 0x9000,
 	       "Page prev not advancing to previous page");
 	pa.x = 0xafff;
-	assert(pa_prev_page(pa).x == 0x9000,
+	assert(phys_prev_page(pa).x == 0x9000,
 	       "Page prev not advancing to previous page");
 	pa.x = 0xa000;
-	assert(pa_prev_page(pa).x == 0x9000,
+	assert(phys_prev_page(pa).x == 0x9000,
 	       "Page prev not advancing to previous page");
 
 	pa.x = 0xabcd;
-	assert(pa_to_pfn(pa).x == 0xa,
-	       "pa_to_pfn() not correctly counting PA index");
+	assert(phys_to_pfn(pa).x == 0xa,
+	       "phys_to_pfn() not correctly counting PA index");
 	pa.x = 0xa000;
-	assert(pa_to_pfn(pa).x == 0xa,
-	       "pa_to_pfn() not correctly counting PA index");
+	assert(phys_to_pfn(pa).x == 0xa,
+	       "phys_to_pfn() not correctly counting PA index");
 	pa.x = 0xafff;
-	assert(pa_to_pfn(pa).x == 0xa,
-	       "pa_to_pfn() not correctly counting PA index");
+	assert(phys_to_pfn(pa).x == 0xa,
+	       "phys_to_pfn() not correctly counting PA index");
 	pa.x = 0xb123;
-	assert(pa_to_pfn(pa).x == 0xb,
-	       "pa_to_pfn() not correctly counting PA index");
+	assert(phys_to_pfn(pa).x == 0xb,
+	       "phys_to_pfn() not correctly counting PA index");
 
 	pfn_t pfn = {0xa};
 	assert(pfn_to_pa(pfn).x == 0xa000,
@@ -668,10 +668,10 @@ static const char *assert_memory_map_ranges(void)
 
 	pgdaddr_t pgd = early_alloc_pgd();
 	virtaddr_t va = {0x03ebf6000UL};
-	uint64_t pa_offset = 7 * (1UL << 30);
+	uint64_t phys_offset = 7 * (1UL << 30);
 	// We can be offset from VA + still get 2 MiB, 1 GiB mappings as long as
 	// the lower 30 bits are equal.
-	physaddr_t pa = {va.x + pa_offset};
+	physaddr_t pa = {va.x + phys_offset};
 	uint64_t num_pages = 2631700;
 	uint64_t num_alloc = _map_page_range(pgd, va, pa, num_pages,
 					     MAP_KERNEL_NOGLOBAL, &alloc);
@@ -703,7 +703,7 @@ static const char *assert_memory_map_ranges(void)
 		assert(pude_1gib(pude), "Unexpected non-1 GiB PUDE?");
 
 		virtaddr_t va = encode_virt(0, i, 0, 0, 0);
-		physaddr_t pa = {va.x + pa_offset};
+		physaddr_t pa = {va.x + phys_offset};
 		assert(pude_data_1gib(pude).x == pa.x,
 		       "Incorrect 1 GiB mapping?");
 
@@ -739,7 +739,7 @@ static const char *assert_memory_map_ranges(void)
 		assert(pmde_2mib(pmde), "Unexpected non-2MiB PMDE?");
 
 		virtaddr_t va = encode_virt(0, 0, i, 0, 0);
-		physaddr_t pa = {va.x + pa_offset};
+		physaddr_t pa = {va.x + phys_offset};
 		assert(pmde_data_2mib(pmde).x == pa.x,
 		       "Incorrect 2 MiB mapping?");
 
@@ -767,7 +767,7 @@ static const char *assert_memory_map_ranges(void)
 			assert(pmde_2mib(pmde), "Unexpected non-2MiB PMDE?");
 
 			virtaddr_t va = encode_virt(0, 11, i, 0, 0);
-			physaddr_t pa = {va.x + pa_offset};
+			physaddr_t pa = {va.x + phys_offset};
 			assert(pmde_data_2mib(pmde).x == pa.x,
 			       "Incorrect 2 MiB mapping?");
 
@@ -793,7 +793,7 @@ static const char *assert_memory_map_ranges(void)
 		assert(ptde_present(ptde), "PTDE not present?");
 
 		virtaddr_t va = encode_virt(0, 0, 501, i, 0);
-		physaddr_t pa = {va.x + pa_offset};
+		physaddr_t pa = {va.x + phys_offset};
 		assert(ptde_data(ptde).x == pa.x, "Incorrect 4 KiB mapping?");
 	}
 
@@ -810,7 +810,7 @@ static const char *assert_memory_map_ranges(void)
 		assert(ptde_present(ptde), "PTDE not present?");
 
 		virtaddr_t va = encode_virt(0, 11, 10, i, 0);
-		physaddr_t pa = {va.x + pa_offset};
+		physaddr_t pa = {va.x + phys_offset};
 		assert(ptde_data(ptde).x == pa.x, "Incorrect 4 KiB mapping?");
 	}
 

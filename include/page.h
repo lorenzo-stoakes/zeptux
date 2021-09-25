@@ -319,7 +319,7 @@ static inline void zero_page(physaddr_t pa)
 }
 
 // Convert a physical address to a page frame number.
-static inline pfn_t pa_to_pfn(physaddr_t pa)
+static inline pfn_t phys_to_pfn(physaddr_t pa)
 {
 	pfn_t pfn = {pa.x >> PAGE_SHIFT};
 	return pfn;
@@ -333,18 +333,18 @@ static inline physaddr_t pfn_to_pa(pfn_t pfn)
 }
 
 // Return the physical address of the page after this PA.
-static inline physaddr_t pa_next_page(physaddr_t pa)
+static inline physaddr_t phys_next_page(physaddr_t pa)
 {
-	pfn_t pfn = pa_to_pfn(pa);
+	pfn_t pfn = phys_to_pfn(pa);
 	pfn.x++;
 	return pfn_to_pa(pfn);
 }
 
 // Return the physical address of the page before this PA. Doesn't check for
 // underflow.
-static inline physaddr_t pa_prev_page(physaddr_t pa)
+static inline physaddr_t phys_prev_page(physaddr_t pa)
 {
-	pfn_t pfn = pa_to_pfn(pa);
+	pfn_t pfn = phys_to_pfn(pa);
 	pfn.x--;
 	return pfn_to_pa(pfn);
 }

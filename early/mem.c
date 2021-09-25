@@ -287,8 +287,8 @@ static struct early_page_alloc_span *find_span(physaddr_t pa)
 // Determine the offset of a specific physical address into an early page
 // allocator span in pages. Assumes the PA has already been located within the
 // span via find_span() above.
-static inline uint64_t pa_to_span_offset(struct early_page_alloc_span *span,
-					 physaddr_t pa)
+static inline uint64_t phys_to_span_offset(struct early_page_alloc_span *span,
+					   physaddr_t pa)
 {
 	uint64_t offset_bytes = pa.x - span->start.x;
 	return offset_bytes >> PAGE_SHIFT;
@@ -346,7 +346,7 @@ static void alloc_at(physaddr_t pa, enum early_alloc_type type)
 		early_panic("Unable to locate span for %lx", pa.x);
 	}
 
-	uint64_t offset = pa_to_span_offset(span, pa);
+	uint64_t offset = phys_to_span_offset(span, pa);
 	if (bitmap_is_set(span->alloc_bitmap, offset)) {
 		early_panic("Page containing %lx is already allocated?", pa.x);
 	}
@@ -415,7 +415,7 @@ void early_page_free(physaddr_t pa)
 	if (span == NULL)
 		early_panic("Cannot find span for PA %lx", pa.x);
 
-	uint64_t offset = pa_to_span_offset(span, pa);
+	uint64_t offset = phys_to_span_offset(span, pa);
 
 	if (!bitmap_is_set(span->alloc_bitmap, offset)) {
 		early_panic("Attempt to free unallocated PA %lx", pa.x);
@@ -451,14 +451,14 @@ static void alloc_init_pages(physaddr_t first_scratch_page,
 	physaddr_t pa = first_scratch_page;
 	for (int i = 0; i < (int)num_scratch_pages; i++) {
 		early_page_alloc_ephemeral_at(pa);
-		pa = pa_next_page(pa);
+		pa = phys_next_page(pa);
 	}
 
 	// Allocate kernel stack.
 	pa.x = KERNEL_STACK_ADDRESS_PHYS;
 	for (int i = 0; i < KERNEL_STACK_PAGES; i++) {
 		early_page_alloc_at(pa);
-		pa = pa_prev_page(pa);
+		pa = phys_prev_page(pa);
 	}
 
 	// Alloc early boot info.
@@ -471,7 +471,7 @@ static void alloc_init_pages(physaddr_t first_scratch_page,
 	uint64_t elf_pages = bytes_to_pages(info->kernel_elf_size_bytes);
 	for (int i = 0; i < (int)elf_pages; i++) {
 		early_page_alloc_at(pa);
-		pa = pa_next_page(pa);
+		pa = phys_next_page(pa);
 	}
 
 	// Allocate (ephemeral) early page tables - we will remap the page
@@ -649,7 +649,7 @@ static void alloc_map_physblock(physaddr_t start, uint64_t num_pages)
 {
 	// We have to map the page _containing_ the first VA in the range up to
 	// and including the page _containing_ the last VA in the range.
-	uint64_t start_offset = pa_to_pfn(start).x * sizeof(struct physblock);
+	uint64_t start_offset = phys_to_pfn(start).x * sizeof(struct physblock);
 	uint64_t start_addr = KERNEL_MEM_MAP_ADDRESS + start_offset;
 	uint64_t end_addr = start_addr + num_pages * sizeof(struct physblock);
 	virtaddr_t start_va = {ALIGN(start_addr, PAGE_SIZE)};

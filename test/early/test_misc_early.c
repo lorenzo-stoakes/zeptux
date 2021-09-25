@@ -23,22 +23,22 @@ const char *test_misc(void)
 	assert(!IS_ALIGNED(0x5fff, 0x1000), "IS_ALIGNED(0x5fff, 0x1000)?");
 
 	physaddr_t pa = {0x1fff};
-	pa = pa_next_page(pa);
+	pa = phys_next_page(pa);
 	assert(pa.x == 0x2000,
-	       "pa_next_page() not moving correctly to next page");
-	pa = pa_next_page(pa);
+	       "phys_next_page() not moving correctly to next page");
+	pa = phys_next_page(pa);
 	assert(pa.x == 0x3000,
-	       "pa_next_page() not moving correctly to next page");
-	pa = pa_prev_page(pa);
+	       "phys_next_page() not moving correctly to next page");
+	pa = phys_prev_page(pa);
 	assert(pa.x == 0x2000,
-	       "pa_next_page() not moving correctly to previous page");
+	       "phys_next_page() not moving correctly to previous page");
 
 	assert(bytes_to_pages(0) == 0, "bytes_to_pages(0) != 0?");
 	assert(bytes_to_pages(0x1000) == 1, "bytes_to_pages(0x1000) != 1?");
 	assert(bytes_to_pages(0x1001) == 2, "bytes_to_pages(0x1001) != 2?");
 
 	pa.x = 0xdeadbeef;
-	assert(pa_to_pfn(pa).x == 0xdeadb, "0xdeadbeef PFN != 0xdeadb?");
+	assert(phys_to_pfn(pa).x == 0xdeadb, "0xdeadbeef PFN != 0xdeadb?");
 
 	return NULL;
 }
