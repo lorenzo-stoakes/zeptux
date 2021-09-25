@@ -7,8 +7,8 @@ set special default = zeptux.img
 # Include files automatically added to `cc` and `c++` statements.
 set special includes = include arch/x86_64/include .
 
-# Force rebuild whenever this file is changed.
-set special global_file_deps = zeptux.zbuild
+# Force rebuild whenever these files are changed.
+set special global_file_deps = zeptux.zbuild .clang-format
 
 # Specify the flags to pass to gcc.
 set var BOOT_CFLAGS = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
