@@ -32,10 +32,11 @@
 // Represents the type of a physical memory block.
 typedef enum physblock_type {
 	PHYSBLOCK_UNALLOC = 0,
-	PHYSBLOCK_PAGETABLE = 1,
-	PHYSBLOCK_PHYSBLOCK = 2,
-	PHYSBLOCK_KERNEL = 3,
-	PHYSBLOCK_USER = 4,
+	PHYSBLOCK_TAIL = 1,
+	PHYSBLOCK_PAGETABLE = 2,
+	PHYSBLOCK_PHYSBLOCK = 3,
+	PHYSBLOCK_KERNEL = 4,
+	PHYSBLOCK_USER = 5,
 	PHYSBLOCK_MOVABLE = 1 << 10,
 	PHYSBLOCK_PINNED = 1 << 11,
 } physblock_type_t;
