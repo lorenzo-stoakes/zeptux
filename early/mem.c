@@ -372,7 +372,8 @@ static physaddr_t alloc(enum early_alloc_type type)
 		return span_offset_to_pa(span, offset);
 	}
 
-	early_panic("Out of memory!");
+	early_panic("Out of memory, %lu pages of %lu allocated!",
+		    alloc_state->num_allocated_pages, alloc_state->total_pages);
 }
 
 void early_page_alloc_ephemeral_at(physaddr_t pa)
