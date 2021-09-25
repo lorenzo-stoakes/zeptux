@@ -65,8 +65,7 @@ static void _map_page_range_pmd(pmdaddr_t pmd, struct page_map_state *state)
 			// are not permitted so panic.
 			state->alloc->panic(
 				"Unable to map VA 0x%lx at PA 0x%lx as 2 MiB PMDE already maps to 0x%lx",
-				state->va.x, state->pa.x,
-				pmde_data_2mib(pmde).x);
+				state->va.x, state->pa.x, pmde_data_2mib(pmde).x);
 		} else if (!present) {
 			// PTD not mapped so we have to allocate.
 			ptd = state->alloc->ptd();
@@ -120,8 +119,7 @@ static void _map_page_range_pud(pudaddr_t pud, struct page_map_state *state)
 			// are not permitted so panic.
 			state->alloc->panic(
 				"Unable to map VA 0x%lx at PA 0x%lx as 1 GiB PUDE already maps to 0x%lx",
-				state->va.x, state->pa.x,
-				pude_data_1gib(pude).x);
+				state->va.x, state->pa.x, pude_data_1gib(pude).x);
 		} else if (!present) {
 			// PMD not mapped so we have to allocate.
 			pmd = state->alloc->pmd();
@@ -149,9 +147,9 @@ static void _map_page_range_pud(pudaddr_t pud, struct page_map_state *state)
 	}
 }
 
-uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
-			 physaddr_t start_pa, int64_t num_pages,
-			 map_flags_t flags, struct page_allocators *alloc)
+uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va, physaddr_t start_pa,
+			 int64_t num_pages, map_flags_t flags,
+			 struct page_allocators *alloc)
 {
 	struct page_map_state state = {
 		.va = start_va,
@@ -348,8 +346,7 @@ static void maybe_dump_range(struct page_dump_state *state)
 	}
 
 	char buf[1024];
-	state->printf("0x%016lx - 0x%016lx: %s / ", state->start.x,
-		      state->end.x,
+	state->printf("0x%016lx - 0x%016lx: %s / ", state->start.x, state->end.x,
 		      bytes_to_human(state->end.x - state->start.x, buf,
 				     sizeof(buf)));
 	dump_flags(state);
@@ -412,8 +409,7 @@ static void dump_mapped_pages_ptd(ptdaddr_t ptd, struct page_dump_state *state)
 			continue;
 		}
 
-		virtaddr_t start = encode_virt(state->pgd_index,
-					       state->pud_index,
+		virtaddr_t start = encode_virt(state->pgd_index, state->pud_index,
 					       state->pmd_index, i, 0);
 		virtaddr_t end = {start.x + PAGE_SIZE};
 		extend_dump_range(state, start, end, ptde_raw_flags(ptde));
@@ -463,8 +459,8 @@ static void dump_mapped_pages_pud(pudaddr_t pud, struct page_dump_state *state)
 		}
 
 		if (pude_1gib(pude)) {
-			virtaddr_t start = encode_virt(
-				state->pgd_index, state->pud_index, 0, 0, 0);
+			virtaddr_t start = encode_virt(state->pgd_index,
+						       state->pud_index, 0, 0, 0);
 			virtaddr_t end = {start.x + PAGE_SIZE_1GIB};
 			extend_dump_range(state, start, end,
 					  pude_raw_flags_1gib(pude));

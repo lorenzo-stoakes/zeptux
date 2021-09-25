@@ -66,8 +66,7 @@ static bool elf_check_addrs(struct elf_header *header)
 			continue;
 
 		uint64_t addr = prog_header->vaddr;
-		if (addr != 0 &&
-		    prog_header->offset != addr - KERNEL_ELF_ADDRESS)
+		if (addr != 0 && prog_header->offset != addr - KERNEL_ELF_ADDRESS)
 			return false;
 	}
 
@@ -77,8 +76,7 @@ static bool elf_check_addrs(struct elf_header *header)
 			continue;
 
 		uint64_t addr = sect_header->addr;
-		if (addr != 0 &&
-		    sect_header->offset != addr - KERNEL_ELF_ADDRESS)
+		if (addr != 0 && sect_header->offset != addr - KERNEL_ELF_ADDRESS)
 			return false;
 	}
 
@@ -166,8 +164,7 @@ static struct elf_load_state load1(uint8_t *buf)
 	// Calculate the number of sectors we need to load in order to also load
 	// the section headers.
 	uint32_t section_header_end_bytes =
-		header->shoff +
-		header->shnum * sizeof(struct elf_section_header);
+		header->shoff + header->shnum * sizeof(struct elf_section_header);
 	section_header_end_bytes =
 		ALIGN_UP(section_header_end_bytes, SECTOR_SIZE_BYTES);
 	uint16_t sectors = section_header_end_bytes / SECTOR_SIZE_BYTES;
@@ -230,8 +227,8 @@ static bool load2(uint8_t *buf, struct elf_load_state *state)
 		uint16_t sectors = bytes_aligned / SECTOR_SIZE_BYTES;
 		uint16_t delta = sectors - state->sectors_loaded;
 
-		read_sectors_lba48(&buf[old_bytes_aligned],
-				   state->sectors_loaded, delta);
+		read_sectors_lba48(&buf[old_bytes_aligned], state->sectors_loaded,
+				   delta);
 	}
 
 	return true;

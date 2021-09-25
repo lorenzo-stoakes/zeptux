@@ -53,8 +53,7 @@ static const char *assert_correct_virtaddr(void)
 	// We also need to test that we can convert a virtual address from the
 	// kernel ELF to a physical address correctly.
 	va.x = KERNEL_ELF_ADDRESS + 0xbeef;
-	assert(virt_to_phys(va).x == 0xbeef,
-	       "virt_to_phys() not decoded ELF VA");
+	assert(virt_to_phys(va).x == 0xbeef, "virt_to_phys() not decoded ELF VA");
 
 	ptr = (void *)va.x;
 	assert(virt_ptr_to_phys(ptr).x == 0xbeef,
@@ -385,18 +384,16 @@ static const char *assert_pagetable_helpers(void)
 
 		assign_data_1gib(pud, i, data, MAP_KERNEL_NOGLOBAL);
 		pude = *pude_at(pud, i);
-		assert(pude.x ==
-			       ((data.x & ~PAGE_MASK_1GIB) | PAGE_FLAG_DEFAULT |
-				PAGE_FLAG_NX | PAGE_FLAG_PSE),
+		assert(pude.x == ((data.x & ~PAGE_MASK_1GIB) | PAGE_FLAG_DEFAULT |
+				  PAGE_FLAG_NX | PAGE_FLAG_PSE),
 		       "Cannot assign 1 GiB data page to PUD");
 		assert(pude_data_1gib(pude).x == (data.x & ~PAGE_MASK_1GIB),
 		       "pude_data_1gib() not retrieving data page address");
 
 		assign_data_2mib(pmd, i, data, MAP_KERNEL_NOGLOBAL);
 		pmde = *pmde_at(pmd, i);
-		assert(pmde.x ==
-			       ((data.x & ~PAGE_MASK_2MIB) | PAGE_FLAG_DEFAULT |
-				PAGE_FLAG_NX | PAGE_FLAG_PSE),
+		assert(pmde.x == ((data.x & ~PAGE_MASK_2MIB) | PAGE_FLAG_DEFAULT |
+				  PAGE_FLAG_NX | PAGE_FLAG_PSE),
 		       "Cannot assign 2 MiB data page to PMD");
 		assert(pmde_data_2mib(pmde).x == (data.x & ~PAGE_MASK_2MIB),
 		       "pmde_data_2mib() not retrieving data page address");
@@ -513,8 +510,7 @@ static const char *assert_memory_map_basic(void)
 
 	va = encode_virt(0, 0, 1, 0, 0);
 
-	num_alloc +=
-		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+	num_alloc += _map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
 
 	assert(num_alloc == 4, "New PTD not allocated?");
 
@@ -547,8 +543,7 @@ static const char *assert_memory_map_basic(void)
 	va = encode_virt(0, 1, 0, 0, 0);
 	pa.x = 0xdeadbe000;
 
-	num_alloc +=
-		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+	num_alloc += _map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
 
 	assert(num_alloc == 6, "New PMD, PTD not allocated?");
 
@@ -582,8 +577,7 @@ static const char *assert_memory_map_basic(void)
 	va = encode_virt(1, 0, 0, 0, 0);
 	pa.x = 0xf00b000;
 
-	num_alloc +=
-		_map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
+	num_alloc += _map_page_range(pgd, va, pa, 1, MAP_KERNEL_NOGLOBAL, &alloc);
 
 	assert(num_alloc == 9, "New PUD, PMD, PTD not allocated?");
 

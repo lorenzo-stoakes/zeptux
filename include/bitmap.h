@@ -49,8 +49,7 @@ static inline void bitmap_set_all(struct bitmap *bitmap)
 
 // Initialises the specified bitmap to contain `num_bits` bits. Returns the
 // bitmap for convenience.
-static inline struct bitmap *bitmap_init(struct bitmap *bitmap,
-					 uint64_t num_bits)
+static inline struct bitmap *bitmap_init(struct bitmap *bitmap, uint64_t num_bits)
 {
 	bitmap->num_bits = num_bits;
 	bitmap->num_words = bitmap_calc_words(num_bits);

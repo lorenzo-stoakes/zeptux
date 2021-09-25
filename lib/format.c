@@ -34,8 +34,7 @@ static void _vsnprintf_putc(struct vsnprintf_state *state, char chr)
 }
 
 // Place `chr` into the target buffer `n` times.
-static void _vsnprintf_putc_repeat(struct vsnprintf_state *state, char chr,
-				   int n)
+static void _vsnprintf_putc_repeat(struct vsnprintf_state *state, char chr, int n)
 {
 	for (int i = 0; i < n; i++) {
 		_vsnprintf_putc(state, chr);
@@ -52,8 +51,7 @@ static void _vsnprintf_puts(struct vsnprintf_state *state, const char *str)
 
 // Try to place string `str` into the target buffer, with the specified format
 // settings.
-static void _vsnprintf_puts_format(struct vsnprintf_state *state,
-				   const char *str,
+static void _vsnprintf_puts_format(struct vsnprintf_state *state, const char *str,
 				   struct vsnprintf_format *format)
 {
 	if (format->pad_left)
@@ -186,8 +184,7 @@ int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap)
 		{
 			int64_t val = va_arg(ap, int64_t);
 
-			_vsnprintf_int64(&state, is64 ? val : (int)val,
-					 &format);
+			_vsnprintf_int64(&state, is64 ? val : (int)val, &format);
 			break;
 		}
 		case 'U':
@@ -265,8 +262,7 @@ char *bytes_to_human(uint64_t bytes, char *buf, uint64_t buf_size)
 
 	// If unit is < GiB it's ok to just round off.
 	if (unit_index < 3 || bytes % unit_mult == 0) {
-		snprintf(buf, buf_size, "%5lu %s", num_units,
-			 units[unit_index]);
+		snprintf(buf, buf_size, "%5lu %s", num_units, units[unit_index]);
 		return buf;
 	}
 

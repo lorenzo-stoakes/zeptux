@@ -206,8 +206,7 @@ typedef enum {
 	MAP_KERNEL_NOGLOBAL = 2,
 	MAP_DEVICE = 3,
 	// Upper bits specify modifiers:
-	MAP_CODE =
-		BIT_MASK(MAP_FLAG_MODE_BITS + 0), // We default to setting NX.
+	MAP_CODE = BIT_MASK(MAP_FLAG_MODE_BITS + 0), // We default to setting NX.
 	MAP_READONLY = BIT_MASK(MAP_FLAG_MODE_BITS + 1),
 } map_flags_t;
 #define MAP_FLAG_MODE_MASK (BIT_MASK_BELOW(MAP_FLAG_MODE_BITS))
@@ -604,8 +603,8 @@ static inline void assign_pud(pgdaddr_t pgd, uint64_t index, pudaddr_t pud)
 }
 
 // Assign a 1 GiB data page to a PUDE.
-static inline void assign_data_1gib(pudaddr_t pud, uint64_t index,
-				    physaddr_t pa, map_flags_t flags)
+static inline void assign_data_1gib(pudaddr_t pud, uint64_t index, physaddr_t pa,
+				    map_flags_t flags)
 {
 	pude_at(pud, index)->x = (pa.x & ~PAGE_MASK_1GIB) | PAGE_FLAG_PSE |
 				 map_flags_to_page_flags(flags);
@@ -618,8 +617,8 @@ static inline void assign_pmd(pudaddr_t pud, uint64_t index, pmdaddr_t pmd)
 }
 
 // Assign a 2 MiB data page to a PMDE.
-static inline void assign_data_2mib(pmdaddr_t pmd, uint64_t index,
-				    physaddr_t pa, map_flags_t flags)
+static inline void assign_data_2mib(pmdaddr_t pmd, uint64_t index, physaddr_t pa,
+				    map_flags_t flags)
 {
 	pmde_at(pmd, index)->x = (pa.x & ~PAGE_MASK_2MIB) | PAGE_FLAG_PSE |
 				 map_flags_to_page_flags(flags);
@@ -642,9 +641,9 @@ static inline void assign_data(ptdaddr_t ptd, uint64_t index, physaddr_t pa,
 // Map a range of virtual addresses from [start_va, start_va + num_pages) to
 // [start_pa, start_pa + num_pages) under PGD and allocating new pages as
 // required using alloc functions. Returns the number of pages allocated.
-uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va,
-			 physaddr_t start_pa, int64_t num_pages,
-			 map_flags_t flags, struct page_allocators *alloc);
+uint64_t _map_page_range(pgdaddr_t pgd, virtaddr_t start_va, physaddr_t start_pa,
+			 int64_t num_pages, map_flags_t flags,
+			 struct page_allocators *alloc);
 
 // Walk page tables to retrieve the raw arch page flags for the specified VA in
 // the specified PGD. Use `alloc` to panic.

@@ -32,7 +32,7 @@ BraceWrapping:
     SplitEmptyRecord: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
-BreakBeforeTernaryOperators: false
+BreakBeforeTernaryOperators: true
 BreakStringLiterals: false
 ColumnLimit: 82
 ContinuationIndentWidth: 8

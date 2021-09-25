@@ -47,9 +47,9 @@ static inline int early_puts(const char *str)
 	return early_printf("%s\n", str);
 }
 
-#define early_panic(fmt, ...)                      \
-	_early_panic("at " __FILE__ ":" STRINGIFY( \
-		__LINE__) ": " fmt __VA_OPT__(, ) __VA_ARGS__)
+#define early_panic(fmt, ...)                                                    \
+	_early_panic("at " __FILE__ ":" STRINGIFY(__LINE__) ": " fmt __VA_OPT__( \
+		, ) __VA_ARGS__)
 
 // Early kernel panic function, simply outputs the specified panic reason then
 // halts. The full fat version will output additional useful information for
