@@ -5,6 +5,7 @@
 
 #include "atomic.h"
 #include "compiler.h"
+#include "list.h"
 #include "spinlock.h"
 #include "types.h"
 // For now we assume x86-64 architecture.
@@ -29,6 +30,9 @@
 // The maximum number of pages available in the kernel stack.
 #define KERNEL_STACK_PAGES (4)
 
+// The maximum 2^order size of a physically contiguous allocation.
+#define MAX_ORDER (12)
+
 // Represents the type of a physical memory block.
 typedef enum physblock_type {
 	PHYSBLOCK_UNALLOC = 0,
@@ -49,7 +53,10 @@ struct physblock {
 	// head_offset in each tail page to indicate where the head is.
 	uint8_t head_offset;
 	uint8_t order; // 2^order pages in this physblock.
+
 	physblock_type_t type;
+
+	struct list_node node;
 
 	uint32_t refcount;
 	spinlock_t lock; // All fields are protected by this lock.
@@ -62,6 +69,30 @@ static_assert(sizeof(struct physblock) <= 64);
 // dependency cycle.
 static_assert(sizeof(struct physblock) * (4096 / sizeof(struct physblock)) ==
 	      4096);
+
+// Represents per-order statistics.
+struct phys_alloc_order_stats {
+	// Number of pages each comprising 2^order 4 KiB pages.
+	uint64_t num_pages;
+	uint64_t num_free_pages;
+};
+
+// Represents overall statistics relating to the physical allocator.
+struct phys_alloc_stats {
+	// These stats include pages comprising compound pages.
+	uint64_t num_4k_pages;
+	uint64_t num_free_4k_pages;
+	uint64_t num_pagetable_pages;
+	uint64_t num_physblock_pages;
+	// Per-order statistics.
+	struct phys_alloc_order_stats order[MAX_ORDER];
+};
+
+// Represents physical allocator state.
+struct phys_alloc_state {
+	struct list free_lists[MAX_ORDER];
+	struct phys_alloc_stats stats;
+};
 
 // The root kernel PGD.
 extern pgdaddr_t kernel_root_pgd;
