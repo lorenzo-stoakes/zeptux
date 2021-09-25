@@ -43,3 +43,8 @@ static inline int64_t find_first_clear_bit(uint64_t x)
 {
 	return find_first_set_bit(~x);
 }
+
+// Determines the offset of `_member` within aggregate `_type`.
+#ifndef offsetof
+#define offsetof(_type, _member) __builtin_offsetof(_type, _member)
+#endif

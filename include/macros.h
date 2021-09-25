@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compiler.h"
 #include "consts.h"
 #include "types.h"
 
@@ -42,3 +43,9 @@
 
 // Suppresses unused parameter warnings.
 #define IGNORE_PARAM(_param) (void)_param
+
+// Obtain a pointer to the container of the aggregate type `_type` containing
+// `_member` pointed to by `_ptr`
+// e.g. container_of(&foo->bar, struct foo, bar) == &foo
+#define container_of(_ptr, _type, _member) \
+	((_type *)((uint8_t *)(_ptr)-offsetof(_type, _member)))

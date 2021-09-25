@@ -6,6 +6,7 @@
 #include "bitmap.h"
 #include "elf.h"
 #include "format.h"
+#include "list.h"
 #include "macros.h"
 #include "mm.h"
 #include "page.h"
