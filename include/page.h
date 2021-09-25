@@ -263,11 +263,17 @@ static inline virtaddr_t phys_to_virt(physaddr_t addr)
 	return va;
 }
 
+// Get pointer for virtual address.
+static inline void *virt_to_ptr(virtaddr_t va)
+{
+	return (void *)va.x;
+}
+
 // Get pointer for virtual address (via direct mapping) from physical
 // address.
 static inline void *phys_to_virt_ptr(physaddr_t addr)
 {
-	return (void *)phys_to_virt(addr).x;
+	return virt_to_ptr(phys_to_virt(addr));
 }
 
 // Get pointer for virtual address (via direct mapping) from page table
