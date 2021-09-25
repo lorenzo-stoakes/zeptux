@@ -315,10 +315,8 @@ const char *assert_early_page_alloc_correct(void)
 			break;
 		}
 	}
-	// We'll allow the code to segfault in the bizarre (or broken!) scenario
-	// where there is none... But check to see that there is another span
-	// after us so we can test moving to it.
-	assert(span_index < (int)state->num_spans, "Insufficient spans to test");
+
+	bool can_test_next_span = span_index + 1 < (int)state->num_spans;
 
 	uint64_t prev_total_alloc = state->num_allocated_pages;
 	uint64_t prev_span_alloc = span->num_allocated_pages;
@@ -326,7 +324,13 @@ const char *assert_early_page_alloc_correct(void)
 	// Allocate the rest of the span.
 	physaddr_t first_pa;
 	uint64_t num_free = span->num_pages - span->num_allocated_pages;
+
 	assert(num_free > 0, "Not enough free pages available in span to test");
+
+	// If we are unable to test the next span, limit scope.
+	if (!can_test_next_span)
+		num_free = num_free < 1000 ? num_free : 1000;
+
 	for (uint64_t i = 0; i < num_free; i++) {
 		physaddr_t pa = early_page_alloc();
 		if (i == 0)
@@ -344,13 +348,19 @@ const char *assert_early_page_alloc_correct(void)
 		       "Allocated page not page-aligned?");
 	}
 
-	struct early_page_alloc_span *next_span = &state->spans[span_index + 1];
-	prev_span_alloc = next_span->num_allocated_pages;
+	physaddr_t pa;
+	if (can_test_next_span) {
+		struct early_page_alloc_span *next_span =
+			&state->spans[span_index + 1];
+		prev_span_alloc = next_span->num_allocated_pages;
 
-	physaddr_t pa = early_page_alloc();
-	assert(next_span->num_allocated_pages == prev_span_alloc + 1,
-	       "Not allocated from next span?");
-	assert(pa.x >= next_span->start.x, "Not allocated from next span?");
+		pa = early_page_alloc();
+
+		assert(next_span->num_allocated_pages == prev_span_alloc + 1,
+		       "Not allocated from next span?");
+		assert(pa.x >= next_span->start.x,
+		       "Not allocated from next span?");
+	}
 
 	// Now free from the first span.
 	prev_total_alloc = state->num_allocated_pages;
