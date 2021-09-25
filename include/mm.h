@@ -42,8 +42,12 @@ typedef enum physblock_type {
 
 // Describes a 'block' of physical memory of size 2^order pages.
 struct physblock {
+	// If a physblock comprises > 1 page and a PA relates to a page other
+	// than the first, we store all relevant physblock data in only the
+	// first 'head' page, and not the remaining 'tail' pages. We set
+	// head_offset in each tail page to indicate where the head is.
 	uint8_t head_offset;
-	uint8_t order;
+	uint8_t order; // 2^order pages in this physblock.
 	physblock_type_t type;
 
 	uint32_t refcount;
