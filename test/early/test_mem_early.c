@@ -517,8 +517,7 @@ static const char *assert_early_map_kernel_elf_correct(void)
 		       KERNEL_ELF_ADDRESS_PHYS,
 	       "Header not mapped?");
 
-	struct elf_section_header *sect_headers =
-		(void *)header + header->shoff;
+	struct elf_section_header *sect_headers = (void *)header + header->shoff;
 	for (int i = 0; i < (int)header->shnum; i++) {
 		struct elf_section_header *sect_header = &sect_headers[i];
 
