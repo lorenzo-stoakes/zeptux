@@ -664,6 +664,50 @@ static void alloc_map_physblock(physaddr_t start, uint64_t num_pages)
 	}
 }
 
+// Determine the physical address of memory referenced by an offset into an
+// early page allocator span.
+static physaddr_t span_to_phys(struct early_page_alloc_span *span, uint64_t i)
+{
+	physaddr_t pa = {span->start.x + PAGE_SIZE * i};
+
+	return pa;
+}
+
+// Initialise the physblock for the early page allocated span. Assumes
+// physblocks allocated and mapped.
+static void init_physblock_span(struct early_page_alloc_span *span)
+{
+	// Everything is order-0 to begin with (the early page allocator cannot
+	// allocate order > 0 pages) so we don't need to do anything special to
+	// handle order > 0 physblocks.
+	for (uint64_t i = 0; i < span->num_pages; i++) {
+		// Non-allocated blocks are correctly specified by the zeroed
+		// initial data.
+		if (!bitmap_is_set(span->alloc_bitmap, i))
+			continue;
+
+		physaddr_t pa = span_to_phys(span, i);
+		struct physblock *block = phys_to_physblock_lock(pa);
+
+		// Ephemeral pages need not be assigned as they will not be
+		// added to the physical allocator.
+		if (bitmap_is_set(span->ephemeral_bitmap, i))
+			goto next;
+
+		if (bitmap_is_set(span->pagetable_bitmap, i)) {
+			block->type = PHYSBLOCK_PAGETABLE;
+		} else if (bitmap_is_set(span->physblock_bitmap, i)) {
+			block->type = PHYSBLOCK_PHYSBLOCK;
+		} else {
+			// We default to movable.
+			block->type = PHYSBLOCK_KERNEL | PHYSBLOCK_MOVABLE;
+		}
+
+	next:
+		spinlock_release(&block->lock);
+	}
+}
+
 void early_init_mem_map(void)
 {
 	// For each range of available physical memory, allocate a physblock per
@@ -679,7 +723,10 @@ void early_init_mem_map(void)
 		alloc_map_physblock(span->start, span->num_pages);
 	}
 
-	// TODO: Second pass, marking page tables.
+	// Second pass, initialising the physblocks.
+	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
+		init_physblock_span(&alloc_state->spans[i]);
+	}
 }
 
 void early_mem_init(void)
