@@ -2,6 +2,7 @@
 
 #include "macros.h"
 #include "mm.h"
+#include "spinlock.h"
 #include "string.h"
 #include "types.h"
 #include "x86-consts.h"
@@ -666,3 +667,47 @@ physaddr_t _walk_virt_to_phys(pgdaddr_t pgd, virtaddr_t va,
 // is set are merged with 4 KiB pages for the purposes of dumping ranges.
 void dump_mapped_pages(pgdaddr_t pgd, bool mask_huge_flag,
 		       int (*printf)(const char *fmt, ...));
+
+// Obtain a pointer to a physblock from a PFN without either locking it or
+// determining if the block is a tail entry.
+static inline struct physblock *_pfn_to_physblock_raw(pfn_t pfn)
+{
+	virtaddr_t va = {KERNEL_MEM_MAP_ADDRESS +
+			 pfn.x * sizeof(struct physblock)};
+
+	return (struct physblock *)virt_to_ptr(va);
+}
+
+// Obtain a pointer to a physblock from a PFN without determining if the block
+// is a tail entry.
+static inline struct physblock *_pfn_to_physblock_raw_lock(pfn_t pfn)
+{
+	struct physblock *block = _pfn_to_physblock_raw(pfn);
+	spinlock_acquire(&block->lock);
+
+	return block;
+}
+
+// Obtain the HEAD physblock entry for this TAIL physblock.
+// ASSUMES: physblock lock is held.
+static inline struct physblock *physblock_tail_to_head(struct physblock *block,
+						       pfn_t pfn)
+{
+	uint8_t offset = block->head_offset;
+	spinlock_release(&block->lock);
+
+	pfn.x -= offset;
+	return _pfn_to_physblock_raw_lock(pfn);
+}
+
+// Obtain a pointer to a physblock, obtains head physblock if points to a tail
+// entry and ACQUIRES spinlock on the physblock which the consumer must release
+// after use.
+static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
+{
+	pfn_t pfn = phys_to_pfn(pa);
+	struct physblock *block = _pfn_to_physblock_raw_lock(pfn);
+
+	return block->head_offset == 0 ? block
+				       : physblock_tail_to_head(block, pfn);
+}
