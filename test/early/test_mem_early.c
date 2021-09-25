@@ -310,7 +310,7 @@ const char *assert_early_page_alloc_correct(void)
 	int span_index = 0;
 	for (int i = 0; i < (int)state->num_spans; i++) {
 		span = &state->spans[i];
-		if (span->allocated_pages < span->num_pages) {
+		if (span->num_allocated_pages < span->num_pages) {
 			span_index = i;
 			break;
 		}
@@ -318,48 +318,47 @@ const char *assert_early_page_alloc_correct(void)
 	// We'll allow the code to segfault in the bizarre (or broken!) scenario
 	// where there is none... But check to see that there is another span
 	// after us so we can test moving to it.
-	assert(span_index < (int)state->num_spans,
-	       "Insufficient spans to test");
+	assert(span_index < (int)state->num_spans, "Insufficient spans to test");
 
-	uint64_t prev_total_alloc = state->allocated_pages;
-	uint64_t prev_span_alloc = span->allocated_pages;
+	uint64_t prev_total_alloc = state->num_allocated_pages;
+	uint64_t prev_span_alloc = span->num_allocated_pages;
 
 	// Allocate the rest of the span.
 	physaddr_t first_pa;
-	uint64_t num_free = span->num_pages - span->allocated_pages;
+	uint64_t num_free = span->num_pages - span->num_allocated_pages;
 	assert(num_free > 0, "Not enough free pages available in span to test");
 	for (uint64_t i = 0; i < num_free; i++) {
 		physaddr_t pa = early_page_alloc();
 		if (i == 0)
 			first_pa = pa;
 
-		assert(state->allocated_pages == prev_total_alloc + 1,
+		assert(state->num_allocated_pages == prev_total_alloc + 1,
 		       "Alloc state total alloc count not incremented?");
-		assert(span->allocated_pages == prev_span_alloc + 1,
+		assert(span->num_allocated_pages == prev_span_alloc + 1,
 		       "Span total alloc count not incremented?");
 
-		prev_total_alloc = state->allocated_pages;
-		prev_span_alloc = span->allocated_pages;
+		prev_total_alloc = state->num_allocated_pages;
+		prev_span_alloc = span->num_allocated_pages;
 
 		assert(IS_ALIGNED(pa.x, PAGE_SIZE),
 		       "Allocated page not page-aligned?");
 	}
 
 	struct early_page_alloc_span *next_span = &state->spans[span_index + 1];
-	prev_span_alloc = next_span->allocated_pages;
+	prev_span_alloc = next_span->num_allocated_pages;
 
 	physaddr_t pa = early_page_alloc();
-	assert(next_span->allocated_pages == prev_span_alloc + 1,
+	assert(next_span->num_allocated_pages == prev_span_alloc + 1,
 	       "Not allocated from next span?");
 	assert(pa.x >= next_span->start.x, "Not allocated from next span?");
 
 	// Now free from the first span.
-	prev_total_alloc = state->allocated_pages;
-	prev_span_alloc = span->allocated_pages;
+	prev_total_alloc = state->num_allocated_pages;
+	prev_span_alloc = span->num_allocated_pages;
 	early_page_free(first_pa);
-	assert(state->allocated_pages == prev_total_alloc - 1,
+	assert(state->num_allocated_pages == prev_total_alloc - 1,
 	       "Freeing didn't reduce allocated?");
-	assert(span->allocated_pages == prev_span_alloc - 1,
+	assert(span->num_allocated_pages == prev_span_alloc - 1,
 	       "Freeing didn't reduce allocated?");
 
 	// We should expect to get it right back.
@@ -375,26 +374,25 @@ const char *assert_early_page_alloc_correct(void)
 	early_page_free(pa);
 	// We should get the same back, if so everything is working as expected.
 	pa = early_page_alloc();
-	assert(pa.x == first_pa.x,
-	       "alloc_at() not allocating where we expect?");
+	assert(pa.x == first_pa.x, "alloc_at() not allocating where we expect?");
 	early_page_free(pa);
 
 	// Allocate ephemeral pages and expect everything to work as expected.
-	uint64_t prev_ephemeral = state->ephemeral_pages;
+	uint64_t prev_ephemeral = state->num_ephemeral_pages;
 	early_page_alloc_ephemeral_at(pa);
-	assert(state->ephemeral_pages == prev_ephemeral + 1,
+	assert(state->num_ephemeral_pages == prev_ephemeral + 1,
 	       "Ephemeral page not counted?");
 	early_page_free(pa);
-	assert(state->ephemeral_pages == prev_ephemeral,
+	assert(state->num_ephemeral_pages == prev_ephemeral,
 	       "Freed ephemeral page not accounted for?");
 
 	// Allocate pagetable pages and expect everything to work as expected.
-	uint64_t prev_pagetables = state->pagetable_pages;
+	uint64_t prev_pagetables = state->num_pagetable_pages;
 	pa = early_pagetable_alloc();
-	assert(state->pagetable_pages == prev_pagetables + 1,
+	assert(state->num_pagetable_pages == prev_pagetables + 1,
 	       "Pagetable page not counted?");
 	early_page_free(pa);
-	assert(state->pagetable_pages == prev_pagetables,
+	assert(state->num_pagetable_pages == prev_pagetables,
 	       "Freed pagetable page not accounted for?");
 
 #define CHECK_ZEROED(addr)                                 \
@@ -416,22 +414,22 @@ const char *assert_early_page_alloc_correct(void)
 	CHECK_ZEROED(pmd);
 	ptdaddr_t ptd = early_alloc_ptd();
 	CHECK_ZEROED(ptd);
-	assert(state->pagetable_pages == prev_pagetables + 4,
+	assert(state->num_pagetable_pages == prev_pagetables + 4,
 	       "Page table allocations not counted?");
 
-	uint64_t num_alloc = state->allocated_pages;
+	uint64_t num_alloc = state->num_allocated_pages;
 
 	early_free_pgd(pgd);
-	assert(state->allocated_pages == num_alloc - 1, "PGD not freed");
+	assert(state->num_allocated_pages == num_alloc - 1, "PGD not freed");
 
 	early_free_pud(pud);
-	assert(state->allocated_pages == num_alloc - 2, "PUD not freed");
+	assert(state->num_allocated_pages == num_alloc - 2, "PUD not freed");
 
 	early_free_pmd(pmd);
-	assert(state->allocated_pages == num_alloc - 3, "PMD not freed");
+	assert(state->num_allocated_pages == num_alloc - 3, "PMD not freed");
 
 	early_free_ptd(ptd);
-	assert(state->allocated_pages == num_alloc - 4, "PTD not freed");
+	assert(state->num_allocated_pages == num_alloc - 4, "PTD not freed");
 
 	return NULL;
 }

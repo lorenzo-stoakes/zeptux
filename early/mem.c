@@ -305,19 +305,19 @@ static void mark_page_allocated(struct early_page_alloc_span *span,
 				uint64_t offset, enum early_alloc_type type)
 {
 	bitmap_set(span->alloc_bitmap, offset);
-	alloc_state->allocated_pages++;
-	span->allocated_pages++;
+	alloc_state->num_allocated_pages++;
+	span->num_allocated_pages++;
 
 	switch (type) {
 	case EARLY_ALLOC_NORMAL:
 		break;
 	case EARLY_ALLOC_EPHEMERAL:
 		bitmap_set(span->ephemeral_bitmap, offset);
-		alloc_state->ephemeral_pages++;
+		alloc_state->num_ephemeral_pages++;
 		break;
 	case EARLY_ALLOC_PAGETABLE:
 		bitmap_set(span->pagetable_bitmap, offset);
-		alloc_state->pagetable_pages++;
+		alloc_state->num_pagetable_pages++;
 		break;
 	}
 }
@@ -402,17 +402,17 @@ void early_page_free(physaddr_t pa)
 	}
 
 	bitmap_clear(span->alloc_bitmap, offset);
-	alloc_state->allocated_pages--;
-	span->allocated_pages--;
+	alloc_state->num_allocated_pages--;
+	span->num_allocated_pages--;
 
 	if (bitmap_is_set(span->ephemeral_bitmap, offset)) {
 		bitmap_clear(span->ephemeral_bitmap, offset);
-		alloc_state->ephemeral_pages--;
+		alloc_state->num_ephemeral_pages--;
 	}
 
 	if (bitmap_is_set(span->pagetable_bitmap, offset)) {
 		bitmap_clear(span->pagetable_bitmap, offset);
-		alloc_state->pagetable_pages--;
+		alloc_state->num_pagetable_pages--;
 	}
 }
 

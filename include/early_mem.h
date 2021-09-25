@@ -60,7 +60,7 @@ struct scratch_alloc_state {
 struct early_page_alloc_span {
 	physaddr_t start;
 	uint64_t num_pages;
-	uint64_t allocated_pages;
+	uint64_t num_allocated_pages;
 	struct bitmap *alloc_bitmap;
 	struct bitmap *ephemeral_bitmap;
 	struct bitmap *pagetable_bitmap;
@@ -70,9 +70,9 @@ struct early_page_alloc_span {
 // pages will be preserved when switching to the 'real' physical allocator.
 struct early_page_alloc_state {
 	uint64_t total_pages;
-	uint64_t allocated_pages; // Includes ephemeral pages.
-	uint64_t ephemeral_pages;
-	uint64_t pagetable_pages;
+	uint64_t num_allocated_pages; // Includes ephemeral pages.
+	uint64_t num_ephemeral_pages;
+	uint64_t num_pagetable_pages;
 	uint64_t num_spans;
 	struct early_page_alloc_span spans[];
 };
