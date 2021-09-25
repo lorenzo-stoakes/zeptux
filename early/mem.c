@@ -625,19 +625,20 @@ void early_remap_page_tables(struct early_boot_info *info)
 // `start`.
 static void alloc_map_physblock(physaddr_t start, uint64_t num_pages)
 {
-	uint64_t num_physblock_pages =
-		bytes_to_pages(num_pages * sizeof(struct physblock));
+	// We have to map the page _containing_ the first VA in the range up to
+	// and including the page _containing_ the last VA in the range.
+	uint64_t start_offset = pa_to_pfn(start).x * sizeof(struct physblock);
+	uint64_t start_addr = KERNEL_MEM_MAP_ADDRESS + start_offset;
+	uint64_t end_addr = start_addr + num_pages * sizeof(struct physblock);
+	virtaddr_t start_va = {ALIGN(start_addr, PAGE_SIZE)};
+	virtaddr_t end_va = {ALIGN_UP(end_addr, PAGE_SIZE)};
 
-	pfn_t pfn = pa_to_pfn(start);
-	virtaddr_t va = {KERNEL_MEM_MAP_ADDRESS +
-			 sizeof(struct physblock) * pfn.x};
-	for (uint64_t i = 0; i < num_physblock_pages; i++) {
+	for (virtaddr_t va = start_va; va.x < end_va.x; va = virt_next_page(va)) {
 		// We initialise all physblocks to zero.
 		physaddr_t pa = early_page_alloc_zero();
 
 		_map_page_range(kernel_root_pgd, va, pa, 1, MAP_KERNEL,
 				&early_allocators);
-		va = virt_next_page(va);
 	}
 }
 
