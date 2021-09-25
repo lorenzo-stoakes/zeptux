@@ -405,6 +405,15 @@ const char *assert_early_page_alloc_correct(void)
 	assert(state->num_pagetable_pages == prev_pagetables,
 	       "Freed pagetable page not accounted for?");
 
+	uint64_t prev_physblocks = state->num_physblock_pages;
+	pa = early_physblock_page_alloc();
+	CHECK_ZEROED(pa);
+	assert(state->num_physblock_pages == prev_physblocks + 1,
+	       "physblock page not counted?");
+	early_page_free(pa);
+	assert(state->num_physblock_pages == prev_physblocks,
+	       "Freed physblock page not accounted for?");
+
 	pa = early_page_alloc_zero();
 	CHECK_ZEROED(pa);
 	pgdaddr_t pgd = early_alloc_pgd();

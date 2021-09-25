@@ -4,6 +4,7 @@ enum early_alloc_type {
 	EARLY_ALLOC_NORMAL,
 	EARLY_ALLOC_EPHEMERAL,
 	EARLY_ALLOC_PAGETABLE,
+	EARLY_ALLOC_PHYSBLOCK,
 };
 
 // Stores scratch allocator state. We will only access this single-threaded so
@@ -254,11 +255,17 @@ static uint64_t alloc_span_bitmaps(struct early_page_alloc_span *span)
 		early_scratch_page_alloc();
 	}
 
+	span->physblock_bitmap = phys_to_virt_ptr(early_scratch_page_alloc());
+	for (int i = 1; i < (int)bitmap_pages; i++) {
+		early_scratch_page_alloc();
+	}
+
 	bitmap_init(span->alloc_bitmap, num_pages);
 	bitmap_init(span->ephemeral_bitmap, num_pages);
 	bitmap_init(span->pagetable_bitmap, num_pages);
+	bitmap_init(span->physblock_bitmap, num_pages);
 
-	return bitmap_pages * 3;
+	return bitmap_pages * 4;
 }
 
 // Find the early page allocator span that contains a specified physical
@@ -319,6 +326,12 @@ static void mark_page_allocated(struct early_page_alloc_span *span,
 		bitmap_set(span->pagetable_bitmap, offset);
 		alloc_state->num_pagetable_pages++;
 		break;
+	case EARLY_ALLOC_PHYSBLOCK:
+		bitmap_set(span->physblock_bitmap, offset);
+		alloc_state->num_physblock_pages++;
+		break;
+	default:
+		early_panic("Impossible!");
 	}
 }
 
@@ -389,6 +402,13 @@ physaddr_t early_pagetable_alloc(void)
 	return pa;
 }
 
+physaddr_t early_physblock_page_alloc(void)
+{
+	physaddr_t pa = alloc(EARLY_ALLOC_PHYSBLOCK);
+	zero_page(pa);
+	return pa;
+}
+
 void early_page_free(physaddr_t pa)
 {
 	struct early_page_alloc_span *span = find_span(pa);
@@ -413,6 +433,11 @@ void early_page_free(physaddr_t pa)
 	if (bitmap_is_set(span->pagetable_bitmap, offset)) {
 		bitmap_clear(span->pagetable_bitmap, offset);
 		alloc_state->num_pagetable_pages--;
+	}
+
+	if (bitmap_is_set(span->physblock_bitmap, offset)) {
+		bitmap_clear(span->physblock_bitmap, offset);
+		alloc_state->num_physblock_pages--;
 	}
 }
 
@@ -632,7 +657,7 @@ static void alloc_map_physblock(physaddr_t start, uint64_t num_pages)
 
 	for (virtaddr_t va = start_va; va.x < end_va.x; va = virt_next_page(va)) {
 		// We initialise all physblocks to zero.
-		physaddr_t pa = early_page_alloc_zero();
+		physaddr_t pa = early_physblock_page_alloc();
 
 		_map_page_range(kernel_root_pgd, va, pa, 1, MAP_KERNEL,
 				&early_allocators);

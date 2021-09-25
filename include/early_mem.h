@@ -63,6 +63,7 @@ struct early_page_alloc_span {
 	struct bitmap *alloc_bitmap;
 	struct bitmap *ephemeral_bitmap;
 	struct bitmap *pagetable_bitmap;
+	struct bitmap *physblock_bitmap;
 };
 
 // Represents the state of the early page allocator. All non-ephemeral allocated
@@ -72,6 +73,7 @@ struct early_page_alloc_state {
 	uint64_t num_allocated_pages; // Includes ephemeral pages.
 	uint64_t num_ephemeral_pages;
 	uint64_t num_pagetable_pages;
+	uint64_t num_physblock_pages;
 	uint64_t num_spans;
 	struct early_page_alloc_span spans[];
 };
@@ -169,6 +171,10 @@ static inline physaddr_t early_page_alloc_zero(void)
 // Allocate a physical page intended to be used for a page table. It WILL be
 // zeroed.
 physaddr_t early_pagetable_alloc(void);
+
+// Allocate a physical page intended to be used for physblock metadata. It WILL
+// be zeroed.
+physaddr_t early_physblock_page_alloc(void);
 
 // Allocates an ephemeral physical page from the early page allocator (will be
 // discared when switching to the full fat physical allocator). It will NOT be
