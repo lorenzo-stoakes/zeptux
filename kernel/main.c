@@ -39,6 +39,17 @@ static void prelude(void)
 		     bytes_to_human(info->total_avail_ram_bytes, buf,
 				    sizeof(buf)),
 		     info->total_avail_ram_bytes);
+
+	struct early_page_alloc_state *alloc_state = early_get_page_alloc_state();
+	uint64_t total_pages = alloc_state->total_pages;
+	uint64_t alloc_pages = alloc_state->num_allocated_pages;
+	uint64_t pagetable_pages = alloc_state->num_pagetable_pages;
+	uint64_t physblock_pages = alloc_state->num_physblock_pages;
+
+	early_printf(
+		"\nTotal pages = %lu, allocated = %lu (pagetables = %lu, physblock pages = %lu, rest = %lu)\n",
+		total_pages, alloc_pages, pagetable_pages, physblock_pages,
+		alloc_pages - pagetable_pages - physblock_pages);
 }
 
 void main(void)
