@@ -732,6 +732,12 @@ void early_init_mem_map(void)
 	}
 }
 
+void early_init_phys_alloc_state(void)
+{
+	physaddr_t pa = early_page_alloc_zero();
+	phys_alloc_init_state(phys_to_virt_ptr(pa));
+}
+
 void early_mem_init(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
@@ -744,5 +750,6 @@ void early_mem_init(void)
 	early_scratch_alloc_init(info);
 	early_page_alloc_init(info);
 	early_remap_page_tables(info);
+	early_init_phys_alloc_state();
 	early_init_mem_map();
 }

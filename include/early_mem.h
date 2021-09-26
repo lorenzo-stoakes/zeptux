@@ -204,6 +204,10 @@ void early_remap_page_tables(struct early_boot_info *info);
 void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
 			  pgdaddr_t pgd);
 
+// Allocate a page of memory for full-fat physical allocator state and invoke
+// the physical allocator state initialisation code.
+void early_init_phys_alloc_state(void);
+
 // Initialise an array of physblocks describing physical memory, allocating
 // pages to store this information and then mapping from
 // KERNEL_MEM_MAP_ADDRESS. We index into this array by PFN.

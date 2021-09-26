@@ -98,3 +98,10 @@ struct phys_alloc_state {
 
 // The root kernel PGD.
 extern pgdaddr_t kernel_root_pgd;
+
+// Initialise the physical allocator state, `ptr` points to an early allocated
+// memory page. Called during early memory initialisation.
+void phys_alloc_init_state(void *ptr);
+
+// Gets the physical allocator state.
+struct phys_alloc_state *phys_get_alloc_state(void);
