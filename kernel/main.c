@@ -55,6 +55,7 @@ static void prelude(void)
 void main(void)
 {
 	early_init();
+	phys_alloc_init();
 
 	prelude();
 

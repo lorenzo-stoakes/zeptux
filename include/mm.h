@@ -19,6 +19,7 @@ typedef enum physblock_type {
 	PHYSBLOCK_PHYSBLOCK = 3,
 	PHYSBLOCK_KERNEL = 4,
 	PHYSBLOCK_USER = 5,
+	PHYSBLOCK_TYPE_MASK = BIT_MASK_BELOW(10),
 	PHYSBLOCK_MOVABLE = 1 << 10,
 	PHYSBLOCK_PINNED = 1 << 11,
 } physblock_type_t;
@@ -121,13 +122,18 @@ static inline struct physblock *physblock_tail_to_head(struct physblock *block,
 // Obtain a pointer to a physblock, obtains head physblock if points to a tail
 // entry and ACQUIRES spinlock on the physblock which the consumer must release
 // after use.
-static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
+static inline struct physblock *pfn_to_physblock_lock(pfn_t pfn)
 {
-	pfn_t pfn = phys_to_pfn(pa);
 	struct physblock *block = _pfn_to_physblock_raw_lock(pfn);
 
 	return block->head_offset == 0 ? block
 				       : physblock_tail_to_head(block, pfn);
+}
+
+static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
+{
+	pfn_t pfn = phys_to_pfn(pa);
+	return pfn_to_physblock_lock(pfn);
 }
 
 // Initialise the physical allocator state, `ptr` points to an early allocated
@@ -137,3 +143,9 @@ void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state
 
 // Gets the physical allocator state.
 struct phys_alloc_state *phys_get_alloc_state(void);
+
+// Free a physical page into the allocator.
+void phys_free_pfn(pfn_t pfn);
+
+// Actually initialise the full-fat physical memory allocator.
+void phys_alloc_init(void);
