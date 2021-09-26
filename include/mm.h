@@ -6,32 +6,10 @@
 #include "atomic.h"
 #include "compiler.h"
 #include "list.h"
+#include "mm_defs.h"
+#include "page.h"
 #include "spinlock.h"
 #include "types.h"
-// For now we assume x86-64 architecture.
-#include "arch/x86_64/include/x86-consts.h"
-
-// The division between userland and kernel memory.
-#define KERNEL_BASE (X86_KERNEL_BASE)
-// Taking advantage of the larger address space we map ALL physical memory from
-// KERNEL_DIRECT_MAP (up to 64 TiB).
-#define KERNEL_DIRECT_MAP_BASE (X86_KERNEL_DIRECT_MAP_BASE)
-// Where we load the kernel.
-#define KERNEL_ELF_ADDRESS_PHYS (X86_KERNEL_ELF_ADDRESS_PHYS)
-#define KERNEL_ELF_ADDRESS (X86_KERNEL_ELF_ADDRESS)
-// Where the .text section of the kernel is loaded to.
-#define KERNEL_TEXT_ADDRESS (X86_KERNEL_TEXT_ADDRESS)
-// Where an array of struct physblock entries exist (discontiguously mapped by
-// PFN such that offsetting to an existing physical page from here will provide
-// the appropriate physblock)
-#define KERNEL_MEM_MAP_ADDRESS (X86_KERNEL_MEM_MAP_ADDRESS)
-// The physical address of the kernel stack.
-#define KERNEL_STACK_ADDRESS_PHYS (X86_KERNEL_STACK_ADDRESS_PHYS)
-// The maximum number of pages available in the kernel stack.
-#define KERNEL_STACK_PAGES (4)
-
-// The maximum 2^order size of a physically contiguous allocation.
-#define MAX_ORDER (12)
 
 // Represents the type of a physical memory block.
 typedef enum physblock_type {
@@ -105,3 +83,50 @@ void phys_alloc_init_state(void *ptr);
 
 // Gets the physical allocator state.
 struct phys_alloc_state *phys_get_alloc_state(void);
+
+// Free a physical page into the allocator.
+void phys_free(physaddr_t pa);
+
+// Obtain a pointer to a physblock from a PFN without either locking it or
+// determining if the block is a tail entry.
+static inline struct physblock *_pfn_to_physblock_raw(pfn_t pfn)
+{
+	virtaddr_t va = {KERNEL_MEM_MAP_ADDRESS +
+			 pfn.x * sizeof(struct physblock)};
+
+	return (struct physblock *)virt_to_ptr(va);
+}
+
+// Obtain a pointer to a physblock from a PFN without determining if the block
+// is a tail entry.
+static inline struct physblock *_pfn_to_physblock_raw_lock(pfn_t pfn)
+{
+	struct physblock *block = _pfn_to_physblock_raw(pfn);
+	spinlock_acquire(&block->lock);
+
+	return block;
+}
+
+// Obtain the HEAD physblock entry for this TAIL physblock.
+// ASSUMES: physblock lock is held.
+static inline struct physblock *physblock_tail_to_head(struct physblock *block,
+						       pfn_t pfn)
+{
+	uint8_t offset = block->head_offset;
+	spinlock_release(&block->lock);
+
+	pfn.x -= offset;
+	return _pfn_to_physblock_raw_lock(pfn);
+}
+
+// Obtain a pointer to a physblock, obtains head physblock if points to a tail
+// entry and ACQUIRES spinlock on the physblock which the consumer must release
+// after use.
+static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
+{
+	pfn_t pfn = phys_to_pfn(pa);
+	struct physblock *block = _pfn_to_physblock_raw_lock(pfn);
+
+	return block->head_offset == 0 ? block
+				       : physblock_tail_to_head(block, pfn);
+}
