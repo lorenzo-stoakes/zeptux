@@ -66,26 +66,25 @@ struct phys_alloc_stats {
 	struct phys_alloc_order_stats order[MAX_ORDER];
 };
 
+// Represents a span of available physical memory.
+struct phys_alloc_span {
+	pfn_t start_pfn;
+	uint64_t num_pages;
+};
+
 // Represents physical allocator state.
 struct phys_alloc_state {
 	struct list free_lists[MAX_ORDER];
 	struct phys_alloc_stats stats;
 
 	spinlock_t lock;
+
+	uint64_t num_spans;
+	struct phys_alloc_span spans[0];
 };
 
 // The root kernel PGD.
 extern pgdaddr_t kernel_root_pgd;
-
-// Initialise the physical allocator state, `ptr` points to an early allocated
-// memory page. Called during early memory initialisation.
-void phys_alloc_init_state(void *ptr);
-
-// Gets the physical allocator state.
-struct phys_alloc_state *phys_get_alloc_state(void);
-
-// Free a physical page into the allocator.
-void phys_free(physaddr_t pa);
 
 // Obtain a pointer to a physblock from a PFN without either locking it or
 // determining if the block is a tail entry.
@@ -130,3 +129,11 @@ static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
 	return block->head_offset == 0 ? block
 				       : physblock_tail_to_head(block, pfn);
 }
+
+// Initialise the physical allocator state, `ptr` points to an early allocated
+// memory page. Called during early memory initialisation.
+struct early_page_alloc_state;
+void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state);
+
+// Gets the physical allocator state.
+struct phys_alloc_state *phys_get_alloc_state(void);

@@ -734,8 +734,14 @@ void early_init_mem_map(void)
 
 void early_init_phys_alloc_state(void)
 {
+	if (sizeof(struct phys_alloc_state) +
+		    sizeof(struct phys_alloc_span) * alloc_state->num_spans >
+	    PAGE_SIZE)
+		early_panic(
+			"Too many spans to allocate phys alloc state in 1 page");
+
 	physaddr_t pa = early_page_alloc_zero();
-	phys_alloc_init_state(phys_to_virt_ptr(pa));
+	phys_alloc_init_state(phys_to_virt_ptr(pa), alloc_state);
 }
 
 void early_mem_init(void)
