@@ -61,7 +61,8 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 	for (uint64_t i = 0; i < span->num_pages; i++, pfn.x++) {
 		struct physblock *block = pfn_to_physblock_lock(pfn);
 
-		if (IS_MASK_SET(block->type, PHYSBLOCK_UNALLOC)) {
+		if (IS_MASK_SET(block->type, PHYSBLOCK_UNMANAGED)) {
+			block->type = PHYSBLOCK_FREE;
 			// Set refcount -> 1 so the freeing mechanism actually
 			// frees the page.
 			block->refcount++;
