@@ -66,6 +66,11 @@ std::string assert_list_correct()
 		assert(false, "Can iterate empty list?");
 	}
 
+	struct list list2;
+	list_init(&list2);
+	assert(list_empty(&list2), "Empty list not empty?");
+	assert(list_count(&list2) == 0, "Empty list not empty?");
+
 	for (int i = 0; i < 10; i++) {
 		elem *ptr = new elem();
 		ptr->x = i;
