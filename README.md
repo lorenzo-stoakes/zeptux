@@ -11,10 +11,7 @@ It is released under an MIT license.
 
 ### Next steps
 
-* Add initial physical memory allocator.
-* Move boot sector allocated physical memory into physical allocator.
-* Map boot sector allocated memory into VA correctly (including the kernel ELF),
-  correcting ELF page flags (e.g. ro for .rodata).
+* Implement full-fat physical buddy allocator.
 * Implement early slab allocator.
 * Implement interrupt handler and enable interrupts.
 * Page fault handling.
