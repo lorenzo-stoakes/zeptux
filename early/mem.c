@@ -704,6 +704,8 @@ static void init_physblock_span(struct early_page_alloc_span *span)
 			block->type = PHYSBLOCK_KERNEL | PHYSBLOCK_MOVABLE;
 		}
 
+		block->refcount = 1;
+
 	next:
 		spinlock_release(&block->lock);
 	}
