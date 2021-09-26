@@ -92,6 +92,8 @@ struct phys_alloc_stats {
 struct phys_alloc_state {
 	struct list free_lists[MAX_ORDER];
 	struct phys_alloc_stats stats;
+
+	spinlock_t lock;
 };
 
 // The root kernel PGD.
