@@ -682,13 +682,15 @@ static void init_physblock_span(struct early_page_alloc_span *span)
 	// allocate order > 0 pages) so we don't need to do anything special to
 	// handle order > 0 physblocks.
 	for (uint64_t i = 0; i < span->num_pages; i++) {
-		// Non-allocated blocks are correctly specified by the zeroed
-		// initial data.
-		if (!bitmap_is_set(span->alloc_bitmap, i))
-			continue;
-
 		physaddr_t pa = span_to_phys(span, i);
 		struct physblock *block = phys_to_physblock_lock(pa);
+
+		list_node_init(&block->node);
+
+		// Non-allocated blocks are correctly specified by otherwise
+		// zeroed initial data.
+		if (!bitmap_is_set(span->alloc_bitmap, i))
+			continue;
 
 		// Ephemeral pages need not be assigned as they will not be
 		// added to the physical allocator.

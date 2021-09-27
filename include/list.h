@@ -39,13 +39,18 @@ static_assert(sizeof(struct list) == sizeof(struct list_node) &&
 #define LIST_DEFINE(_list_name) \
 	struct list _list_name = LIST_INIT_VALUE(_list_name)
 
+// Initialise a list node as empty.
+static inline void list_node_init(struct list_node *node)
+{
+	node->next = node;
+	node->prev = node;
+}
+
 // Initialise a list as empty.
 static inline void list_init(struct list *list)
 {
 	struct list_node *node = (struct list_node *)list;
-
-	list->first = node;
-	list->last = node;
+	list_node_init(node);
 }
 
 // Determine if a list is empty.
