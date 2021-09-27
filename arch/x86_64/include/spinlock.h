@@ -34,7 +34,7 @@ static inline void spinlock_acquire(spinlock_t *lock)
 	}
 }
 
-// Release a spinlock.
+// Release a spinlock. Noop if already cleared.
 static inline void spinlock_release(spinlock_t *lock)
 {
 	atomic_store_release(&lock->x, 0);
