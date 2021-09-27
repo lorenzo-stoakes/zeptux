@@ -137,7 +137,7 @@ static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
 	return pfn_to_physblock_lock(pfn);
 }
 
-// Initialise the physical allocator state, `ptr` points to an early allocated
+// Initialise the physical allocator _state_, `ptr` points to an early allocated
 // memory page. Called during early memory initialisation.
 struct early_page_alloc_state;
 void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state);
@@ -145,7 +145,8 @@ void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state
 // Gets the physical allocator state.
 struct phys_alloc_state *phys_get_alloc_state(void);
 
-// Free a physical page into the allocator.
+// Decrements reference count for specified physical page, if it reaches zero
+// the page is freed.
 void phys_free_pfn(pfn_t pfn);
 
 // Actually initialise the full-fat physical memory allocator.
