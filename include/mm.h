@@ -3,6 +3,9 @@
 // See docs/memmap.md for more information on the physical and virtual memory
 // maps as provided by hardware and assigned by zeptux.
 
+// We implement a buddy allocator, see
+// https://en.wikipedia.org/wiki/Buddy_memory_allocation
+
 #include "atomic.h"
 #include "compiler.h"
 #include "list.h"
@@ -31,7 +34,7 @@ struct physblock {
 	// than the first, we store all relevant physblock data in only the
 	// first 'head' page, and not the remaining 'tail' pages. We set
 	// head_offset in each tail page to indicate where the head is.
-	uint8_t head_offset;
+	uint16_t head_offset;
 	uint8_t order; // 2^order pages in this physblock.
 
 	physblock_type_t type;
