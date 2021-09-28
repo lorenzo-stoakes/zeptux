@@ -23,7 +23,7 @@ static void _map_page_range_ptd(ptdaddr_t ptd, struct page_map_state *state)
 
 		if (ptde_present(ptde)) {
 			if (IS_MASK_SET(state->flags, MAP_SKIP_IF_MAPPED))
-				return;
+				goto next;
 
 			state->alloc->panic(
 				"Trying to map VA 0x%lx to PA 0x%lx but already mapped to 0x%lx",
@@ -32,6 +32,7 @@ static void _map_page_range_ptd(ptdaddr_t ptd, struct page_map_state *state)
 
 		assign_data(ptd, index, state->pa, state->flags);
 
+	next:
 		state->pa = phys_offset_pages(state->pa, 1);
 		state->va = virt_offset_pages(state->va, 1);
 		state->num_remaining_pages--;
