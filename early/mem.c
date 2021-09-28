@@ -575,16 +575,10 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 	// have established it is page aligned.
 	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL | MAP_READONLY,
 			&early_allocators);
-
-	// Map the section headers. It will never span more than 2 pages.
-	va.x += header->shoff;
-	physaddr_t pa = {elf_pa.x + header->shoff};
-	_map_page_range(pgd, va, pa, 2, MAP_KERNEL | MAP_READONLY,
-			&early_allocators);
-
 	// Now work through each section, mapping accordingly.
 	struct elf_section_header *sect_headers = (void *)header + header->shoff;
 
+	physaddr_t pa;
 	for (int i = 0; i < (int)header->shnum; i++) {
 		struct elf_section_header *sect_header = &sect_headers[i];
 
