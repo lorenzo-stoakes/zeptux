@@ -690,7 +690,7 @@ static void init_physblock_span(struct early_page_alloc_span *span)
 		// Non-allocated blocks are correctly specified by otherwise
 		// zeroed initial data.
 		if (!bitmap_is_set(span->alloc_bitmap, i))
-			continue;
+			goto next;
 
 		// Ephemeral pages need not be assigned as they will not be
 		// added to the physical allocator.
