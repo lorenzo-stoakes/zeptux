@@ -571,10 +571,6 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 		early_panic("Misaligned kernel ELF header by %lu",
 			    va.x % PAGE_SIZE);
 
-	// Map the header. It will never be larger than 1 page in size as we
-	// have established it is page aligned.
-	_map_page_range(pgd, va, elf_pa, 1, MAP_KERNEL | MAP_READONLY,
-			&early_allocators);
 	// Now work through each section, mapping accordingly.
 	struct elf_section_header *sect_headers = (void *)header + header->shoff;
 
@@ -596,9 +592,13 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 					"Kernel ELF NOBITS header exceeds page size");
 
 			pa = early_page_alloc();
-			// We need to copy the current state of the header into the page.
+			// We need to copy the current state of the header into
+			// the page.
+			// NOTE: We copy the full page as ELF section headers
+			// can overlap with .bss for example and not doing so
+			// loses this data.
 			memcpy(phys_to_virt_ptr(pa), (void *)sect_header->addr,
-			       sect_header->size);
+			       PAGE_SIZE);
 		} else {
 			pa.x = elf_pa.x + sect_header->offset;
 		}
@@ -620,11 +620,20 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 				flags, &early_allocators);
 	}
 
+	// Map the header. It will never be larger than 1 page in size as we
+	// have established it is page aligned. If already mapped in some other
+	// section above, we skip it + retain attributes specified above.
+	va.x = (uint64_t)header;
+	_map_page_range(pgd, va, elf_pa, 1,
+			MAP_KERNEL | MAP_READONLY | MAP_SKIP_IF_MAPPED,
+			&early_allocators);
+
 	// Map the section headers. It will never span more than 2 pages. These
 	// might have already been mapped above, set map flag such that we skip
 	// the mapping here if so.
-	va.x = (uint64_t)header + header->shoff;
+	va.x += header->shoff;
 	pa.x = elf_pa.x + header->shoff;
+
 	_map_page_range(pgd, va, pa, 2,
 			MAP_KERNEL | MAP_READONLY | MAP_SKIP_IF_MAPPED,
 			&early_allocators);
