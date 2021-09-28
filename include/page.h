@@ -209,6 +209,7 @@ typedef enum {
 	// Upper bits specify modifiers:
 	MAP_CODE = BIT_MASK(MAP_FLAG_MODE_BITS + 0), // We default to setting NX.
 	MAP_READONLY = BIT_MASK(MAP_FLAG_MODE_BITS + 1),
+	MAP_SKIP_IF_MAPPED = BIT_MASK(MAP_FLAG_MODE_BITS + 2),
 } map_flags_t;
 #define MAP_FLAG_MODE_MASK (BIT_MASK_BELOW(MAP_FLAG_MODE_BITS))
 

@@ -21,10 +21,14 @@ static void _map_page_range_ptd(ptdaddr_t ptd, struct page_map_state *state)
 		uint64_t index = virt_ptde_index(state->va);
 		ptde_t ptde = *ptde_at(ptd, index);
 
-		if (ptde_present(ptde))
+		if (ptde_present(ptde)) {
+			if (IS_MASK_SET(state->flags, MAP_SKIP_IF_MAPPED))
+				return;
+
 			state->alloc->panic(
 				"Trying to map VA 0x%lx to PA 0x%lx but already mapped to 0x%lx",
 				state->va.x, state->pa.x, ptde_data(ptde).x);
+		}
 
 		assign_data(ptd, index, state->pa, state->flags);
 
