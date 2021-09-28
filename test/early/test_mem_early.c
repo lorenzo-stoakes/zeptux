@@ -263,13 +263,8 @@ static const char *assert_correct_total_ram(struct early_boot_info *info)
 const char *assert_correct_scratch_alloc(void)
 {
 	struct scratch_alloc_state *state = early_scratch_alloc_state();
-	struct early_boot_info *info = early_get_boot_info();
 
 	uint64_t orig_pages = state->pages;
-
-	uint64_t offset = state->start.x - KERNEL_ELF_ADDRESS_PHYS;
-	assert(offset == ALIGN_UP(info->kernel_elf_size_bytes, 0x1000),
-	       "offset from kernel ELF PA != page-aligned kernel ELF size");
 
 	for (int i = 0; i < 10; i++) {
 		physaddr_t pa = early_scratch_page_alloc();
