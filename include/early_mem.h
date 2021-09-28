@@ -24,6 +24,8 @@
 #define EARLY_PUD_KERNEL_ELF_ADDRESS \
 	(KERNEL_DIRECT_MAP_BASE + X86_EARLY_PUD_KERNEL_ELF)
 
+#define EARLY_MAX_SCRATCH_PAGES (48)
+
 // See https://uefi.org/specs/ACPI/6.4/15_System_Address_Map_Interfaces/int-15h-e820h---query-system-address-map.html
 struct e820_entry {
 	uint64_t base;

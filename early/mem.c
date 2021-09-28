@@ -40,14 +40,16 @@ static bool less(struct e820_entry *a, struct e820_entry *b)
 	return a->base < b->base || (a->base == b->base && a->size < b->size);
 }
 
-// Initialise the early scratch allocator, using pages placed immediately after
-// the ELF. These pages will _not_ be kept later.
-static void early_scratch_alloc_init(struct early_boot_info *info)
+// Initialise the early scratch allocator, a very very simplistic bootstrap
+// allocator that allows up to EARLY_MAX_SCRATCH_PAGES pages to be allocated,
+// which are placed before the start ELF image. These pages will _not_ be kept
+// later.
+static void early_scratch_alloc_init()
 {
-	// We place the scratch buffer immediately after the ELF...
-	uint64_t offset = KERNEL_ELF_ADDRESS_PHYS + info->kernel_elf_size_bytes;
-	// ...page aligned.
-	physaddr_t addr = {ALIGN_UP(offset, PAGE_SIZE)};
+	// We place the scratch buffer immediately prior to the ELF.
+	uint64_t offset =
+		KERNEL_ELF_ADDRESS_PHYS - (EARLY_MAX_SCRATCH_PAGES << PAGE_SHIFT);
+	physaddr_t addr = {offset};
 	scratch_state.start = addr;
 	scratch_state.pages = 0;
 }
@@ -218,6 +220,10 @@ struct scratch_alloc_state *early_scratch_alloc_state(void)
 physaddr_t early_scratch_page_alloc(void)
 {
 	// About as simplistic as it gets.
+
+	if (scratch_state.pages >= EARLY_MAX_SCRATCH_PAGES)
+		early_panic("Out of scratch memory!");
+
 	physaddr_t addr = {scratch_state.start.x +
 			   PAGE_SIZE * scratch_state.pages++};
 
@@ -755,7 +761,7 @@ void early_mem_init(void)
 	early_merge_e820(info);
 	early_normalise_e820(info);
 	early_set_total_ram(info);
-	early_scratch_alloc_init(info);
+	early_scratch_alloc_init();
 	early_page_alloc_init(info);
 	early_remap_page_tables(info);
 	early_init_phys_alloc_state();
