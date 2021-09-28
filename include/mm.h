@@ -184,3 +184,6 @@ static inline void phys_free(physaddr_t pa)
 
 // Actually initialise the full-fat physical memory allocator.
 void phys_alloc_init(void);
+
+// Determine PFN span index, or -1 if not contained within known memory.
+int pfn_to_span(pfn_t pfn);
