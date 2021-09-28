@@ -619,6 +619,15 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 		_map_page_range(pgd, va, pa, bytes_to_pages(sect_header->size),
 				flags, &early_allocators);
 	}
+
+	// Map the section headers. It will never span more than 2 pages. These
+	// might have already been mapped above, set map flag such that we skip
+	// the mapping here if so.
+	va.x = (uint64_t)header + header->shoff;
+	pa.x = elf_pa.x + header->shoff;
+	_map_page_range(pgd, va, pa, 2,
+			MAP_KERNEL | MAP_READONLY | MAP_SKIP_IF_MAPPED,
+			&early_allocators);
 }
 
 void map_early_video(pgdaddr_t pgd)
