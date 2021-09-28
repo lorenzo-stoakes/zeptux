@@ -84,6 +84,8 @@ struct phys_alloc_state {
 
 	spinlock_t lock;
 
+	// This can be accessed without a lock as they will be written once and
+	// never changed (we don't support hot swapping).
 	uint64_t num_spans;
 	struct phys_alloc_span spans[0];
 };
@@ -134,10 +136,31 @@ static inline struct physblock *pfn_to_physblock_lock(pfn_t pfn)
 				       : physblock_tail_to_head(block, pfn);
 }
 
+// Obtain a pointer to a physblock, obtains head physblock if points to a tail
+// entry and ACQUIRES spinlock on the physblock which the consumer must release
+// after use.
 static inline struct physblock *phys_to_physblock_lock(physaddr_t pa)
 {
 	pfn_t pfn = phys_to_pfn(pa);
 	return pfn_to_physblock_lock(pfn);
+}
+
+// Convert a physblock pointer to its associated PFN.
+static inline pfn_t physblock_to_pfn(struct physblock *block)
+{
+	uint64_t bytes = (uint64_t)block - KERNEL_MEM_MAP_ADDRESS;
+	pfn_t pfn = {bytes / sizeof(struct physblock)};
+	return pfn;
+}
+
+// Determine the PFN of the 'buddy' page to the page specified by `pfn`.
+static inline pfn_t pfn_to_buddy_pfn(pfn_t pfn, uint8_t order)
+{
+	// We simply use the lowest bit in the PFN to indicate which of the pair
+	// this page is, so to find the other we simply xor it.
+	// E.g. 0b10100 of order 1 would pair with 0b10110 and vice-versa.
+	pfn_t ret = {pfn.x ^ (1ULL << order)};
+	return ret;
 }
 
 // Initialise the physical allocator _state_, `ptr` points to an early allocated
@@ -151,6 +174,13 @@ struct phys_alloc_state *phys_get_alloc_state(void);
 // Decrements reference count for specified physical page, if it reaches zero
 // the page is freed.
 void phys_free_pfn(pfn_t pfn);
+
+// Decrements reference count for specified physical page, if it reaches zero
+// the page is freed.
+static inline void phys_free(physaddr_t pa)
+{
+	phys_free_pfn(phys_to_pfn(pa));
+}
 
 // Actually initialise the full-fat physical memory allocator.
 void phys_alloc_init(void);
