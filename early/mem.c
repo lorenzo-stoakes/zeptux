@@ -605,8 +605,9 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 
 		// We insist on page-aligned ELF sections.
 		if (!IS_ALIGNED(va.x, PAGE_SIZE) || !IS_ALIGNED(pa.x, PAGE_SIZE))
-			early_panic("Misaligned kernel ELF section (%d) by %lu",
-				    i, va.x % PAGE_SIZE);
+			early_panic(
+				"Misaligned kernel ELF section (%d) by %lu, VA=0x%lx, PA=0x%lx",
+				i, va.x % PAGE_SIZE, va.x, pa.x);
 
 		// Determine mapping flags.
 		map_flags_t flags = MAP_KERNEL;
