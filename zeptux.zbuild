@@ -13,7 +13,6 @@ set special global_file_deps = zeptux.zbuild .clang-format
 # Specify the flags to pass to gcc.
 set var BOOT_CFLAGS = --std=gnu2x -fno-builtin -fno-stack-protector -nostdinc -Wall -Wextra -Werror -mno-sse -mno-sse2 -mno-mmx -mno-3dnow -mno-avx -Wno-stringop-overflow -fno-omit-frame-pointer -Wno-main -D__ZEPTUX_KERNEL
 set var CFLAGS = $BOOT_CFLAGS
-# TODO: Page faults without -ftree-coalesce-vars
 set var CFLAGS += -g -O2
 
 # We place the size of the ELF image at a certain offset into the final output
