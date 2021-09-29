@@ -37,7 +37,8 @@ start16:
 start.no_long_mode:
 	movw $panic_nolong_str, %si
 	call bios_say
-	hlt
+start.forever:
+	jmp start.forever
 
 /*
  * Once upon a time 1 MiB was considered a huge amount of memory. Thus the
@@ -86,7 +87,8 @@ enable_a20:
 	// Nothing worked, we cannot continue.
 	movw $panic_a20_str, %si
 	call bios_say
-	hlt
+enable_a20.forever:
+	jmp enable_a20.forever
 
 enable_a20.done:
 	ret

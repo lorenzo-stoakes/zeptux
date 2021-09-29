@@ -88,17 +88,20 @@ get_e820.done:
 get_e820.unsupported:
 	movw $e820_unsupported_str, %si
 	call bios_say
-	hlt
+	jmp get_e820.forever
 
 get_e820.call_failed:
 	movw $e820_call_failed_str, %si
 	call bios_say
-	hlt
+	jmp get_e820.forever
 
 get_e820.unexpected_length:
 	movw $e820_unexpected_length_str, %si
 	call bios_say
-	hlt
+	jmp get_e820.forever
+
+get_e820.forever:
+	jmp get_e820.forever
 
 #ifdef CONFIG_BOOTLOADER_BIOS
 bios_load_kernel_elf:
@@ -184,7 +187,8 @@ bios_load_kernel_elf.done:
 bios_load_kernel_elf.fault:
 	mov $bios_load_fail_str, %si
 	call bios_say
-	hlt
+bios_load_kernel_elf.forever:
+	jmp bios_load_kernel_elf.forever
 
 #endif
 
@@ -200,7 +204,7 @@ e820_unexpected_length_str:
 	.asciz "panic: e820 call unexpected entry length!"
 
 bios_load_fail_str:
-	.asciz "panic: BIOS ELF image load failed"
+	.asciz "panic: BIOS ELF image load failed!"
 
 .code32
 
@@ -292,7 +296,8 @@ start64:
 	call load
 
 	// If we reach here, something has gone wrong!
-	hlt
+start64.forever:
+	jmp start64.forever
 start64.loop:
 	jmp start64.loop
 
