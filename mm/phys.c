@@ -151,6 +151,7 @@ static void free_physblock_locked(struct physblock *block)
 		block->type = PHYSBLOCK_FREE;
 		list_push_back(&alloc_state->free_lists[order], &block->node);
 		alloc_state->stats.num_free_4k_pages += 1UL << order;
+		alloc_state->stats.order[0].num_free_pages++;
 	}
 	// Compact.
 	block = compact_free_blocks_locked(block);
@@ -185,6 +186,13 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 
 			free_physblock_locked(block);
 		} else {
+			if ((block->type & PHYSBLOCK_TYPE_MASK) ==
+			    PHYSBLOCK_PAGETABLE)
+				stats->num_pagetable_pages++;
+			else if ((block->type & PHYSBLOCK_TYPE_MASK) ==
+				 PHYSBLOCK_PHYSBLOCK)
+				stats->num_physblock_pages++;
+
 			spinlock_release(&block->lock);
 		}
 	}
