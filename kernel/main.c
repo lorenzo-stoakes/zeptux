@@ -40,18 +40,6 @@ static void prelude(void)
 				    sizeof(buf)),
 		     info->total_avail_ram_bytes);
 
-	struct early_page_alloc_state *alloc_state = early_get_page_alloc_state();
-	uint64_t total_pages = alloc_state->total_pages;
-	uint64_t alloc_pages = alloc_state->num_allocated_pages;
-	uint64_t pagetable_pages = alloc_state->num_pagetable_pages;
-	uint64_t physblock_pages = alloc_state->num_physblock_pages;
-
-	early_printf("\nEarly: Total pages = %lu, allocated = %lu\n", total_pages,
-		     alloc_pages);
-	early_printf("(pagetables = %lu, physblock pages = %lu, rest = %lu)\n",
-		     pagetable_pages, physblock_pages,
-		     alloc_pages - pagetable_pages - physblock_pages);
-
 	struct phys_alloc_state *state = phys_get_alloc_state_locked();
 	struct phys_alloc_stats *stats = &state->stats;
 
