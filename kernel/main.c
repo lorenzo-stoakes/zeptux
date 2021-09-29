@@ -46,10 +46,11 @@ static void prelude(void)
 	uint64_t pagetable_pages = alloc_state->num_pagetable_pages;
 	uint64_t physblock_pages = alloc_state->num_physblock_pages;
 
-	early_printf(
-		"\nTotal pages = %lu, allocated = %lu (pagetables = %lu, physblock pages = %lu, rest = %lu)\n",
-		total_pages, alloc_pages, pagetable_pages, physblock_pages,
-		alloc_pages - pagetable_pages - physblock_pages);
+	early_printf("\nTotal pages = %lu, allocated = %lu\n", total_pages,
+		     alloc_pages);
+	early_printf("(pagetables = %lu, physblock pages = %lu, rest = %lu)\n",
+		     pagetable_pages, physblock_pages,
+		     alloc_pages - pagetable_pages - physblock_pages);
 }
 
 void main(void)
