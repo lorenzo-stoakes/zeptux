@@ -168,8 +168,8 @@ static inline pfn_t pfn_to_buddy_pfn(pfn_t pfn, uint8_t order)
 struct early_page_alloc_state;
 void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state);
 
-// Gets the physical allocator state.
-struct phys_alloc_state *phys_get_alloc_state(void);
+// Gets the physical allocator state, with a lock acquired.
+struct phys_alloc_state *phys_get_alloc_state_locked(void);
 
 // Decrements reference count for specified physical page, if it reaches zero
 // the page is freed.
