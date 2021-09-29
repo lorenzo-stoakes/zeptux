@@ -92,9 +92,7 @@ static struct physblock *_join_physblocks_locked(struct physblock *head,
 
 	// General stats do not change, but order ones do!
 	struct phys_alloc_stats *stats = &alloc_state->stats;
-	stats->order[order - 1].num_pages -= 2;
 	stats->order[order - 1].num_free_pages -= 2;
-	stats->order[order].num_pages++;
 	stats->order[order].num_free_pages++;
 
 	return head;
@@ -178,7 +176,6 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 	for (uint64_t i = 0; i < span->num_pages; i++, pfn.x++) {
 		struct physblock *block = pfn_to_physblock_lock(pfn);
 
-		stats->order[0].num_pages++;
 		if ((block->type & PHYSBLOCK_TYPE_MASK) == PHYSBLOCK_UNMANAGED) {
 			// Set refcount -> 1 so the freeing mechanism actually
 			// frees the page.

@@ -56,7 +56,6 @@ static_assert(sizeof(struct physblock) * (4096 / sizeof(struct physblock)) ==
 // Represents per-order statistics.
 struct phys_alloc_order_stats {
 	// Number of pages each comprising 2^order 4 KiB pages.
-	uint64_t num_pages;
 	uint64_t num_free_pages;
 };
 

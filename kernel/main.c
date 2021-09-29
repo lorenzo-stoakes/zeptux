@@ -43,16 +43,20 @@ static void prelude(void)
 	struct phys_alloc_state *state = phys_get_alloc_state_locked();
 	struct phys_alloc_stats *stats = &state->stats;
 
-	early_printf("\nphys_alloc: total=%lu/%lu free, pg=%lu, pb=%lu\n",
-		     stats->num_free_4k_pages, stats->num_4k_pages,
-		     stats->num_pagetable_pages, stats->num_physblock_pages);
+	early_printf("\nphys_alloc: total=%lu, pg=%lu, pb=%lu, rest=%lu\n",
+		     stats->num_4k_pages, stats->num_pagetable_pages,
+		     stats->num_physblock_pages,
+		     stats->num_4k_pages - stats->num_free_4k_pages -
+			     stats->num_pagetable_pages -
+			     stats->num_physblock_pages);
 
-	for (int i = 0; i < MAX_ORDER; i++) {
+	early_printf("            [ ");
+	for (int i = 0; i < MAX_ORDER - 1; i++) {
 		struct phys_alloc_order_stats *order_stats = &stats->order[i];
 
-		early_printf("order-% 2d: % 6ld/% 6ld free\n", i,
-			     order_stats->num_free_pages, order_stats->num_pages);
+		early_printf("%lu, ", order_stats->num_free_pages);
 	}
+	early_printf("%lu ]\n", stats->order[MAX_ORDER - 1].num_free_pages);
 	spinlock_release(&state->lock);
 }
 
