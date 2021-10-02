@@ -40,7 +40,7 @@ static void prelude(void)
 				    sizeof(buf)),
 		     info->total_avail_ram_bytes);
 
-	struct phys_alloc_state *state = phys_get_alloc_state_locked();
+	struct phys_alloc_state *state = phys_get_alloc_state_lock();
 	struct phys_alloc_stats *stats = &state->stats;
 
 	early_printf("\nphys_alloc: total=%lu, pg=%lu, pb=%lu, rest=%lu\n",
