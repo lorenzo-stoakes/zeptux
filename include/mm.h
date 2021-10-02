@@ -152,6 +152,13 @@ static inline pfn_t physblock_to_pfn(struct physblock *block)
 	return pfn;
 }
 
+// Covert a physblock pointer to its associated physical address.
+static inline physaddr_t physblock_to_phys(struct physblock *block)
+{
+	pfn_t pfn = physblock_to_pfn(block);
+	return pfn_to_phys(pfn);
+}
+
 // Determine the PFN of the 'buddy' page to the page specified by `pfn`.
 static inline pfn_t pfn_to_buddy_pfn(pfn_t pfn, uint8_t order)
 {
