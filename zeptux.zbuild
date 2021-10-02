@@ -26,7 +26,7 @@ set var ELF_SIZE_OFFSET = 2556
 # and 512 bytes for sector rounding up on boot.
 set var MAX_KERNEL_ELF_SIZE = 473088
 # Shared qemu options.
-set var QEMU_OPT = -serial mon:stdio -smp 1
+set var QEMU_OPT = -serial mon:stdio -smp 1 -m 1G
 # Options specific to release. We invoke intentional reset on early test exit so
 # cannot have these debug options set.
 set var QEMU_OPT_RELEASE = $QEMU_OPT -d int,cpu_reset -no-reboot
