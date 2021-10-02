@@ -640,7 +640,8 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 			&early_allocators);
 }
 
-void map_early_video(pgdaddr_t pgd)
+// Map the early console video memory range as device memory for early video output.
+static void early_map_video_range(pgdaddr_t pgd)
 {
 	uint64_t num_pages = bytes_to_pages(early_video_size());
 	virtaddr_t va = {EARLY_VIDEO_MEMORY_ADDRESS};
@@ -649,7 +650,9 @@ void map_early_video(pgdaddr_t pgd)
 	_map_page_range(pgd, va, pa, num_pages, MAP_DEVICE, &early_allocators);
 }
 
-void early_remap_page_tables(struct early_boot_info *info)
+// Move from the early page table structure (1 GiB direct, ELF image mpaping) to
+// an actually correct mapping.
+static void early_remap_page_tables(struct early_boot_info *info)
 {
 	physaddr_t elf_pa = {KERNEL_ELF_ADDRESS_PHYS};
 	struct elf_header *header = (struct elf_header *)KERNEL_ELF_ADDRESS;
@@ -657,7 +660,7 @@ void early_remap_page_tables(struct early_boot_info *info)
 
 	early_map_direct(info, pgd);
 	early_map_kernel_elf(header, elf_pa, pgd);
-	map_early_video(pgd);
+	early_map_video_range(pgd);
 
 	set_pgd(pgd);
 	kernel_root_pgd = pgd;
@@ -732,7 +735,10 @@ static void init_physblock_span(struct early_page_alloc_span *span)
 	}
 }
 
-void early_init_mem_map(void)
+// Initialise an array of physblocks describing physical memory, allocating
+// pages to store this information and then mapping from
+// KERNEL_MEM_MAP_ADDRESS. We index into this array by PFN.
+static void early_init_mem_map(void)
 {
 	// For each range of available physical memory, allocate a physblock per
 	// page and map from KERNEL_MEM_MAP_ADDRESS.
@@ -753,7 +759,9 @@ void early_init_mem_map(void)
 	}
 }
 
-void early_init_phys_alloc_state(void)
+// Allocate a page of memory for full-fat physical allocator state and invoke
+// the physical allocator state initialisation code.
+static void early_init_phys_alloc_state(void)
 {
 	if (sizeof(struct phys_alloc_state) +
 		    sizeof(struct phys_alloc_span) * alloc_state->num_spans >

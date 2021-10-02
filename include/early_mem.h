@@ -188,16 +188,8 @@ physaddr_t early_page_alloc_ephemeral(void);
 // be done casually!)
 void early_page_free(physaddr_t pa);
 
-// Maps physical memory as specified in RAM entries in the boot info to the
-// specified PGD.
-void early_map_direct(struct early_boot_info *info, pgdaddr_t pgd);
-
 // Retrieve early page alloc state. Mostly exposed for testability.
 struct early_page_alloc_state *early_get_page_alloc_state(void);
-
-// Move from the early page table structure (1 GiB direct, ELF image mpaping) to
-// an actually correct mapping.
-void early_remap_page_tables(struct early_boot_info *info);
 
 // Map kernel ELF into memory using the specific ELF header (it is assumed the
 // pointer points to beginning of the ELF) mapping num_pages into memory and
@@ -205,15 +197,6 @@ void early_remap_page_tables(struct early_boot_info *info);
 // executable sections as non-NX.
 void early_map_kernel_elf(struct elf_header *header, physaddr_t pa,
 			  pgdaddr_t pgd);
-
-// Allocate a page of memory for full-fat physical allocator state and invoke
-// the physical allocator state initialisation code.
-void early_init_phys_alloc_state(void);
-
-// Initialise an array of physblocks describing physical memory, allocating
-// pages to store this information and then mapping from
-// KERNEL_MEM_MAP_ADDRESS. We index into this array by PFN.
-void early_init_mem_map(void);
 
 // Generate early page allocation functions for each page level.
 #define GEN_PAGE_ALLOC(pagelevel)                                     \
