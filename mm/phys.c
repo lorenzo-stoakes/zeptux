@@ -202,26 +202,26 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 static void split_block_locked(struct physblock *block)
 {
 	struct phys_alloc_stats *stats = &alloc_state->stats;
-	uint8_t order = block->order - 1;
+	uint8_t new_order = block->order - 1;
 	pfn_t pfn = physblock_to_pfn(block);
-	pfn_t buddy_pfn = pfn_to_buddy_pfn(pfn, order);
+	pfn_t buddy_pfn = pfn_to_buddy_pfn(pfn, new_order);
 	struct physblock *buddy = _pfn_to_physblock_raw(buddy_pfn);
 
-	block->order = order;
-	buddy->order = order;
+	block->order = new_order;
+	buddy->order = new_order;
 	buddy->type = PHYSBLOCK_FREE;
 
 	// All tail pages will already be marked tail with correct offsets for
 	// `block` but `buddy` will need to have head_offset values reset.
-	_set_tail_physblocks(buddy, order);
+	_set_tail_physblocks(buddy, new_order);
 
 	list_detach(&block->node);
-	struct list *free_list = &alloc_state->free_lists[order];
+	struct list *free_list = &alloc_state->free_lists[new_order];
 	list_push_back(free_list, &block->node);
 	list_push_back(free_list, &buddy->node);
 
-	stats->order[order + 1].num_free_pages--;
-	stats->order[order].num_free_pages += 2;
+	stats->order[new_order + 1].num_free_pages--;
+	stats->order[new_order].num_free_pages += 2;
 
 	spinlock_release(&block->lock);
 }
