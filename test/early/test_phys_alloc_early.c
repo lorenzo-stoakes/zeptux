@@ -37,6 +37,13 @@ const char *test_phys_alloc(void)
 
 		physaddr_t pa = phys_alloc(order, ALLOC_KERNEL);
 
+		struct physblock *block = phys_to_physblock_lock(pa);
+		assert(block->type == PHYSBLOCK_KERNEL,
+		       "Not marked kernel physblock type?");
+		assert(block->order == order, "Inocrrect order set?");
+		assert(block->refcount == 1, "refcount not set?");
+		spinlock_release(&block->lock);
+
 		assert(IS_ALIGNED(pa.x, 1UL << (order + PAGE_SHIFT)),
 		       "Misaligned PA?");
 
@@ -45,6 +52,7 @@ const char *test_phys_alloc(void)
 		assert(stats->num_free_4k_pages == num_4k_pages - (1UL << order),
 		       "4 KiB pages stats not updated after alloc?");
 		phys_free(pa);
+
 		assert(stats->order[order].num_free_pages == num_free_pages,
 		       "Stats not updated after free?");
 	}
