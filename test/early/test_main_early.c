@@ -24,6 +24,14 @@ void main(void)
 	if (res != NULL)
 		early_puts(res);
 
+	// Tests after this point rely on physical memory allocator being
+	// initiated.
+	phys_alloc_init();
+
+	res = test_phys_alloc();
+	if (res != NULL)
+		early_puts(res);
+
 	early_puts("// zeptux EARLY test run complete");
 	exit_qemu();
 }

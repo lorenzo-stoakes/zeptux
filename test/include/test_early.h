@@ -13,17 +13,20 @@ static inline void exit_qemu(void)
 	outw(0x604, 0x2000);
 }
 
-// test_format.c
+// test_format_early.c
 const char *test_format(void);
 
-// test_string.c
+// test_string_early.c
 const char *test_string(void);
 
-// test_misc.c
+// test_misc_early.c
 const char *test_misc(void);
 
-// test_mem.c
+// test_mem_early.c
 const char *test_mem(void);
 
-// test_page.c
+// test_page_early.c
 const char *test_page(void);
+
+// test_phys_alloc_early.c
+const char *test_phys_alloc(void);
