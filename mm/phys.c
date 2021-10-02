@@ -195,6 +195,17 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 	}
 }
 
+// Split higher order physblocks in order to free up a physblock of order
+// `order`. Panics if unable to do so.
+// ASSUME: `alloc_state` has lock held.
+static void split_higher_order_blocks(uint8_t target_order)
+{
+	for (uint8_t order = target_order + 1; order <= MAX_ORDER; order++) {
+		// TODO: Implementation.
+		IGNORE_PARAM(order);
+	}
+}
+
 void phys_alloc_init(void)
 {
 	for (uint64_t i = 0; i < alloc_state->num_spans; i++) {
@@ -219,4 +230,31 @@ int pfn_to_span(pfn_t pfn)
 	}
 
 	return -1;
+}
+
+struct physblock *phys_alloc_block(uint8_t order)
+{
+	if (order > MAX_ORDER)
+		panic("Invalid order %u, maximum is %u", order, MAX_ORDER);
+
+	spinlock_acquire(&alloc_state->lock);
+
+	uint64_t num_4k_pages = 1UL << order;
+	if (alloc_state->stats.num_free_4k_pages < num_4k_pages)
+		panic("Out of memory: %lu pages requested, %lu available (order %u)",
+		      num_4k_pages, alloc_state->stats.num_free_4k_pages, order);
+
+	struct list *free_list = &alloc_state->free_lists[order];
+
+	// If we don't have enough pages available at the requested order we
+	// have to split larger order pages to obtain one. If we cannot this will panic.
+	if (list_empty(free_list))
+		split_higher_order_blocks(order);
+
+	struct physblock *block =
+		list_first_element(free_list, struct physblock, node);
+
+	spinlock_release(&alloc_state->lock);
+
+	return block;
 }

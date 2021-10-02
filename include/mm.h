@@ -193,3 +193,15 @@ void phys_alloc_init(void);
 
 // Determine PFN span index, or -1 if not contained within known memory.
 int pfn_to_span(pfn_t pfn);
+
+// Allocate physically contiguous memory consisting of 2^order 4 KiB pages and
+// returns the physblock associated with this memory.
+struct physblock *phys_alloc_block(uint8_t order);
+
+// Allocate physically contiguous memory consisting of 2^order 4 KiB pages and
+// returns the physical address associated with this memory.
+static inline physaddr_t phys_alloc(uint8_t order)
+{
+	struct physblock *block = phys_alloc_block(order);
+	return physblock_to_phys(block);
+}
