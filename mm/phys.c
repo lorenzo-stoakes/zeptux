@@ -213,6 +213,7 @@ static void split_block_locked(struct physblock *block)
 
 	// All tail pages will already be marked tail with correct offsets for
 	// `block` but `buddy` will need to have head_offset values reset.
+	buddy->head_offset = 0;
 	_set_tail_physblocks(buddy, new_order);
 
 	list_detach(&block->node);
