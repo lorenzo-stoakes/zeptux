@@ -28,6 +28,16 @@ typedef enum physblock_type {
 	PHYSBLOCK_PINNED = 1 << 11,
 } physblock_type_t;
 
+typedef enum {
+	ALLOC_KERNEL = 1,
+	ALLOC_USER = 2,
+	ALLOC_PAGETABLE = 3,
+	ALLOC_PHYSBLOCK = 4,
+	ALLOC_TYPE_MASK = BIT_MASK_BELOW(10),
+	ALLOC_MOVABLE = 1 << 10,
+	ALLOC_PINNED = 1 << 11,
+} alloc_flags_t;
+
 // Describes a 'block' of physical memory of size 2^order pages.
 struct physblock {
 	// If a physblock comprises > 1 page and a PA relates to a page other
@@ -197,12 +207,12 @@ int pfn_to_span_locked(pfn_t pfn);
 
 // Allocate physically contiguous memory consisting of 2^order 4 KiB pages and
 // returns the physblock associated with this memory.
-struct physblock *phys_alloc_block(uint8_t order);
+struct physblock *phys_alloc_block(uint8_t order, alloc_flags_t flags);
 
 // Allocate physically contiguous memory consisting of 2^order 4 KiB pages and
 // returns the physical address associated with this memory.
-static inline physaddr_t phys_alloc(uint8_t order)
+static inline physaddr_t phys_alloc(uint8_t order, alloc_flags_t flags)
 {
-	struct physblock *block = phys_alloc_block(order);
+	struct physblock *block = phys_alloc_block(order, flags);
 	return physblock_to_phys(block);
 }

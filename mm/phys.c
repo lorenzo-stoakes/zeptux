@@ -232,7 +232,36 @@ int pfn_to_span_locked(pfn_t pfn)
 	return -1;
 }
 
-struct physblock *phys_alloc_block(uint8_t order)
+// Convert allocation flags to physblock type.
+static inline physblock_type_t alloc_flags_to_physblock_type(alloc_flags_t flags)
+{
+	physblock_type_t type;
+	switch (flags & ALLOC_TYPE_MASK) {
+	case ALLOC_KERNEL:
+		type = PHYSBLOCK_KERNEL;
+		break;
+	case ALLOC_USER:
+		type = PHYSBLOCK_USER;
+		break;
+	case ALLOC_PAGETABLE:
+		type = PHYSBLOCK_PAGETABLE;
+		break;
+	case ALLOC_PHYSBLOCK:
+		type = PHYSBLOCK_PHYSBLOCK;
+		break;
+	default:
+		panic("Unrecognised alloc flag %d", flags & ALLOC_TYPE_MASK);
+	}
+
+	if (IS_MASK_SET(flags, ALLOC_MOVABLE))
+		type |= PHYSBLOCK_MOVABLE;
+	if (IS_MASK_SET(flags, ALLOC_PINNED))
+		type |= PHYSBLOCK_PINNED;
+
+	return type;
+}
+
+struct physblock *phys_alloc_block(uint8_t order, alloc_flags_t flags)
 {
 	if (order > MAX_ORDER)
 		panic("Invalid order %u, maximum is %u", order, MAX_ORDER);
@@ -262,12 +291,11 @@ struct physblock *phys_alloc_block(uint8_t order)
 	if (block->type != PHYSBLOCK_FREE || block->order != order) {
 		spinlock_release(&block->lock);
 		spinlock_release(&alloc_state->lock);
-		return phys_alloc_block(order);
+		return phys_alloc_block(order, flags);
 	}
 
 	list_detach(&block->node);
-	// TODO: Allow ability to set different types.
-	block->type = PHYSBLOCK_KERNEL | PHYSBLOCK_MOVABLE;
+	block->type = alloc_flags_to_physblock_type(flags);
 	block->refcount++;
 
 	stats->num_free_4k_pages -= num_4k_pages;
