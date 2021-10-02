@@ -100,6 +100,15 @@ KERNEL_MEM_MAP_ADDRESS = ffffc00040000000 -> |----------------| x
                                              \     unused     \
                                              /      hole      /
                                              \                \
+KERNEL_VMALLOC_ADDRESS = ffffd00000000000 -> ------------------ ^
+                                             |     vmalloc    | |
+                                             |     mapping    | | 32 TiB
+                                             |      space     | |
+                         fffff00000000000 -> ------------------ v
+                                             /                /
+                                             \     unused     \
+                                             /      hole      /
+                                             \                \
                                              ------------------
 ```
 

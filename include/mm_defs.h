@@ -17,6 +17,8 @@
 // PFN such that offsetting to an existing physical page from here will provide
 // the appropriate physblock)
 #define KERNEL_MEM_MAP_ADDRESS (X86_KERNEL_MEM_MAP_ADDRESS)
+// Where we place vmalloc mappings.
+#define KERNEL_VMALLOC_ADDRESS (X86_KERNEL_VMALLOC_ADDRESS)
 // The physical address of the kernel stack.
 #define KERNEL_STACK_ADDRESS_PHYS (X86_KERNEL_STACK_ADDRESS_PHYS)
 // The maximum number of pages available in the kernel stack.

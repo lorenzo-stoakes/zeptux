@@ -110,6 +110,8 @@
 // Where we store a (discontiguous series of mappings to) physblock entries
 // describing physical memory.
 #define X86_KERNEL_MEM_MAP_ADDRESS (0xffffc00040000000UL)
+// Where we place vmalloc mappings.
+#define X86_KERNEL_VMALLOC_ADDRESS (0xffffd00000000000UL)
 
 #define X86_EARLY_PGD (0x1000)
 #define X86_EARLY_PUD_DIRECT0 (0x2000)
