@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "mm.h"
 #include "page.h"
+#include "panic.h"
 #include "range.h"
 #include "spinlock.h"
 #include "string.h"
