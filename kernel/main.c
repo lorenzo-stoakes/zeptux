@@ -51,12 +51,12 @@ static void prelude(void)
 			     stats->num_physblock_pages);
 
 	early_printf("            [ ");
-	for (int i = 0; i < MAX_ORDER - 1; i++) {
+	for (int i = 0; i < MAX_ORDER; i++) {
 		struct phys_alloc_order_stats *order_stats = &stats->order[i];
 
 		early_printf("%lu, ", order_stats->num_free_pages);
 	}
-	early_printf("%lu ]\n", stats->order[MAX_ORDER - 1].num_free_pages);
+	early_printf("%lu ]\n", stats->order[MAX_ORDER].num_free_pages);
 	spinlock_release(&state->lock);
 }
 

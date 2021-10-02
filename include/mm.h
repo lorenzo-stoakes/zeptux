@@ -67,7 +67,7 @@ struct phys_alloc_stats {
 	uint64_t num_pagetable_pages;
 	uint64_t num_physblock_pages;
 	// Per-order statistics.
-	struct phys_alloc_order_stats order[MAX_ORDER];
+	struct phys_alloc_order_stats order[MAX_ORDER + 1];
 };
 
 // Represents a span of available physical memory.
@@ -78,7 +78,7 @@ struct phys_alloc_span {
 
 // Represents physical allocator state.
 struct phys_alloc_state {
-	struct list free_lists[MAX_ORDER];
+	struct list free_lists[MAX_ORDER + 1];
 	struct phys_alloc_stats stats;
 
 	spinlock_t lock;

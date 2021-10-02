@@ -10,7 +10,7 @@ void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state
 {
 	alloc_state = (struct phys_alloc_state *)ptr;
 
-	for (int i = 0; i < MAX_ORDER; i++) {
+	for (int i = 0; i <= MAX_ORDER; i++) {
 		list_init(&alloc_state->free_lists[i]);
 	}
 
@@ -103,7 +103,7 @@ static struct physblock *_join_physblocks_locked(struct physblock *head,
 // ASSUMES: `alloc_state` has lock held.
 static struct physblock *compact_free_blocks_locked(struct physblock *block)
 {
-	for (uint8_t order = block->order; order < MAX_ORDER - 1; order++) {
+	for (uint8_t order = block->order; order <= MAX_ORDER - 1; order++) {
 		struct physblock *buddy = physblock_to_buddy_lock(block);
 
 		if (buddy == NULL)
