@@ -39,6 +39,12 @@ typedef enum {
 	ALLOC_PINNED = 1 << 11,
 } alloc_flags_t;
 
+// Represents kmalloc allocator options.
+typedef enum {
+	KMALLOC_KERNEL = 1,
+	KMALLOC_TYPE_MASK = BIT_MASK_BELOW(10),
+} kmalloc_flags_t;
+
 // Describes a 'block' of physical memory of size 2^order pages.
 struct physblock {
 	// If a physblock comprises > 1 page and a PA relates to a page other
@@ -223,3 +229,14 @@ static inline physaddr_t phys_alloc_one(void)
 {
 	return phys_alloc(0, ALLOC_KERNEL);
 }
+
+// Allocate kernel memory containing `size` bytes. allocation behaviour
+// specified by `flags`.
+void *kmalloc(uint64_t size, kmalloc_flags_t flags);
+
+// Allocate kernel memory containing `size` bytes. allocation behaviour
+// specified by `flags`. Zero memory.
+void *kzalloc(uint64_t size, kmalloc_flags_t flags);
+
+// Free kernel allocated memory pointed at by `ptr`.
+void kfree(void *ptr);
