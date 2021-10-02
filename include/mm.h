@@ -28,6 +28,7 @@ typedef enum physblock_type {
 	PHYSBLOCK_PINNED = 1 << 11,
 } physblock_type_t;
 
+// Represents physical allocator options.
 typedef enum {
 	ALLOC_KERNEL = 1,
 	ALLOC_USER = 2,
