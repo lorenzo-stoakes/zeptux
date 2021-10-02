@@ -216,3 +216,9 @@ static inline physaddr_t phys_alloc(uint8_t order, alloc_flags_t flags)
 	struct physblock *block = phys_alloc_block(order, flags);
 	return physblock_to_phys(block);
 }
+
+// Allocate a single 4 KiB page of kernel allocation type.
+static inline physaddr_t phys_alloc_one(void)
+{
+	return phys_alloc(0, ALLOC_KERNEL);
+}

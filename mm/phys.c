@@ -55,7 +55,7 @@ static struct physblock *physblock_to_buddy_lock(struct physblock *block)
 }
 
 // Mark all tail pages of a compound page tail.
-// ASSUMES: Appropriate locks are held, all of which are claered.
+// ASSUMES: Appropriate locks are held, all of which are cleared.
 static void _set_tail_physblocks(struct physblock *start, uint8_t order)
 {
 	uint16_t num_blocks = 1 << order;
@@ -195,14 +195,68 @@ static void phys_alloc_init_span(struct phys_alloc_span *span)
 	}
 }
 
+// Split physblock `block` into 2 blocks of order - 1 and place the 2 halves
+// into the appropriate free list.
+// ASSUMES: `alloc_state` has lock held.
+// ASSUMES: `block` has lock held.
+static void split_block_locked(struct physblock *block)
+{
+	struct phys_alloc_stats *stats = &alloc_state->stats;
+	uint8_t order = block->order - 1;
+	pfn_t pfn = physblock_to_pfn(block);
+	pfn_t buddy_pfn = pfn_to_buddy_pfn(pfn, order);
+	struct physblock *buddy = _pfn_to_physblock_raw(buddy_pfn);
+
+	block->order = order;
+	buddy->order = order;
+	buddy->type = PHYSBLOCK_FREE;
+
+	// All tail pages will already be marked tail with correct offsets for
+	// `block` but `buddy` will need to have head_offset values reset.
+	_set_tail_physblocks(buddy, order);
+
+	list_detach(&block->node);
+	struct list *free_list = &alloc_state->free_lists[order];
+	list_push_back(free_list, &block->node);
+	list_push_back(free_list, &buddy->node);
+
+	stats->order[order + 1].num_free_pages--;
+	stats->order[order].num_free_pages += 2;
+
+	spinlock_release(&block->lock);
+}
+
 // Split higher order physblocks in order to free up a physblock of order
 // `order`. Panics if unable to do so.
 // ASSUME: `alloc_state` has lock held.
 static void split_higher_order_blocks(uint8_t target_order)
 {
-	for (uint8_t order = target_order + 1; order <= MAX_ORDER; order++) {
-		// TODO: Implementation.
-		IGNORE_PARAM(order);
+	// Find the first non-empty free list.
+	uint8_t order = target_order + 1;
+	for (; order <= MAX_ORDER; order++) {
+		if (!list_empty(&alloc_state->free_lists[order]))
+			break;
+	}
+
+	if (order > MAX_ORDER)
+		panic("Out of memory (fragmentation), cannot split pages to obtain one of order %u",
+		      target_order);
+
+	// Now start splitting blocks.
+	for (; order >= target_order + 1; order--) {
+		struct physblock *block = list_first_element(
+			&alloc_state->free_lists[order], struct physblock, node);
+		spinlock_acquire(&block->lock);
+
+		// If somehow the block got swiped from under us, try again.
+		if (block->type != PHYSBLOCK_FREE || block->order != order) {
+			spinlock_release(&block->lock);
+			order++;
+			continue;
+		}
+
+		// Will handle locks.
+		split_block_locked(block);
 	}
 }
 
