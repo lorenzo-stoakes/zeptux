@@ -8,6 +8,7 @@
 #include "format.h"
 #include "global.h"
 #include "list.h"
+#include "log.h"
 #include "macros.h"
 #include "mm.h"
 #include "page.h"
