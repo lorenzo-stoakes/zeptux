@@ -27,3 +27,13 @@ void global_init(void *ptr);
 
 // Retrieve global kernel state, acquiring a spinlock on it.
 struct kernel_global *global_get_locked(void);
+
+// Retrieve the kernel stage from global state acquiring & releasing the global
+// state lock.
+static inline enum kernel_stage global_get_stage(void)
+{
+	struct kernel_global *global = global_get_locked();
+	enum kernel_stage stage = global->stage;
+	spinlock_release(&global->lock);
+	return stage;
+}
