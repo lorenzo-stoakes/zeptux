@@ -239,10 +239,12 @@ struct physblock *phys_alloc_block(uint8_t order)
 
 	spinlock_acquire(&alloc_state->lock);
 
+	struct phys_alloc_stats *stats = &alloc_state->stats;
+
 	uint64_t num_4k_pages = 1UL << order;
-	if (alloc_state->stats.num_free_4k_pages < num_4k_pages)
+	if (stats->num_free_4k_pages < num_4k_pages)
 		panic("Out of memory: %lu pages requested, %lu available (order %u)",
-		      num_4k_pages, alloc_state->stats.num_free_4k_pages, order);
+		      num_4k_pages, stats->num_free_4k_pages, order);
 
 	struct list *free_list = &alloc_state->free_lists[order];
 
@@ -254,6 +256,24 @@ struct physblock *phys_alloc_block(uint8_t order)
 	struct physblock *block =
 		list_first_element(free_list, struct physblock, node);
 
+	spinlock_acquire(&block->lock);
+	// It's possible that a block gets swiped from under us, if that happens
+	// simply recurse and try again.
+	if (block->type != PHYSBLOCK_FREE || block->order != order) {
+		spinlock_release(&block->lock);
+		spinlock_release(&alloc_state->lock);
+		return phys_alloc_block(order);
+	}
+
+	list_detach(&block->node);
+	// TODO: Allow ability to set different types.
+	block->type = PHYSBLOCK_KERNEL | PHYSBLOCK_MOVABLE;
+	block->refcount++;
+
+	stats->num_free_4k_pages -= num_4k_pages;
+	stats->order[order].num_free_pages--;
+
+	spinlock_release(&block->lock);
 	spinlock_release(&alloc_state->lock);
 
 	return block;
