@@ -165,7 +165,7 @@ static inline pfn_t pfn_to_buddy_pfn(pfn_t pfn, uint8_t order)
 	// We simply use the lowest bit in the PFN to indicate which of the pair
 	// this page is, so to find the other we simply xor it.
 	// E.g. 0b10100 of order 1 would pair with 0b10110 and vice-versa.
-	pfn_t ret = {pfn.x ^ (1ULL << order)};
+	pfn_t ret = {pfn.x ^ (1UL << order)};
 	return ret;
 }
 

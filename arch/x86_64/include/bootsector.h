@@ -18,7 +18,7 @@
 // We assume base = 0, limit = 0xfffff:
 //                             b-------f---l---a-------b-----------------------l---------------
 #define GDTE_TEMPLATE_ENTRY \
-	(0b0000000000001111000000000000000000000000000000001111111111111111ULL)
+	(0b0000000000001111000000000000000000000000000000001111111111111111UL)
 
 // Generate GDTE based on the template above.
 #define MAKE_GDTE(_flag, _access) \
@@ -44,7 +44,7 @@
 #define SECTOR_SHIFT (9)
 
 // The size of a disk sector in bytes (512).
-#define SECTOR_SIZE_BYTES (1ULL << SECTOR_SHIFT)
+#define SECTOR_SIZE_BYTES (1UL << SECTOR_SHIFT)
 
 // The number of 512-byte sectors the stage 2 boot loader uses.
 #define STAGE2_SECTORS (4)
