@@ -192,7 +192,8 @@ static inline void phys_free(physaddr_t pa)
 void phys_alloc_init(void);
 
 // Determine PFN span index, or -1 if not contained within known memory.
-int pfn_to_span(pfn_t pfn);
+// ASSUMES: `alloc_state` has lock held.
+int pfn_to_span_locked(pfn_t pfn);
 
 // Allocate physically contiguous memory consisting of 2^order 4 KiB pages and
 // returns the physblock associated with this memory.

@@ -46,8 +46,8 @@ static struct physblock *physblock_to_buddy_lock(struct physblock *block)
 
 	// Both the PFN and buddy PFN must exist in the same physical span of
 	// memory.
-	int span = pfn_to_span(pfn);
-	int buddy_span = pfn_to_span(buddy_pfn);
+	int span = pfn_to_span_locked(pfn);
+	int buddy_span = pfn_to_span_locked(buddy_pfn);
 	if (span == -1 || span != buddy_span)
 		return NULL;
 
@@ -219,7 +219,7 @@ void phys_free_pfn(pfn_t pfn)
 	free_physblock_locked(block);
 }
 
-int pfn_to_span(pfn_t pfn)
+int pfn_to_span_locked(pfn_t pfn)
 {
 	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
 		struct phys_alloc_span *span = &alloc_state->spans[i];
