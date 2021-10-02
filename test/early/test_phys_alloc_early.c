@@ -51,10 +51,22 @@ const char *test_phys_alloc(void)
 		       "Stats not updated after alloc?");
 		assert(stats->num_free_4k_pages == num_4k_pages - (1UL << order),
 		       "4 KiB pages stats not updated after alloc?");
-		phys_free(pa);
 
+		if (order > 0) {
+			for (pfn_t tail_pfn = {phys_to_pfn(pa).x + 1};
+			     tail_pfn.x < (1UL << order); tail_pfn.x++) {
+				struct physblock *tail_block =
+					_pfn_to_physblock_raw(tail_pfn);
+				assert(tail_block == block,
+				       "Tail PA did not link back to head block");
+			}
+		}
+
+		phys_free(pa);
 		assert(stats->order[order].num_free_pages == num_free_pages,
 		       "Stats not updated after free?");
+		assert(stats->num_free_4k_pages == num_4k_pages,
+		       "4 KiB pages stats not updated after alloc?");
 	}
 
 	// Now allocate every available 4 KiB page.
@@ -70,6 +82,47 @@ const char *test_phys_alloc(void)
 		assert(IS_ALIGNED(pa.x, PAGE_SIZE),
 		       "4 KiB page size not aligned");
 	}
+
+	uint8_t next_order = 1;
+	for (; next_order <= MAX_ORDER; next_order++) {
+		if (!list_empty(&state->free_lists[next_order]))
+			break;
+	}
+
+	assert(next_order <= MAX_ORDER,
+	       "No further free pages at higher orders?");
+
+	uint64_t num_next_order_pages = stats->order[next_order].num_free_pages;
+
+	// Allocate a page, which should split next_order pages down.
+	physaddr_t pa = phys_alloc_one();
+
+	assert(stats->order[next_order].num_free_pages ==
+		       num_next_order_pages - 1,
+	       "Didn't split higher order page?");
+
+	// All other pages above should be split leaving 1 page behind at each
+	// level including order 0.
+	for (int order = (int)next_order - 1; order >= 0; order--) {
+		assert(stats->order[order].num_free_pages == 1,
+		       "Did not split correctly");
+	}
+
+	struct physblock *block = phys_to_physblock_lock(pa);
+	assert(block->type == PHYSBLOCK_KERNEL,
+	       "Not marked kernel physblock type?");
+	assert(block->order == 0, "Incorrect order set?");
+	assert(block->refcount == 1, "refcount not set?");
+	spinlock_release(&block->lock);
+
+	phys_free(pa);
+
+	for (int order = 0; order < next_order; order++) {
+		assert(stats->order[order].num_free_pages == 0,
+		       "Did not compact correctly?");
+	}
+	assert(stats->order[next_order].num_free_pages == num_next_order_pages,
+	       "Did not compact correctly?");
 
 	return NULL;
 }
