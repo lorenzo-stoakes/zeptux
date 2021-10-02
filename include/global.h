@@ -1,5 +1,6 @@
 #pragma once
 
+#include "log.h"
 #include "page.h"
 #include "spinlock.h"
 
@@ -16,6 +17,8 @@ enum kernel_stage {
 // Represents global kernel state.
 struct kernel_global {
 	enum kernel_stage stage;
+	bool log_echo; // Echo kernel ring buffer output?
+	log_flags_t log_level;
 
 	spinlock_t lock;
 };
