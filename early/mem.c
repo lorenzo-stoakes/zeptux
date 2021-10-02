@@ -773,6 +773,13 @@ static void early_init_phys_alloc_state(void)
 	phys_alloc_init_state(phys_to_virt_ptr(pa), alloc_state);
 }
 
+// Allocate memory for and initiailise kernel global state.
+static void early_init_kernel_global(void)
+{
+	physaddr_t pa = early_page_alloc_zero();
+	global_init(phys_to_virt_ptr(pa));
+}
+
 void early_mem_init(void)
 {
 	struct early_boot_info *info = early_get_boot_info();
@@ -785,6 +792,7 @@ void early_mem_init(void)
 	early_scratch_alloc_init();
 	early_page_alloc_init(info);
 	early_remap_page_tables(info);
+	early_init_kernel_global();
 	early_init_phys_alloc_state();
 	early_init_mem_map();
 }
