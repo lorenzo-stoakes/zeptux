@@ -286,8 +286,11 @@ struct physblock *phys_alloc_block(uint8_t order, alloc_flags_t flags)
 		list_first_element(free_list, struct physblock, node);
 
 	spinlock_acquire(&block->lock);
-	// It's possible that a block gets swiped from under us, if that happens
-	// simply recurse and try again.
+	// While any actual allocation/freeing will need to acquire an
+	// alloc_state lock which we already hold, it's conceivable that, as we
+	// didn't previously hold a lock on this block that some future change
+	// might result in this being swiped from under us somehow. If so we
+	// simply recurse + try again.
 	if (block->type != PHYSBLOCK_FREE || block->order != order) {
 		spinlock_release(&block->lock);
 		spinlock_release(&alloc_state->lock);
