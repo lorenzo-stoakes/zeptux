@@ -30,7 +30,6 @@ static inline size_t strlen(const char *str)
 static inline void *memset(void *dest, int chr, uint64_t count)
 {
 	// A naive implementation, something to get us started.
-
 	char *target = (char *)dest;
 
 	for (uint64_t i = 0; i < count; i++) {
