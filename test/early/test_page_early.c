@@ -240,14 +240,14 @@ static const char *assert_page_misc(void)
 	       "phys_to_pfn() not correctly counting PA index");
 
 	pfn_t pfn = {0xa};
-	assert(pfn_to_pa(pfn).x == 0xa000,
-	       "pfn_to_pa() not correctly converting PFN to PA");
+	assert(pfn_to_phys(pfn).x == 0xa000,
+	       "pfn_to_phys() not correctly converting PFN to PA");
 	pfn.x = 0xb;
-	assert(pfn_to_pa(pfn).x == 0xb000,
-	       "pfn_to_pa() not correctly converting PFN to PA");
+	assert(pfn_to_phys(pfn).x == 0xb000,
+	       "pfn_to_phys() not correctly converting PFN to PA");
 	pfn.x = 0;
-	assert(pfn_to_pa(pfn).x == 0,
-	       "pfn_to_pa() not correctly converting PFN to PA");
+	assert(pfn_to_phys(pfn).x == 0,
+	       "pfn_to_phys() not correctly converting PFN to PA");
 
 	pa.x = 117 << PAGE_SHIFT;
 	// Add some data offset noise.
