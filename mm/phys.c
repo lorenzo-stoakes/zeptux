@@ -29,7 +29,7 @@ void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state
 	// The remainder of fields are correctly initialised as zero values.
 }
 
-struct phys_alloc_state *phys_get_alloc_state_locked(void)
+struct phys_alloc_state *phys_get_alloc_state_lock(void)
 {
 	spinlock_acquire(&alloc_state->lock);
 	return alloc_state;

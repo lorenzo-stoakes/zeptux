@@ -185,7 +185,7 @@ struct early_page_alloc_state;
 void phys_alloc_init_state(void *ptr, struct early_page_alloc_state *early_state);
 
 // Gets the physical allocator state, with a lock acquired.
-struct phys_alloc_state *phys_get_alloc_state_locked(void);
+struct phys_alloc_state *phys_get_alloc_state_lock(void);
 
 // Decrements reference count for specified physical page, if it reaches zero
 // the page is freed.
