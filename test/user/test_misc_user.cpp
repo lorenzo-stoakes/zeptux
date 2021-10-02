@@ -82,10 +82,11 @@ std::string assert_list_correct()
 		assert(list_count(&list) == (uint64_t)(i + 1),
 		       "List entry not added?");
 
+		assert(!list_empty(&list), "Populated list empty?");
+
 		assert(list_last_element(&list, struct elem, node) == ptr,
 		       "Just added element not last element?");
 	}
-	assert(!list_empty(&list), "Populated list empty?");
 
 	struct list_node *tmp;
 	struct elem *el;

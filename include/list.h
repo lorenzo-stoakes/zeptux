@@ -56,7 +56,7 @@ static inline void list_init(struct list *list)
 // Determine if a list is empty.
 static inline bool list_empty(struct list *list)
 {
-	return list->first == list->last;
+	return list->first == (struct list_node *)list;
 }
 
 // Obtain the element containing a given list node.
