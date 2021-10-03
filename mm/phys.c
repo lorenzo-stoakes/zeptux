@@ -142,16 +142,29 @@ static void free_physblock_locked(struct physblock *block)
 		block->refcount = 0;
 	}
 
-	// Free.
 	uint8_t order = block->order;
 	spinlock_acquire(&alloc_state->lock);
-	if (block->type != PHYSBLOCK_FREE) {
-		block->type = PHYSBLOCK_FREE;
-		list_push_back(&alloc_state->free_lists[order], &block->node);
-		alloc_state->stats.num_free_4k_pages += 1UL << order;
-		alloc_state->stats.order[order].num_free_pages++;
+
+	struct phys_alloc_stats *stats = &alloc_state->stats;
+
+	switch ((block->type & PHYSBLOCK_TYPE_MASK)) {
+	case PHYSBLOCK_FREE:
+		goto compact;
+	case PHYSBLOCK_PAGETABLE:
+		stats->num_pagetable_pages--;
+		break;
+	case PHYSBLOCK_PHYSBLOCK:
+		stats->num_physblock_pages--;
+		break;
+	default:
+		break;
 	}
-	// Compact.
+
+	block->type = PHYSBLOCK_FREE;
+	list_push_back(&alloc_state->free_lists[order], &block->node);
+	stats->num_free_4k_pages += 1UL << order;
+	stats->order[order].num_free_pages++;
+compact:
 	block = compact_free_blocks_locked(block);
 	spinlock_release(&alloc_state->lock);
 done:
