@@ -372,6 +372,18 @@ struct physblock *phys_alloc_block(uint8_t order, alloc_flags_t flags)
 	stats->num_free_4k_pages -= num_4k_pages;
 	stats->order[order].num_free_pages--;
 
+	// Update specific pagetable stats.
+	switch (flags & ALLOC_TYPE_MASK) {
+	case ALLOC_PAGETABLE:
+		stats->num_pagetable_pages++;
+		break;
+	case ALLOC_PHYSBLOCK:
+		stats->num_physblock_pages++;
+		break;
+	default:
+		break;
+	}
+
 	spinlock_release(&block->lock);
 	spinlock_release(&alloc_state->lock);
 
