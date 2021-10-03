@@ -124,5 +124,52 @@ const char *test_phys_alloc(void)
 	assert(stats->order[next_order].num_free_pages == num_next_order_pages,
 	       "Did not compact correctly?");
 
+	// Assert that various alloc flags work correctly.
+
+	uint64_t num_4k_pages = stats->num_free_4k_pages;
+
+	pa = phys_alloc(0, ALLOC_USER);
+	block = phys_to_physblock_lock(pa);
+	assert((block->type & PHYSBLOCK_TYPE_MASK) == PHYSBLOCK_USER,
+	       "ALLOC_USER doesn't result in PHYSBLOCK_USER?");
+	spinlock_release(&block->lock);
+	assert(stats->num_free_4k_pages == num_4k_pages - 1,
+	       "Stats not updated?");
+	phys_free(pa);
+	assert(stats->num_free_4k_pages == num_4k_pages,
+	       "Stats not updated after free?");
+
+	uint64_t num_pagetable_pages = stats->num_pagetable_pages;
+	pa = phys_alloc(0, ALLOC_PAGETABLE);
+	block = phys_to_physblock_lock(pa);
+	assert((block->type & PHYSBLOCK_TYPE_MASK) == PHYSBLOCK_PAGETABLE,
+	       "ALLOC_PAGETABLE doesn't result in PHYSBLOCK_PAGETABLE?");
+	spinlock_release(&block->lock);
+	assert(stats->num_free_4k_pages == num_4k_pages - 1,
+	       "Stats not updated?");
+	assert(stats->num_pagetable_pages == num_pagetable_pages + 1,
+	       "Pagetable stats not updated?");
+	phys_free(pa);
+	assert(stats->num_pagetable_pages == num_pagetable_pages,
+	       "Pagetable stats not updated after free?");
+	assert(stats->num_free_4k_pages == num_4k_pages,
+	       "Stats not updated after free?");
+
+	uint64_t num_physblock_pages = stats->num_physblock_pages;
+	pa = phys_alloc(0, ALLOC_PHYSBLOCK);
+	block = phys_to_physblock_lock(pa);
+	assert((block->type & PHYSBLOCK_TYPE_MASK) == PHYSBLOCK_PHYSBLOCK,
+	       "ALLOC_PHYSBLOCK doesn't result in PHYSBLOCK_PHYSBLOCK?");
+	spinlock_release(&block->lock);
+	assert(stats->num_free_4k_pages == num_4k_pages - 1,
+	       "Stats not updated?");
+	assert(stats->num_physblock_pages == num_physblock_pages + 1,
+	       "Physblock stats not updated?");
+	phys_free(pa);
+	assert(stats->num_physblock_pages == num_physblock_pages,
+	       "Physblock stats not updated after free?");
+	assert(stats->num_free_4k_pages == num_4k_pages,
+	       "Stats not updated after free?");
+
 	return NULL;
 }
