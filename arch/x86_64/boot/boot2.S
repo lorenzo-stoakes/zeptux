@@ -298,8 +298,6 @@ start64:
 	// If we reach here, something has gone wrong!
 start64.forever:
 	jmp start64.forever
-start64.loop:
-	jmp start64.loop
 
 gdt:
 	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
