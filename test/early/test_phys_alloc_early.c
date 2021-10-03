@@ -109,7 +109,7 @@ const char *test_phys_alloc(void)
 	}
 
 	struct physblock *block = phys_to_physblock_lock(pa);
-	assert(block->type == PHYSBLOCK_KERNEL,
+	assert((block->type & PHYSBLOCK_TYPE_MASK) == PHYSBLOCK_KERNEL,
 	       "Not marked kernel physblock type?");
 	assert(block->order == 0, "Incorrect order set?");
 	assert(block->refcount == 1, "refcount not set?");
