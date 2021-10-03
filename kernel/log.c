@@ -9,6 +9,10 @@ void kernel_log_init(void)
 		sizeof(struct kernel_log_state) +
 		KERNEL_LOG_MAX_NUM_ENTRIES * sizeof(struct kernel_log_entry);
 	state = kzalloc(bytes, KMALLOC_KERNEL);
+
+	struct kernel_global *global = global_get_locked();
+	global->stage = KERNEL_STAGE_2_HAS_RING_BUFFER;
+	spinlock_release(&global->lock);
 }
 
 // Get pointer to next write kernel log entry.
@@ -43,6 +47,7 @@ static void maybe_echo_log(struct kernel_global *global, log_flags_t flags,
 	// For now we only support early mode.
 	switch (global->stage) {
 	case KERNEL_STAGE_1_EARLY:
+	case KERNEL_STAGE_2_HAS_RING_BUFFER:
 		break;
 	default:
 		panic("Unsupported kernel stage %d", global->stage);
@@ -72,7 +77,6 @@ static void maybe_echo_log(struct kernel_global *global, log_flags_t flags,
 	early_printf("%s\n", buf);
 }
 
-// Add kernel log entry to kernel ring buffer.
 void log_vprintf(log_flags_t flags, const char *fmt, va_list ap)
 {
 	spinlock_acquire(&state->lock);
