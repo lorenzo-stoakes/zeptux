@@ -174,7 +174,7 @@ bios_load_kernel_elf.loop:
 bios_load_kernel_elf.done:
 	// Store kernel ELF file size in boot info ELF size field.
 	movl KERNEL_IMAGE_SIZE_MEM_ADDRESS, %eax
-	movl %eax, X86_EARLY_BOOT_INFO_ADDRESS_PHYS
+	movl %eax, X86_EARLY_BOOT_INFO_KERNEL_ELF_SIZE_ADDRESS_PHYS
 
 	// Clear used registers.
 	xorl %eax, %eax
