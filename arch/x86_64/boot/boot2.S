@@ -308,6 +308,8 @@ start64.forever:
 	jmp start64.forever
 
 retrieve_reset_apic:
+	xorq %rax, %rax
+
 	// Obtain APIC base address.
 	movl $X86_IA32_APIC_BASE_MSR, %ecx
 	rdmsr
@@ -315,7 +317,7 @@ retrieve_reset_apic:
 	shrq $12, %rax
 	shlq $12, %rax
 	// Limit to 36 bits (RDX stores higher bits).
-	orq $0xf, %rdx
+	andq $0xf, %rdx
 
 	// Copy RAX -> RCX, RDX -> RBX
 	movq %rax, %rcx
