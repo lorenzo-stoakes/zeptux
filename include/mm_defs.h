@@ -23,7 +23,7 @@
 #define KERNEL_STACK_ADDRESS_PHYS (X86_KERNEL_STACK_ADDRESS_PHYS)
 // The maximum number of pages available in the kernel stack.
 #define KERNEL_STACK_PAGES (4)
-// The virtually mapped APIC base address.
+// The virtually mapped (local) APIC base address.
 #define APIC_BASE_ADDRESS (0xffffc10040000000UL)
 
 // The maximum 2^order size of a physically contiguous allocation.
