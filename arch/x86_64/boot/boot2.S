@@ -12,6 +12,7 @@ boot2:
 #endif
 	call set_video_mode
 	call get_e820
+	call disable_pic
 
 	// Move to 32-bit protected mode.
 	lgdtl gdtdescr
@@ -101,6 +102,12 @@ get_e820.unexpected_length:
 
 get_e820.forever:
 	jmp get_e820.forever
+
+disable_pic:
+	mov $0xff, %al
+	outb %al, $X86_PIC1_DATA_PORT
+	outb %al, $X86_PIC2_DATA_PORT
+	ret
 
 #ifdef CONFIG_BOOTLOADER_BIOS
 bios_load_kernel_elf:
@@ -289,23 +296,7 @@ start64:
 	movw %ax, %fs
 	movw %ax, %gs
 
-	// Obtain APIC base address.
-	movl $X86_IA32_APIC_BASE_MSR, %ecx
-	rdmsr
-	// Page align.
-	shrq $12, %rax
-	shlq $12, %rax
-	// Extract higher bits, max 36 bits.
-	orq $0xf, %rdx
-	shlq $32, %rdx
-	orq %rdx, %rax
-	// Store in early boot info.
-	mov %rax, X86_EARLY_BOOT_INFO_APIC_BASE_ADDRESS_PHYS
-
-	// Clear clobbered registers.
-	xorq %rax, %rax
-	xorq %rcx, %rcx
-	xorq %rdx, %rdx
+	call retrieve_reset_apic
 
 	// Setup stack.
 	movq $X86_KERNEL_STACK_ADDRESS, %rsp
@@ -315,6 +306,39 @@ start64:
 	// If we reach here, something has gone wrong!
 start64.forever:
 	jmp start64.forever
+
+retrieve_reset_apic:
+	// Obtain APIC base address.
+	movl $X86_IA32_APIC_BASE_MSR, %ecx
+	rdmsr
+	// Page align.
+	shrq $12, %rax
+	shlq $12, %rax
+	// Limit to 36 bits (RDX stores higher bits).
+	orq $0xf, %rdx
+
+	// Copy RAX -> RCX, RDX -> RBX
+	movq %rax, %rcx
+	movq %rdx, %rbx
+
+	// Store in early boot info.
+	shlq $32, %rdx
+	orq %rdx, %rax
+	mov %rax, X86_EARLY_BOOT_INFO_APIC_BASE_ADDRESS_PHYS
+
+	// Reset APIC base address to ensure set.
+	mov %rcx, %rax
+	mov %rbx, %rdx
+	movl $X86_IA32_APIC_BASE_MSR_SET_ENABLE, %ecx
+	wrmsr
+
+	// Clear clobbered registers.
+	xorq %rax, %rax
+	xorq %rbx, %rbx
+	xorq %rcx, %rcx
+	xorq %rdx, %rdx
+
+	ret
 
 gdt:
 	.quad MAKE_GDTE(0, 0) // Null, can't select GDTE 0.
