@@ -72,9 +72,8 @@ get_e820.skip:
 	jnz get_e820.loop
 get_e820.done:
 	movw %bp, X86_EARLY_BOOT_INFO_E820_ENTRY_COUNT_ADDRESS_PHYS // Store entry count.
-	// Clear upper bytes of 64-bit value.
+	// Clear upper bytes of 32-bit value.
 	movw $0, X86_EARLY_BOOT_INFO_E820_ENTRY_COUNT_ADDRESS_PHYS + 2
-	movl $0, X86_EARLY_BOOT_INFO_E820_ENTRY_COUNT_ADDRESS_PHYS + 4
 
 	// Restore clobbered regs and clear ES.
 	xorl %eax, %eax

@@ -38,10 +38,12 @@ struct e820_entry {
 // at a specific known location in memory which the kernel can access once
 // booted.
 struct early_boot_info {
-	uint64_t kernel_elf_size_bytes;
+	// Set post-boot.
 	uint64_t total_avail_ram_bytes;
 	uint64_t num_ram_spans;
-	uint64_t num_e820_entries;
+	// Set during boot process.
+	uint32_t kernel_elf_size_bytes;
+	uint32_t num_e820_entries;
 	struct e820_entry e820_entries[0];
 } PACKED;
 

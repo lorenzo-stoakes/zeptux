@@ -8,7 +8,7 @@ static void prelude(void)
 	log_info("-- zeptux %u.%u.%u --", zeptux_ver.maj, zeptux_ver.min,
 		 zeptux_ver.rev);
 	log_info("");
-	log_info("kernel ELF size = %lu",
+	log_info("kernel ELF size = %u",
 		 early_get_boot_info()->kernel_elf_size_bytes);
 
 	struct early_boot_info *info = early_get_boot_info();
