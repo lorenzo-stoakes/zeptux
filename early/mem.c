@@ -650,6 +650,15 @@ static void early_map_video_range(pgdaddr_t pgd)
 	_map_page_range(pgd, va, pa, num_pages, MAP_DEVICE, &early_allocators);
 }
 
+// Map the APIC register page.
+static void early_map_apic_base(pgdaddr_t pgd)
+{
+	virtaddr_t va = {APIC_BASE_ADDRESS};
+	physaddr_t pa = early_get_boot_info()->apic_base;
+
+	_map_page_range(pgd, va, pa, 1, MAP_DEVICE, &early_allocators);
+}
+
 // Move from the early page table structure (1 GiB direct, ELF image mpaping) to
 // an actually correct mapping.
 static void early_remap_page_tables(struct early_boot_info *info)
@@ -661,6 +670,7 @@ static void early_remap_page_tables(struct early_boot_info *info)
 	early_map_direct(info, pgd);
 	early_map_kernel_elf(header, elf_pa, pgd);
 	early_map_video_range(pgd);
+	early_map_apic_base(pgd);
 
 	set_pgd(pgd);
 	kernel_root_pgd = pgd;
