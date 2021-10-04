@@ -42,6 +42,7 @@ struct early_boot_info {
 	uint64_t total_avail_ram_bytes;
 	uint64_t num_ram_spans;
 	// Set during boot process.
+	physaddr_t apic_base;
 	uint32_t kernel_elf_size_bytes;
 	uint32_t num_e820_entries;
 	struct e820_entry e820_entries[0];

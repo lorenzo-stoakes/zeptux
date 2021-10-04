@@ -289,6 +289,24 @@ start64:
 	movw %ax, %fs
 	movw %ax, %gs
 
+	// Obtain APIC base address.
+	movl $X86_IA32_APIC_BASE_MSR, %ecx
+	rdmsr
+	// Page align.
+	shrq $12, %rax
+	shlq $12, %rax
+	// Extract higher bits, max 36 bits.
+	orq $0xf, %rdx
+	shlq $32, %rdx
+	orq %rdx, %rax
+	// Store in early boot info.
+	mov %rax, X86_EARLY_BOOT_INFO_APIC_BASE_ADDRESS_PHYS
+
+	// Clear clobbered registers.
+	xorq %rax, %rax
+	xorq %rcx, %rcx
+	xorq %rdx, %rdx
+
 	// Setup stack.
 	movq $X86_KERNEL_STACK_ADDRESS, %rsp
 	// Call the kernel ELF loader.
