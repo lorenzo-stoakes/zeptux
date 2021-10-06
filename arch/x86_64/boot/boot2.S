@@ -104,6 +104,7 @@ get_e820.forever:
 	jmp get_e820.forever
 
 disable_pic:
+	// Mask all PIC interrupts.
 	mov $0xff, %al
 	outb %al, $X86_PIC1_DATA_PORT
 	outb %al, $X86_PIC2_DATA_PORT
