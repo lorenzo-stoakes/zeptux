@@ -11,8 +11,6 @@ It is released under an MIT license.
 
 ### Next steps
 
-* Implement full-fat physical buddy allocator.
-* Implement early slab allocator.
 * Implement interrupt handler and enable interrupts.
 * Page fault handling.
 * Implement interrupt-driven serial port interface for early kernel I/O.
