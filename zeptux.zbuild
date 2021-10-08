@@ -50,7 +50,7 @@ build boot.bin from boot_obj {
 }
 
 # Generate kernel.elf (kernel ELF image).
-build [*.o] from [lib/*.c, early/*.c, kernel/*.c, mm/*.c] excluding kernel/main.c as kernel_obj {
+build [*.o] from [lib/*.c, early/*.c, kernel/*.c, mm/*.c, arch/x86_64/kernel/*.c] excluding kernel/main.c as kernel_obj {
 	foreach source to output {
 		cc $CFLAGS -c $source -o $output
 	}

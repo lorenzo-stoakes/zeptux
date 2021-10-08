@@ -7,6 +7,7 @@
 #include "elf.h"
 #include "format.h"
 #include "global.h"
+#include "interrupt.h"
 #include "list.h"
 #include "log.h"
 #include "macros.h"

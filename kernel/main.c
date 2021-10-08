@@ -71,6 +71,7 @@ void main(void)
 	early_init();
 	phys_alloc_init();
 	kernel_log_init();
+	interrupt_init();
 
 	prelude();
 
