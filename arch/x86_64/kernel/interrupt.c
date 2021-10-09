@@ -10,7 +10,8 @@
 #define APIC_EOI_OFFSET (0x0b0)	     // End Of Interrupt register.
 #define APIC_SPURIOUS_OFFSET (0x0f0) // For specifying spurious interrupt vector.
 #define APIC_ESR_OFFSET (0x280)	     // Error Status Register
-#define APIC_TIMER_OFFSET (0x320)    // Local timer.
+#define APIC_TIMER_OFFSET (0x320)    // Local timer register.
+#define APIC_PCINT_OFFSET (0x340)    // Performance counter register.
 #define APIC_LINT0_OFFSET (0x350)    // Local interrupt pin 0 register.
 #define APIC_LINT1_OFFSET (0x360)    // Local interrupt pin 1 register.
 #define APIC_ERROR_OFFSET (0x370)    // Error interrupt register.
@@ -90,6 +91,10 @@ static void lapic_init(void)
 			APIC_PERIODIC_FLAG | (APIC_IRQ_0 + APIC_IRQ_TIMER));
 	// We count down from this.
 	write_lapic_reg(APIC_TICR_OFFSET, APIC_INIT_TIMER_COUNT_VALUE);
+
+	// Disable performance counter overflow interrupts.
+	if (num_lvt_entries >= 4)
+		write_lapic_reg(APIC_PCINT_OFFSET, APIC_MASK_FLAG);
 
 	// Enable local APIC (step 1) - specify spurious interrupt.
 	// See https://en.wikipedia.org/wiki/Interrupt#Spurious_interrupts
