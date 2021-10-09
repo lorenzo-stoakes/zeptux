@@ -314,30 +314,24 @@ retrieve_reset_apic:
 	// Obtain APIC base address.
 	movl $X86_IA32_APIC_BASE_MSR, %ecx
 	rdmsr
-	// Page align.
+
+	// Write + mark enable.
+	orl $X86_IA32_APIC_BASE_MSR_ENABLE, %eax
+	wrmsr
+
+	// Page align, limit to 36 bits (RDX contains higher bits) and place
+	// physical address in RAX.
 	shrq $12, %rax
 	shlq $12, %rax
-	// Limit to 36 bits (RDX stores higher bits).
 	andq $0xf, %rdx
-
-	// Copy RAX -> RCX, RDX -> RBX
-	movq %rax, %rcx
-	movq %rdx, %rbx
-
-	// Store in early boot info.
 	shlq $32, %rdx
 	orq %rdx, %rax
-	mov %rax, X86_EARLY_BOOT_INFO_APIC_BASE_ADDRESS_PHYS
 
-	// Reset APIC base address to ensure set.
-	mov %rcx, %rax
-	mov %rbx, %rdx
-	movl $X86_IA32_APIC_BASE_MSR_SET_ENABLE, %ecx
-	wrmsr
+	// Store in early boot info.
+	mov %rax, X86_EARLY_BOOT_INFO_APIC_BASE_ADDRESS_PHYS
 
 	// Clear clobbered registers.
 	xorq %rax, %rax
-	xorq %rbx, %rbx
 	xorq %rcx, %rcx
 	xorq %rdx, %rdx
 
