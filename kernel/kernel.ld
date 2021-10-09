@@ -16,6 +16,12 @@ SECTIONS {
 		*(.data .data.*)
 	}
 
+	/*
+	 * Offset to ensure that the section headers do not overlap with .bss in
+	 * virtual memory.
+	 */
+	. += 0x10000;
+
 	.bss : ALIGN(4K) {
 		*(.bss .bss.*)
 	}
