@@ -171,3 +171,8 @@
 // The number of meaningful bits in a physical address. In 4-level x86-64 this
 // is 4 levels = 12 + 4*9.
 #define X86_PHYS_ADDR_BITS (48)
+
+// Where the register page for the I/O APIC lives.
+// TODO: This is a default address but I don't believe there is a means of
+// determining for sure where it is.
+#define X86_IO_APIC_ADDRESS_PHYS (0xfec00000UL)

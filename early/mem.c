@@ -653,9 +653,13 @@ static void early_map_video_range(pgdaddr_t pgd)
 // Map the APIC register page.
 static void early_map_apic_base(pgdaddr_t pgd)
 {
+	// Local APIC.
 	virtaddr_t va = {APIC_BASE_ADDRESS};
 	physaddr_t pa = early_get_boot_info()->apic_base;
-
+	_map_page_range(pgd, va, pa, 1, MAP_DEVICE, &early_allocators);
+	// I/O APIC.
+	va.x = APIC_IO_BASE_ADDDRESS;
+	pa.x = X86_IO_APIC_ADDRESS_PHYS;
 	_map_page_range(pgd, va, pa, 1, MAP_DEVICE, &early_allocators);
 }
 

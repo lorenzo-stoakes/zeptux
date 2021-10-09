@@ -96,10 +96,10 @@ KERNEL_MEM_MAP_ADDRESS = ffffc00040000000 -> |----------------| x
                                              |    physblock   | | 1 TiB
                                              |     entries    | |
      APIC_BASE_ADDRESS = ffffc10040000000 -> |----------------| x
-                                             |    Array of    | |
-                                             |    physblock   | | 4 KiB
-                                             |     entries    | |
-                         ffffc10040001000 -> |----------------| v
+                                             |   local, I/O   | |
+                                             | APIC register  | | 8 KiB
+                                             |     pages      | |
+                         ffffc10040002000 -> |----------------| v
                                              /                /
                                              \     unused     \
                                              /      hole      /
