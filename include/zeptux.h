@@ -4,6 +4,7 @@
 
 #include "asm.h"
 #include "bitmap.h"
+#include "bitwise.h"
 #include "elf.h"
 #include "format.h"
 #include "global.h"
