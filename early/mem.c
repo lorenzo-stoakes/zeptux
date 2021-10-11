@@ -613,10 +613,9 @@ void early_map_kernel_elf(struct elf_header *header, physaddr_t elf_pa,
 			uint64_t num_pages = bytes_to_pages(sect_header->size);
 			pa = early_pages_alloc(num_pages);
 			// We need to copy the current state of the header into
-			// the page.
-			// NOTE: We copy the full page as ELF section headers
-			// can overlap with .bss for example and not doing so
-			// loses this data.
+			// the allocated memory. We copy this memory as ELF
+			// section headers can overlap with .bss for example and
+			// not doing so loses this data.
 			memcpy(phys_to_virt_ptr(pa), (void *)sect_header->addr,
 			       PAGE_SIZE * num_pages);
 		} else {
