@@ -397,6 +397,30 @@ physaddr_t early_page_alloc(void)
 	return alloc(EARLY_ALLOC_NORMAL);
 }
 
+physaddr_t early_pages_alloc(int pages)
+{
+	if (pages > (int)sizeof(uint64_t))
+		early_panic(
+			"Can only allocate up to %d pages using the early allocator, attempting to allocate %d",
+			(int)sizeof(uint64_t), pages);
+
+	for (int i = 0; i < (int)alloc_state->num_spans; i++) {
+		struct early_page_alloc_span *span = &alloc_state->spans[i];
+		int offset =
+			bitmap_zero_string_longer_than(span->alloc_bitmap, pages);
+		if (offset == -1)
+			continue;
+
+		// Mark all pages allocated.
+		for (int j = offset; j < offset + pages; j++) {
+			mark_page_allocated(span, j, EARLY_ALLOC_NORMAL);
+		}
+		return span_offset_to_pa(span, offset);
+	}
+
+	early_panic("Unable to allocate %d physically contiguous pages", pages);
+}
+
 physaddr_t early_page_alloc_ephemeral(void)
 {
 	return alloc(EARLY_ALLOC_EPHEMERAL);

@@ -164,6 +164,23 @@ void early_page_alloc_at(physaddr_t pa);
 // Allocates physical page from the early page allocator. It will NOT be zeroed.
 physaddr_t early_page_alloc(void);
 
+// Allocate `pages` number of physically contiguous pages. They will NOT be
+// zeroed. Maximum number of pages is 64 due to limitations in the
+// implementation.
+physaddr_t early_pages_alloc(int pages);
+
+// Allocate `pages` number of physically contiguous pages and zeroes them.
+static inline physaddr_t early_pages_alloc_zero(int pages)
+{
+	physaddr_t pa = early_pages_alloc(pages);
+
+	physaddr_t curr = pa;
+	for (int i = 0; i < pages; i++, curr = phys_next_page(curr)) {
+		zero_page(curr);
+	}
+	return pa;
+}
+
 // Allocates physical page from the early page allocator and zeroes it.
 static inline physaddr_t early_page_alloc_zero(void)
 {
