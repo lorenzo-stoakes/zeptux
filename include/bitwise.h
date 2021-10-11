@@ -11,12 +11,13 @@
 static inline int find_bitstring_longer_than(uint64_t x, int n)
 {
 	int s;
-
-	while (n > 1) {
-		s = n >> 1;
+	int curr = n;
+	while (curr > 1) {
+		s = curr >> 1;
 		x &= x << s;
-		n -= s;
+		curr -= s;
 	}
 
-	return find_first_set_bit(x);
+	int ret = find_first_set_bit(x);
+	return ret < 0 ? -1 : ret - n + 1;
 }
