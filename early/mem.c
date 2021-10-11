@@ -424,9 +424,8 @@ void early_page_free(physaddr_t pa)
 
 	uint64_t offset = phys_to_span_offset(span, pa);
 
-	if (!bitmap_is_set(span->alloc_bitmap, offset)) {
+	if (!bitmap_is_set(span->alloc_bitmap, offset))
 		early_panic("Attempt to free unallocated PA %lx", pa.x);
-	}
 
 	bitmap_clear(span->alloc_bitmap, offset);
 	alloc_state->num_allocated_pages--;
