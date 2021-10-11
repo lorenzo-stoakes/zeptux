@@ -24,6 +24,8 @@
 
 #define APIC_INIT_TIMER_COUNT_VALUE (1000000000)
 
+#define NUM_INTERRUPTS (256)
+
 // See https://wiki.osdev.org/Interrupt_Descriptor_Table#Structure_AMD64 and
 // intel manual 3a, section 6.14.1.
 struct idt_descriptor {
@@ -35,6 +37,8 @@ struct idt_descriptor {
 	uint32_t addr_upper32;	// Upper bits.
 	uint32_t reserved;	// Should be zeroed.
 };
+
+struct idt_descriptor idts[NUM_INTERRUPTS];
 
 // The maximum number of entries in the Local Vector Table, see intel manual 3a,
 // section 10.5.1.
