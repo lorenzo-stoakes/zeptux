@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bitwise.h"
 #include "compiler.h"
 #include "macros.h"
 #include "types.h"
@@ -117,4 +118,36 @@ static inline int64_t bitmap_first_clear(struct bitmap *bitmap)
 	// We keep out-of-range bits clear so we need to check to ensure we
 	// don't return an out-of-range index.
 	return ret >= bitmap->num_bits ? -1 : ret;
+}
+
+// Find first bit string consisting of `n` consecutive zero bits. Returns index
+// of this bitstring, or -1 if it cannot be found.
+// This is rather a rudimentary approach to this problem but good enough for the
+// primary intended use - finding x (where x easily < 64) consecutive free pages
+// in the early page allocator.
+static inline int bitmap_zero_string_longer_than(struct bitmap *bitmap, int n)
+{
+	// TODO: Handle greater than 64 bits.
+	// TODO: Relatedly, allowing overlapping from one
+	//       64-bit word to another.
+
+	if (n > 64)
+		return -1;
+
+	int ret = -1;
+	for (uint32_t i = 0; i < bitmap->num_words; i++) {
+		uint64_t word = bitmap->data[i];
+
+		int index = find_bitstring_longer_than(~word, n);
+		if (index > 0) {
+			ret = i * 64 + index;
+			break;
+		}
+	}
+
+	// We keep out-of-range bits clear so we need to check to ensure we
+	// don't return an out-of-range index. We can be out of range both at
+	// the start of the range or at the end.
+	int num_bits = bitmap->num_bits;
+	return ret >= num_bits || ret + n > num_bits ? -1 : ret;
 }

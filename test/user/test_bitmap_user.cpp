@@ -166,5 +166,35 @@ std::string test_bitmap()
 		bitmap_set(bitmap, i);
 	}
 
+	bitmap_set_all(bitmap);
+	assert(bitmap_zero_string_longer_than(bitmap, 1) == -1,
+	       "Fully set bitmap reports non-exist zero bitstring?");
+
+	bitmap_clear(bitmap, 137);
+	assert(bitmap_zero_string_longer_than(bitmap, 1) == 137,
+	       "Bitmap zero string of length 1 not detected?");
+
+	bitmap_clear(bitmap, 138);
+	assert(bitmap_zero_string_longer_than(bitmap, 2) == 137,
+	       "Not found zero string of size 2?");
+
+	bitmap_clear(bitmap, 139);
+	assert(bitmap_zero_string_longer_than(bitmap, 3) == 137,
+	       "Not found zero string of size 3?");
+
+	assert(bitmap_zero_string_longer_than(bitmap, 4) == -1,
+	       "Only bitstring of length 3 exists, but returns index?");
+
+	bitmap_clear(bitmap, 149);
+	bitmap_clear(bitmap, 148);
+	bitmap_clear(bitmap, 147);
+	bitmap_clear(bitmap, 146);
+	assert(bitmap_zero_string_longer_than(bitmap, 4) == 146,
+	       "Not finding 4 length bitstring at index 146?");
+
+	bitmap_set(bitmap, 147);
+	assert(bitmap_zero_string_longer_than(bitmap, 4) == -1,
+	       "Overlapping into out of range zero bits?");
+
 	return "";
 }
