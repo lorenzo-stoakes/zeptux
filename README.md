@@ -1,5 +1,9 @@
 # Zeptux
 
+__NOTE:__ Zeptux is on hold for the time being as I am busy improving my
+algorithm skills and playing with __memtux__. I plan to return to it at a later
+date.
+
 Zeptux is an in-development, opinionated, UNIX-like kernel which may or may not
 target POSIX conformity.
 
