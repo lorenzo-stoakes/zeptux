@@ -1,7 +1,7 @@
 # Zeptux
 
 __NOTE:__ Zeptux is on hold for the time being as I am busy working on the
-[memory management book](https://ljs.io/book.html). I plan to return to it at a
+[memory management book](https://linuxmemory.org). I plan to return to it at a
 later date.
 
 Zeptux is an in-development, opinionated, UNIX-like kernel which may or may not
